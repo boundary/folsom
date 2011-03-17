@@ -1,4 +1,4 @@
--module(emetrics_vm_resource).
+-module(emetrics_memory_resource).
 
 -export([init/1, content_types_provided/2, to_json/2, allowed_methods/2]).
 
@@ -13,7 +13,5 @@ allowed_methods(ReqData, Context) ->
     {['GET'], ReqData, Context}.
 
 to_json(ReqData, Context) ->
-    {mochijson2:encode(get_system_info()), ReqData, Context}.
+    {mochijson2:encode(erlang:memory()), ReqData, Context}.
 
-get_system_info() ->
-    [{"process_count", erlang:system_info(process_count)}].
