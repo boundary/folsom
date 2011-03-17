@@ -1,0 +1,16 @@
+{application, emetrics,
+ [
+  {description, ""},
+  {vsn, "0.1"},
+  {registered, []},
+  {applications, [
+                  kernel,
+                  stdlib,
+                  crypto,
+                  inets,
+                  mochiweb,
+                  webmachine
+                 ]},
+  {mod, { emetrics_app, []}},
+  {env, []}
+ ]}.
