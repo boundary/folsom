@@ -40,14 +40,16 @@ upgrade() ->
 %% @spec init([]) -> SupervisorTree
 %% @doc supervisor callback.
 init([]) ->
-    Ip = case os:getenv("WEBMACHINE_IP") of false -> "0.0.0.0"; Any -> Any end,
+    Ip = case os:getenv("EMETRICS_IP") of false -> "0.0.0.0"; Any -> Any end,
+    Port = case os:getenv("EMETRICS_PORT") of false -> "5555"; Any1 -> Any1 end,
+    LogDir = case os:getenv("EMETRICS_LOG_DIR") of false -> "priv/log"; Any2 -> Any2 end,
     {ok, Dispatch} = file:consult(filename:join(
                          [filename:dirname(code:which(?MODULE)),
                           "..", "priv", "dispatch.conf"])),
     WebConfig = [
                  {ip, Ip},
-                 {port, 8000},
-                 {log_dir, "priv/log"},
+                 {port, Port},
+                 {log_dir, LogDir},
                  {dispatch, Dispatch}],
     Web = {webmachine_mochiweb,
            {webmachine_mochiweb, start, [WebConfig]},
