@@ -25,6 +25,8 @@ convert_system_info({allocator, {_,_,_,List}}) ->
     List;
 convert_system_info({c_compiler_used, {Compiler, Version}}) ->
     [{compiler, Compiler}, {version, convert_c_compiler_version(Version)}];
+convert_system_info({dist_ctrl, List}) ->
+    [{Value1, list_to_binary(io_lib:format("~p", [Value2]))} || {Value1, Value2} <- List];
 convert_system_info({driver_version, Value}) ->
     list_to_binary(Value);
 convert_system_info({machine, Value}) ->
