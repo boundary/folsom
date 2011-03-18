@@ -25,6 +25,8 @@ convert_system_info({allocator, {_,_,_,List}}) ->
     List;
 convert_system_info({c_compiler_used, {Compiler, Version}}) ->
     [{compiler, Compiler}, {version, convert_c_compiler_version(Version)}];
+convert_system_info({cpu_topology, [{processor, List}]}) ->
+    [{processor, convert_cpu_topology(List, [])}];
 convert_system_info({dist_ctrl, List}) ->
     [{Value1, list_to_binary(io_lib:format("~p", [Value2]))} || {Value1, Value2} <- List];
 convert_system_info({driver_version, Value}) ->
@@ -53,3 +55,12 @@ convert_c_compiler_version({A, B, C}) ->
     list_to_binary(io_lib:format("~p.~p.~p", [A, B, C]));
 convert_c_compiler_version({A, B}) ->
     list_to_binary(io_lib:format("~p.~p", [A, B])).
+
+convert_cpu_topology([{core, Value}| Tail], Acc) when is_tuple(Value) ->
+  convert_cpu_topology(Tail, lists:append(Acc, [{core, tuple_to_list(Value)}]));
+convert_cpu_topology([{core, Value}| Tail], Acc) when is_list(Value) ->
+  convert_cpu_topology(Tail, lists:append(Acc, [{core, convert_cpu_topology(Value, [])}]));
+convert_cpu_topology([{thread, Value}| Tail], Acc) ->
+  convert_cpu_topology(Tail, lists:append(Acc, [{thread, tuple_to_list(Value)}]));
+convert_cpu_topology([], Acc) ->
+  Acc.
