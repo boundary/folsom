@@ -1,3 +1,12 @@
+%%%-------------------------------------------------------------------
+%%% File:      emetrics_memory_resource.erl
+%%% @author    joe williams <j@fastip.com>
+%%% @copyright 2011 fast_ip
+%%% @doc
+%%% http end point that conversts erlang:memory/0 to json
+%%% @end
+%%%------------------------------------------------------------------
+
 -module(emetrics_memory_resource).
 
 -export([init/1, content_types_provided/2, to_json/2, allowed_methods/2]).

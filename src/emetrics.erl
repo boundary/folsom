@@ -1,3 +1,11 @@
+%%%-------------------------------------------------------------------
+%%% File:      emetrics.erl
+%%% @author    joe williams <j@fastip.com>
+%%% @copyright 2011 fast_ip
+%%% @doc
+%%% @end
+%%%------------------------------------------------------------------
+
 -module(emetrics).
 -author('Andy Gross <andy@basho.com>').
 -author('Justin Sheehy <justin@@basho.com>').

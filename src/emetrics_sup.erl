@@ -1,5 +1,10 @@
-%% @author author <author@example.com>
-%% @copyright YYYY author.
+%%%-------------------------------------------------------------------
+%%% File:      emetrics_sup.erl
+%%% @author    joe williams <j@fastip.com>
+%%% @copyright 2011 fast_ip
+%%% @doc
+%%% @end
+%%%------------------------------------------------------------------
 
 %% @doc Supervisor for the emetrics application.
 

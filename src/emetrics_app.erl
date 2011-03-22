@@ -1,3 +1,11 @@
+%%%-------------------------------------------------------------------
+%%% File:      emetrics_app.erl
+%%% @author    joe williams <j@fastip.com>
+%%% @copyright 2011 fast_ip
+%%% @doc
+%%% @end
+%%%------------------------------------------------------------------
+
 -module(emetrics_app).
 
 -behaviour(application).
