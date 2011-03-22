@@ -16,43 +16,53 @@
 
 -module(emetrics_exdec).
 
--export([new/0, update/2, update/3, get_values/1, test/0]).
+-export([new/2, update/2, update/3, get_values/1, test/0]).
 
--define(SIZE, 5).
--define(ALPHA, 1).
 -define(HOURSECS, 3600).
+
 -define(RAND, 999999999999).
 
-new() ->
+-record(exdec, {
+    start = 0,
+    next = 0,
+    alpha = 1,
+    size = 5000,
+    reservoir = []
+}).    
+
+new(Alpha, Size) ->
     Now = tick(),
-    [{start, Now}, {next, Now + ?HOURSECS}, {reservoir, []}].
+    #exdec{start = Now, next = Now + ?HOURSECS, alpha = Alpha, size = Size}.
 
-update(List, Value) ->
-    update(List, Value, tick()).
+update(Sample, Value) ->
+    update(Sample, Value, tick()).
 
-update([{start, Start}, {next, Next}, {reservoir, Reservoir}], Value, Tick) when length(Reservoir) < ?SIZE ->
-    NewList = lists:append(Reservoir, [{priority(Tick, Start), Value}]),
-    [{start, Start}, {next, Next}, {reservoir, NewList}];
-update([{start, Start}, {next, Next}, {reservoir, [{FirstTime, _} | Tail]}], Value, Tick) ->
-    Priority = priority(Tick, Start),
-    NewList = case FirstTime < Priority of
-        true ->
-            lists:append(Tail, [{Priority, Value}]);
-        _ ->
-            Tail
-    end,
+update(#exdec{start = Start, alpha = Alpha, size = Size, reservoir = Reservoir} = Sample, Value, Tick) when length(Reservoir) < Size ->
+    NewList = lists:append(Reservoir, [{priority(Alpha, Tick, Start), Value}]),
+    Sample#exdec{reservoir = NewList};
+update(#exdec{start = Start, alpha = Alpha} = Sample, Value, Tick) ->
+    Priority = priority(Alpha, Tick, Start),
+    NewSample = maybe_update(Priority, Value, Sample),
+    maybe_rescale(NewSample, tick()).
 
-    Now = Tick,
-    case Now >= Next of
-        true ->
-            rescale([{start, Start}, {next, Next}, {reservoir, NewList}], Now);
-        _ ->
-            [{start, Start}, {next, Next}, {reservoir, NewList}]
-    end.
-
-get_values([_, _, {reservoir, Reservoir}]) ->
+get_values(#exdec{reservoir = Reservoir}) ->
     {_, Values} = lists:unzip(Reservoir),
     Values.
+
+test() ->
+    List = new(1, 5),
+    List1 = update(List, 1),
+    List2 = update(List1, 2),
+    List3 = update(List2, 3),
+    List4 = update(List3, 4),
+    List5 = update(List4, 5),
+    List6 = update(List5, 6),
+    List7 = update(List6, 7),
+    List8 = update(List7, 8),
+    List9 = update(List8, 9),
+    List10 = update(List9, 10),
+    io:format("~p~n", [get_values(List10)]).
+
 
 % internal api
 
@@ -60,14 +70,24 @@ tick() ->
     {Mega, Sec, _} = erlang:now(),
     (Mega * 1000000 + Sec).
 
-weight(T) ->
-    math:exp(?ALPHA * T).
+weight(Alpha, T) ->
+    math:exp(Alpha * T).
 
-priority(Time, Start) ->
-    weight(Time - Start) / random:uniform(?RAND).
+priority(Alpha, Time, Start) ->
+    weight(Alpha, Time - Start) / random:uniform(?RAND).
 
-rescale([{start, OldStart}, {next, Next}, {reservoir, Reservoir}], Now) when Next == Now ->
+maybe_update(Priority, Value, #exdec{reservoir = [{First, _}| Tail]} = Sample) when First < Priority ->
+    Sample#exdec{reservoir = lists:append(Tail, [{Priority, Value}])};
+maybe_update(_, _, Sample) ->
+    Sample.
+
+maybe_rescale(#exdec{next = Next} = Sample, Now) when Now >= Next ->
+    rescale(Sample, Now);
+maybe_rescale(Sample, _) ->
+    Sample.
+    
+rescale(#exdec{start = OldStart, next = Next, alpha = Alpha, reservoir = Reservoir} = Sample, Now) when Next == Now ->
     NewNext = Now + ?HOURSECS,
     NewStart = tick(),
-    NewReservoir = [{Key * math:exp(-?ALPHA * (NewStart - OldStart)), Value} || {Key, Value} <- Reservoir],
-    [{start, NewStart}, {next, NewNext}, {reservoir, NewReservoir}].
+    NewReservoir = [{Key * math:exp(-Alpha * (NewStart - OldStart)), Value} || {Key, Value} <- Reservoir],
+    Sample#exdec{start = NewStart, next = NewNext, reservoir = NewReservoir}.
