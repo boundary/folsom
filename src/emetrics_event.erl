@@ -10,29 +10,26 @@
 -behaviour(gen_event).
 
 %% API
--export([start_link/0, add_handler/0]).
+-export([add_handler/3,
+         add_handler/4,
+         delete_handler/1,
+         notify/1,
+         get_values/1,
+         get_info/1]).
 
 %% gen_event callbacks
 -export([init/1, handle_event/2, handle_call/2,
          handle_info/2, terminate/2, code_change/3]).
 
--define(SERVER, ?MODULE).
-
--record(state, {}).
+-record(metric, {
+          id,
+          type = uniform,
+          sample
+         }).
 
 %%%===================================================================
 %%% gen_event callbacks
 %%%===================================================================
-
-%%--------------------------------------------------------------------
-%% @doc
-%% Creates an event manager
-%%
-%% @spec start_link() -> {ok, Pid} | {error, Error}
-%% @end
-%%--------------------------------------------------------------------
-start_link() ->
-    gen_event:start_link({local, ?SERVER}).
 
 %%--------------------------------------------------------------------
 %% @doc
@@ -41,12 +38,25 @@ start_link() ->
 %% @spec add_handler() -> ok | {'EXIT', Reason} | term()
 %% @end
 %%--------------------------------------------------------------------
-add_handler() ->
-    gen_event:add_handler(?SERVER, ?MODULE, []).
+add_handler(Id, Type, Size) ->
+    gen_event:add_sup_handler(emetrics_event_manager,
+                              {emetrics_event, Id}, [Id, Type, Size]).
 
-%%%===================================================================
-%%% gen_event callbacks
-%%%===================================================================
+add_handler(Id, Type, Size, Alpha) ->
+    gen_event:add_sup_handler(emetrics_event_manager,
+                              {emetrics_event, Id}, [Id, Type, Size, Alpha]).
+
+delete_handler(Id) ->
+    gen_event:delete_handler(emetrics_event_manager, {emetrics_event, Id}, nil).
+
+notify(Event) ->
+    gen_event:notify(emetrics_event_manager, Event).
+
+get_values(Id) ->
+    gen_event:call(emetrics_event_manager, {emetrics_event,Id}, values).
+
+get_info(Id) ->
+    gen_event:call(emetrics_event_manager, {emetrics_event, Id}, info).
 
 %%--------------------------------------------------------------------
 %% @private
@@ -57,8 +67,13 @@ add_handler() ->
 %% @spec init(Args) -> {ok, State}
 %% @end
 %%--------------------------------------------------------------------
-init([]) ->
-    {ok, #state{}}.
+init([Id, Type, Size]) ->
+    Sample = emetrics_uniform:new(Size),
+    {ok, #metric{id = Id, type = Type, sample = Sample}};
+init([Id, Type, Size, Alpha]) ->
+    Sample = emtrics_exdec:new(Alpha, Size),
+    {ok, #metric{id = Id, type = Type, sample = Sample}}.
+
 
 %%--------------------------------------------------------------------
 %% @private
@@ -73,7 +88,15 @@ init([]) ->
 %%                          remove_handler
 %% @end
 %%--------------------------------------------------------------------
-handle_event(_Event, State) ->
+handle_event({Id, Value}, #metric{id = Id1, type = uniform, sample = Sample} = State) when Id == Id1 ->
+    NewSample = emetrics_uniform:update(Sample, Value),
+    {ok, State#metric{
+           sample = NewSample}};
+handle_event({Id, Value}, #metric{id = Id1, type = exdec, sample = Sample} = State) when Id == Id1->
+    NewSample = emetrics_exdec:update(Sample, Value),
+    {ok, State#metric{
+           sample = NewSample}};
+handle_event(_, State) ->
     {ok, State}.
 
 %%--------------------------------------------------------------------
@@ -89,9 +112,14 @@ handle_event(_Event, State) ->
 %%                   {remove_handler, Reply}
 %% @end
 %%--------------------------------------------------------------------
-handle_call(_Request, State) ->
-    Reply = ok,
-    {ok, Reply, State}.
+handle_call(info, #metric{id = Id, type = Type} = State) ->
+    {ok, [{id, Id}, {type, Type}], State};
+handle_call(values, #metric{id = Id, type = uniform = Type, sample = Sample} = State) ->
+    Values = emetrics_uniform:get_values(Sample),
+    {ok, [{id, Id}, {type, Type}, {sample, Values}], State};
+handle_call(values, #metric{id = Id, type = exdec = Type, sample = Sample} = State) ->
+    Values = emetrics_exdec:get_values(Sample),
+    {ok, [{id, Id}, {type, Type}, {sample, Values}], State}.
 
 %%--------------------------------------------------------------------
 %% @private
