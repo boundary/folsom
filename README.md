@@ -44,19 +44,19 @@ Delete a metric:
 
 Erlang VM Metrics:
 
-The result of `erlang:memory()`:
+The result of `erlang:memory/0`:
 
        > emetrics_vm_metrics:get_memory().
 
        $ curl http://localhost:5555/_memory
 
-The result of `erlang:system_info(Key)`:
+The result of `erlang:system_info/1`:
 
        > emetrics_vm_metrics:get_system_info().
 
        $ curl http://localhost:5555/_system
 
-The result of `erlang:statistics(Key)`:
+The result of `erlang:statistics/1`:
 
        > emetrics_vm_metrics:get_statistics().
 
