@@ -12,6 +12,8 @@
 %% API
 -export([add_handler/3,
          add_handler/4,
+         add_sup_handler/3,
+         add_sup_handler/4,
          delete_handler/1,
          handler_exists/1,
          notify/1,
@@ -52,6 +54,14 @@ add_handler(Id, Type, Size) ->
 add_handler(Id, Type, Size, Alpha) ->
     gen_event:add_handler(emetrics_event_manager,
                           {emetrics_event, Id}, [Id, Type, Size, Alpha]).
+
+add_sup_handler(Id, Type, Size) ->
+    gen_event:add_sup_handler(emetrics_event_manager,
+                              {emetrics_event, Id}, [Id, Type, Size]).
+
+add_sup_handler(Id, Type, Size, Alpha) ->
+    gen_event:add_sup_handler(emetrics_event_manager,
+                              {emetrics_event, Id}, [Id, Type, Size, Alpha]).
 
 delete_handler(Id) ->
     gen_event:delete_handler(emetrics_event_manager, {emetrics_event, Id}, nil).
