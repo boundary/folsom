@@ -32,21 +32,12 @@ allowed_methods(ReqData, Context) ->
     {['GET', 'PUT', 'DELETE'], ReqData, Context}.
 
 resource_exists(ReqData, Context) ->
-    case wrq:path_info(id, ReqData) of
-        undefined ->
-            {true, ReqData, Context};
-        Id ->
-            {emetrics_event:handler_exists(list_to_atom(Id)), ReqData, Context}
-    end.
+    resource_exists(wrq:path_info(id, ReqData), ReqData, Context).
 
 delete_resource(ReqData, Context) ->
     Id = wrq:path_info(id, ReqData),
-    case emetrics_event:delete_handler(list_to_atom(Id)) of
-        ok ->
-            {true, ReqData, Context};
-        _ ->
-            {false, ReqData, Context}
-    end.
+    emetrics_event:delete_handler(list_to_atom(Id)),
+    {true, ReqData, Context}.
 
 to_json(ReqData, Context) ->
     Result = get_request(wrq:path_info(id, ReqData)),
@@ -57,6 +48,15 @@ from_json(ReqData, Context) ->
     Result = put_request(wrq:path_info(id, ReqData), Body),
     {mochijson2:encode(Result), ReqData, Context}.
 
+
+% internal fuctions
+
+
+resource_exists(undefined, ReqData, Context) ->
+    {true, ReqData, Context};
+resource_exists(Id, ReqData, Context) ->
+    {emetrics_event:handler_exists(list_to_atom(Id)), ReqData, Context}.
+
 get_request(undefined) ->
     emetrics_event:get_handlers();
 get_request(Id) ->
@@ -64,14 +64,18 @@ get_request(Id) ->
 
 put_request(undefined, Body) ->
     Id = list_to_atom(binary_to_list(proplists:get_value(<<"id">>, Body))),
+    Type = list_to_atom(binary_to_list(proplists:get_value(<<"type">>, Body))),
     Size = proplists:get_value(<<"size">>, Body),
-    case list_to_atom(binary_to_list(proplists:get_value(<<"type">>, Body))) of
-        exdec ->
-            Alpha = proplists:get_value(<<"alpha">>, Body),
-            emetrics_event:add_handler(Id, exdec, Size, Alpha);
-        _ ->
-            emetrics_event:add_handler(Id, uniform, Size)
-    end;
+    add_handler(Type, Id, Size, Body);
 put_request(Id, Body) ->
     Value = proplists:get_value(<<"value">>, Body),
     emetrics_event:notify({list_to_atom(Id), Value}).
+
+add_handler(exdec, Id, Size, Body) ->
+    Alpha = proplists:get_value(<<"alpha">>, Body),
+    emetrics_event:add_handler(Id, exdec, Size, Alpha);
+add_handler(uniform, Id, Size, _) ->
+    emetrics_event:add_handler(Id, uniform, Size);
+add_handler(_, Id, Size, _) ->
+    emetrics_event:add_handler(Id, uniform, Size).
+
