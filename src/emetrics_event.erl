@@ -41,17 +41,17 @@
 
 -define(HIST, [10, 20, 30, 50, 100, 200, 300, 400, 500, 1000, 99999999999999]).
 
-%%%===================================================================
-%%% gen_event callbacks
+%%===================================================================
+%%% API
 %%%===================================================================
 
 add_handler(Id, Type, Size) ->
     gen_event:add_handler(emetrics_event_manager,
-                              {emetrics_event, Id}, [Id, Type, Size]).
+                          {emetrics_event, Id}, [Id, Type, Size]).
 
 add_handler(Id, Type, Size, Alpha) ->
     gen_event:add_handler(emetrics_event_manager,
-                              {emetrics_event, Id}, [Id, Type, Size, Alpha]).
+                          {emetrics_event, Id}, [Id, Type, Size, Alpha]).
 
 delete_handler(Id) ->
     gen_event:delete_handler(emetrics_event_manager, {emetrics_event, Id}, nil).
@@ -138,12 +138,18 @@ get_all(Id) ->
      {variance, get_variance(Id)},
      {percentile,
       [
-      {75, get_percentile(Id, 0.75)},
-      {99, get_percentile(Id, 0.99)}
+       {75, get_percentile(Id, 0.75)},
+       {95, get_percentile(Id, 0.95)},
+       {99, get_percentile(Id, 0.99)},
+       {999, get_percentile(Id, 0.999)}
       ]
      },
      {histogram, get_histogram(Id)}
      ].
+
+%%%===================================================================
+%%% gen_event callbacks
+%%%===================================================================
 
 %%--------------------------------------------------------------------
 %% @private
