@@ -8,13 +8,13 @@ Here are some examples in both HTTP and Erlang.
 
 Create a exdec metric named "a" with a sample size of 5 values and an alpha of 1:
 
-       emetrics_event:add_handler(a, exdec, 5, 1).
+       > emetrics_event:add_handler(a, exdec, 5, 1).
 
        $ curl -X PUT http://localhost:5555/_metrics -d '{"id": "a", "size": 5, "type": "exdec", "alpha": 1}' -H 'Content-Type: application/json'
 
 Create a uniform metric named "b" with a sample size of 5 values:
 
-       emetrics_event:add_handler(b, uniform, 5).
+       > emetrics_event:add_handler(b, uniform, 5).
 
        $ curl -X PUT http://localhost:5555/_metrics -d '{"id": "b", "size": 5, "type": "uniform"}' -H 'Content-Type: application/json'
 
@@ -44,13 +44,19 @@ Delete a metric:
 
 Erlang VM Metrics:
 
+The result of `erlang:memory()`:
+
        > emetrics_vm_metrics:get_memory().
 
        $ curl http://localhost:5555/_memory
 
+The result of `erlang:system_info(Key)`:
+
        > emetrics_vm_metrics:get_system_info().
 
        $ curl http://localhost:5555/_system
+
+The result of `erlang:statistics(Key)`:
 
        > emetrics_vm_metrics:get_statistics().
 
