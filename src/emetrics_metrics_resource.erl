@@ -49,29 +49,29 @@ delete_resource(ReqData, Context) ->
     end.
 
 to_json(ReqData, Context) ->
-    Result = response(wrq:path_info(id, ReqData), wrq:method(ReqData)),
+    Result = get_request(wrq:path_info(id, ReqData)),
     {mochijson2:encode(Result), ReqData, Context}.
 
 from_json(ReqData, Context) ->
-    case response(wrq:path_info(id, ReqData), wrq:method(ReqData), ReqData) of
-        ok ->
-            {true, ReqData, Context};
-        _ ->
-            {false, ReqData, Context}
-    end.
+    {struct, Body} = mochijson2:decode(wrq:req_body(ReqData)),
+    Result = put_request(wrq:path_info(id, ReqData), Body),
+    {mochijson2:encode(Result), ReqData, Context}.
 
-response(undefined, Method) when Method == 'GET' ->
+get_request(undefined) ->
     emetrics_event:get_handlers();
-response(Id, Method) when Method == 'GET' ->
+get_request(Id) ->
     emetrics_event:get_all(list_to_atom(Id)).
 
-response(Id, Method, ReqData) when Method == 'PUT' ->
-    {struct, Body} = mochijson2:decode(wrq:req_body(ReqData)),
+put_request(undefined, Body) ->
+    Id = list_to_atom(binary_to_list(proplists:get_value(<<"id">>, Body))),
     Size = proplists:get_value(<<"size">>, Body),
     case list_to_atom(binary_to_list(proplists:get_value(<<"type">>, Body))) of
         exdec ->
             Alpha = proplists:get_value(<<"alpha">>, Body),
-            emetrics_event:add_handler(list_to_atom(Id), exdec, Size, Alpha);
+            emetrics_event:add_handler(Id, exdec, Size, Alpha);
         _ ->
-            emetrics_event:add_handler(list_to_atom(Id), uniform, Size)
-    end.
+            emetrics_event:add_handler(Id, uniform, Size)
+    end;
+put_request(Id, Body) ->
+    Value = proplists:get_value(<<"value">>, Body),
+    emetrics_event:notify({list_to_atom(Id), Value}).
