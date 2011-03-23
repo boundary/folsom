@@ -22,5 +22,5 @@ allowed_methods(ReqData, Context) ->
     {['GET'], ReqData, Context}.
 
 to_json(ReqData, Context) ->
-    {mochijson2:encode(erlang:memory()), ReqData, Context}.
+    {mochijson2:encode(emetrics_vm_metrics:get_memory()), ReqData, Context}.
 
