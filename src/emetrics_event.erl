@@ -13,7 +13,9 @@
 -export([add_handler/3,
          add_handler/4,
          delete_handler/1,
+         handler_exists/1,
          notify/1,
+         get_handlers/0,
          get_values/1,
          get_info/1,
          get_max/1,
@@ -32,6 +34,7 @@
 
 -record(metric, {
           id,
+          size,
           type = uniform,
           sample
          }).
@@ -43,18 +46,26 @@
 %%%===================================================================
 
 add_handler(Id, Type, Size) ->
-    gen_event:add_sup_handler(emetrics_event_manager,
+    gen_event:add_handler(emetrics_event_manager,
                               {emetrics_event, Id}, [Id, Type, Size]).
 
 add_handler(Id, Type, Size, Alpha) ->
-    gen_event:add_sup_handler(emetrics_event_manager,
+    gen_event:add_handler(emetrics_event_manager,
                               {emetrics_event, Id}, [Id, Type, Size, Alpha]).
 
 delete_handler(Id) ->
     gen_event:delete_handler(emetrics_event_manager, {emetrics_event, Id}, nil).
 
+handler_exists(Id) ->
+    {_, Handlers} = lists:unzip(gen_event:which_handlers(emetrics_event_manager)),
+    lists:member(Id, Handlers).
+
 notify(Event) ->
     gen_event:notify(emetrics_event_manager, Event).
+
+get_handlers() ->
+    {_, Handlers} = lists:unzip(gen_event:which_handlers(emetrics_event_manager)),
+    Handlers.
 
 get_values(Id) ->
     gen_event:call(emetrics_event_manager, {emetrics_event,Id}, values).
@@ -115,10 +126,11 @@ get_percentile(Values, Percentile) ->
     lists:nth(Element, Values).
 
 get_all(Id) ->
-    {Id, Type} = get_info(Id),
+    {Id, Type, Size} = get_info(Id),
     [
      {id, Id},
      {type, Type},
+     {size, Size},
      {min, get_min(Id)},
      {max, get_max(Id)},
      {mean, get_mean(Id)},
@@ -144,10 +156,10 @@ get_all(Id) ->
 %%--------------------------------------------------------------------
 init([Id, Type, Size]) ->
     Sample = emetrics_uniform:new(Size),
-    {ok, #metric{id = Id, type = Type, sample = Sample}};
+    {ok, #metric{id = Id, type = Type, size = Size, sample = Sample}};
 init([Id, Type, Size, Alpha]) ->
-    Sample = emtrics_exdec:new(Alpha, Size),
-    {ok, #metric{id = Id, type = Type, sample = Sample}}.
+    Sample = emetrics_exdec:new(Alpha, Size),
+    {ok, #metric{id = Id, type = Type, size = Size, sample = Sample}}.
 
 
 %%--------------------------------------------------------------------
@@ -187,8 +199,8 @@ handle_event(_, State) ->
 %%                   {remove_handler, Reply}
 %% @end
 %%--------------------------------------------------------------------
-handle_call(info, #metric{id = Id, type = Type} = State) ->
-    {ok, {Id, Type}, State};
+handle_call(info, #metric{id = Id, type = Type, size = Size} = State) ->
+    {ok, {Id, Type, Size}, State};
 handle_call(values, #metric{type = uniform, sample = Sample} = State) ->
     Values = emetrics_uniform:get_values(Sample),
     {ok, Values, State};
