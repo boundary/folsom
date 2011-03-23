@@ -3,7 +3,7 @@
 %%% @author    joe williams <j@fastip.com>
 %%% @copyright 2011 fast_ip
 %%% @doc
-%%% http end point that conversts erlang:memory/0 to json
+%%% http end point that converts erlang:memory/0 to json
 %%% @end
 %%%------------------------------------------------------------------
 
