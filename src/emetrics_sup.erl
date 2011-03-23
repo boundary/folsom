@@ -55,15 +55,22 @@ init([]) ->
                  {ip, Ip},
                  {port, Port},
                  {log_dir, LogDir},
-                 {dispatch, Dispatch}],
+                 {dispatch, Dispatch}
+                ],
+
     Web = {webmachine_mochiweb,
            {webmachine_mochiweb, start, [WebConfig]},
-           permanent, 5000, worker, dynamic},
+           permanent,
+           5000,
+           worker,
+           dynamic},
+
     EventMgr = {emetrics_event_manager,
-            {gen_event, start_link, [{local, emetrics_event_manager}]},
-            permanent,
-            brutal_kill,
-            worker,
-            dynamic},
+                {gen_event, start_link, [{local, emetrics_event_manager}]},
+                permanent,
+                brutal_kill,
+                worker,
+                dynamic},
+
     Processes = [Web, EventMgr],
     {ok, { {one_for_one, 10, 10}, Processes} }.

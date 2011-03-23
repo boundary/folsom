@@ -1,4 +1,3 @@
-
 -define(SYSTEM_INFO, [
                    allocated_areas,
                    allocator,
