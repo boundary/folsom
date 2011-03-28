@@ -1,5 +1,5 @@
 %%%-------------------------------------------------------------------
-%%% File:      emetrics_uniform.erl
+%%% File:      emetrics_sample_uniform.erl
 %%% @author    joe williams <j@fastip.com>
 %%% @copyright 2011 fast_ip
 %%% @doc
@@ -14,7 +14,7 @@
 %%% @end
 %%%-----------------------------------------------------------------
 
--module(emetrics_uniform).
+-module(emetrics_sample_uniform).
 
 -export([new/1, update/2, get_values/1, test/0]).
 
@@ -27,7 +27,7 @@
 
 new(Size) ->
     #uniform{size = Size}.
-    
+
 update(#uniform{reservoir = []} = Sample, Value) ->
     Sample#uniform{reservoir = [Value]};
 update(#uniform{size = Size, reservoir = Reservoir} = Sample, Value) when length(Reservoir) < Size ->

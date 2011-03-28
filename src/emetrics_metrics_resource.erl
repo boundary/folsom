@@ -40,7 +40,10 @@ delete_resource(ReqData, Context) ->
     {true, ReqData, Context}.
 
 to_json(ReqData, Context) ->
-    Result = get_request(wrq:path_info(id, ReqData)),
+    Id1 = wrq:path_info(id, ReqData),
+    Raw = wrq:get_qs_value("raw", "false", ReqData),
+    Id2 = wrq:get_qs_value("covariance", "false", ReqData),
+    Result = get_request(Id1, list_to_atom(Raw), list_to_atom(Id2)),
     {mochijson2:encode(Result), ReqData, Context}.
 
 from_json(ReqData, Context) ->
@@ -57,9 +60,13 @@ resource_exists(undefined, ReqData, Context) ->
 resource_exists(Id, ReqData, Context) ->
     {emetrics_event:handler_exists(list_to_atom(Id)), ReqData, Context}.
 
-get_request(undefined) ->
+get_request(undefined, _, _) ->
     emetrics_event:get_handlers();
-get_request(Id) ->
+get_request(Id, Raw, _) when Raw == true ->
+    emetrics_event:get_values(list_to_atom(Id));
+get_request(Id1, _, Id2) when Id2 /= false ->
+    [{covariance, emetrics_statistics:get_covariance(list_to_atom(Id1), Id2)}];
+get_request(Id, _, _) ->
     emetrics_event:get_all(list_to_atom(Id)).
 
 put_request(undefined, Body) ->
@@ -76,6 +83,7 @@ add_handler(exdec, Id, Size, Body) ->
     emetrics_event:add_handler(Id, exdec, Size, Alpha);
 add_handler(uniform, Id, Size, _) ->
     emetrics_event:add_handler(Id, uniform, Size);
+add_handler(none, Id, Size, _) ->
+    emetrics_event:add_handler(Id, none, Size);
 add_handler(_, Id, Size, _) ->
     emetrics_event:add_handler(Id, uniform, Size).
-

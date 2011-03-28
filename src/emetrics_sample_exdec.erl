@@ -1,5 +1,5 @@
 %%%-------------------------------------------------------------------
-%%% File:      emetrics_exdec.erl
+%%% File:      emetrics_sample_exdec.erl
 %%% @author    joe williams <j@fastip.com>
 %%% @copyright 2011 fast_ip
 %%% @doc
@@ -14,7 +14,7 @@
 %%% @end
 %%%------------------------------------------------------------------
 
--module(emetrics_exdec).
+-module(emetrics_sample_exdec).
 
 -export([new/2, update/2, update/3, get_values/1, test/0]).
 
@@ -28,7 +28,7 @@
     alpha = 1,
     size = 5000,
     reservoir = []
-}).    
+}).
 
 new(Alpha, Size) ->
     Now = tick(),
@@ -85,7 +85,7 @@ maybe_rescale(#exdec{next = Next} = Sample, Now) when Now >= Next ->
     rescale(Sample, Now);
 maybe_rescale(Sample, _) ->
     Sample.
-    
+
 rescale(#exdec{start = OldStart, next = Next, alpha = Alpha, reservoir = Reservoir} = Sample, Now) when Next == Now ->
     NewNext = Now + ?HOURSECS,
     NewStart = tick(),

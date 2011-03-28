@@ -20,14 +20,6 @@
          get_handlers/0,
          get_values/1,
          get_info/1,
-         get_max/1,
-         get_min/1,
-         get_histogram/1,
-         get_histogram/2,
-         get_variance/1,
-         get_mean/1,
-         get_median/1,
-         get_percentile/2,
          get_all/1]).
 
 %% gen_event callbacks
@@ -40,8 +32,6 @@
           type = uniform,
           sample
          }).
-
--define(HIST, [10, 20, 30, 50, 100, 200, 300, 400, 500, 1000, 99999999999999]).
 
 %%===================================================================
 %%% API
@@ -83,78 +73,29 @@ get_values(Id) ->
 get_info(Id) ->
     gen_event:call(emetrics_event_manager, {emetrics_event, Id}, info).
 
-get_max(Id) when is_atom(Id) ->
-    get_max(get_values(Id));
-get_max([]) ->
-    0;
-get_max(Values) ->
-    [Head | _] = lists:reverse(lists:sort(Values)),
-    Head.
-
-get_min(Id) when is_atom(Id)->
-    get_min(get_values(Id));
-get_min([]) ->
-    0;
-get_min(Values) ->
-    [Head | _] = lists:sort(Values),
-    Head.
-
-get_histogram(Id) ->
-    get_histogram(Id, ?HIST).
-
-get_histogram(Id, Hist) ->
-    Bins = [{Bin, 0} || Bin <- Hist],
-    Values = get_values(Id),
-    build_hist(Values, Bins).
-
-get_variance(Id) ->
-    get_variance(Id, get_values(Id)).
-
-get_variance(_, []) ->
-    0;
-get_variance(Id, Values) ->
-    Mean = get_mean(Id),
-    variance(Mean, Values, 0) / length(Values).
-
-get_mean(Id) when is_atom(Id) ->
-    get_mean(get_values(Id));
-get_mean([]) ->
-    0;
-get_mean(Values) ->
-    Sum = lists:sum(Values),
-    Sum / length(Values).
-
-get_median(Id) ->
-    get_percentile(Id, 0.5).
-
-get_percentile(Id, Percentile) when is_atom(Id) ->
-    get_percentile(lists:sort(get_values(Id)), Percentile);
-get_percentile([], _) ->
-    0;
-get_percentile(Values, Percentile) ->
-    Element = round(Percentile * length(Values)),
-    lists:nth(Element, Values).
-
 get_all(Id) ->
     {Id, Type, Size} = get_info(Id),
     [
      {id, Id},
      {type, Type},
      {size, Size},
-     {min, get_min(Id)},
-     {max, get_max(Id)},
-     {mean, get_mean(Id)},
-     {median, get_median(Id)},
-     {variance, get_variance(Id)},
+     {min, emetrics_statistics:get_min(Id)},
+     {max, emetrics_statistics:get_max(Id)},
+     {mean, emetrics_statistics:get_mean(Id)},
+     {median, emetrics_statistics:get_median(Id)},
+     {variance, emetrics_statistics:get_variance(Id)},
+     {standard_deviation, emetrics_statistics:get_standard_deviation(Id)},
+     {skewness, emetrics_statistics:get_skewness(Id)},
+     {kurtosis, emetrics_statistics:get_kurtosis(Id)},
      {percentile,
       [
-       {75, get_percentile(Id, 0.75)},
-       {95, get_percentile(Id, 0.95)},
-       {99, get_percentile(Id, 0.99)},
-       {999, get_percentile(Id, 0.999)}
+       {75, emetrics_statistics:get_percentile(Id, 0.75)},
+       {95, emetrics_statistics:get_percentile(Id, 0.95)},
+       {99, emetrics_statistics:get_percentile(Id, 0.99)},
+       {999, emetrics_statistics:get_percentile(Id, 0.999)}
       ]
      },
-     {histogram, get_histogram(Id)}
+     {histogram, emetrics_statistics:get_histogram(Id)}
      ].
 
 %%%===================================================================
@@ -170,12 +111,15 @@ get_all(Id) ->
 %% @spec init(Args) -> {ok, State}
 %% @end
 %%--------------------------------------------------------------------
-init([Id, Type, Size]) ->
-    Sample = emetrics_uniform:new(Size),
-    {ok, #metric{id = Id, type = Type, size = Size, sample = Sample}};
-init([Id, Type, Size, Alpha]) ->
+init([Id, uniform, Size]) ->
+    Sample = emetrics_sample_uniform:new(Size),
+    {ok, #metric{id = Id, type = uniform, size = Size, sample = Sample}};
+init([Id, none, Size]) ->
+    Sample = emetrics_sample_none:new(Size),
+    {ok, #metric{id = Id, type = none, size = Size, sample = Sample}};
+init([Id, exdec, Size, Alpha]) ->
     Sample = emetrics_exdec:new(Alpha, Size),
-    {ok, #metric{id = Id, type = Type, size = Size, sample = Sample}}.
+    {ok, #metric{id = Id, type = exdec, size = Size, sample = Sample}}.
 
 
 %%--------------------------------------------------------------------
@@ -192,11 +136,15 @@ init([Id, Type, Size, Alpha]) ->
 %% @end
 %%--------------------------------------------------------------------
 handle_event({Id, Value}, #metric{id = Id1, type = uniform, sample = Sample} = State) when Id == Id1 ->
-    NewSample = emetrics_uniform:update(Sample, Value),
+    NewSample = emetrics_sample_uniform:update(Sample, Value),
     {ok, State#metric{
            sample = NewSample}};
 handle_event({Id, Value}, #metric{id = Id1, type = exdec, sample = Sample} = State) when Id == Id1->
-    NewSample = emetrics_exdec:update(Sample, Value),
+    NewSample = emetrics_sample_exdec:update(Sample, Value),
+    {ok, State#metric{
+           sample = NewSample}};
+handle_event({Id, Value}, #metric{id = Id1, type = none, sample = Sample} = State) when Id == Id1->
+    NewSample = emetrics_sample_none:update(Sample, Value),
     {ok, State#metric{
            sample = NewSample}};
 handle_event(_, State) ->
@@ -218,10 +166,13 @@ handle_event(_, State) ->
 handle_call(info, #metric{id = Id, type = Type, size = Size} = State) ->
     {ok, {Id, Type, Size}, State};
 handle_call(values, #metric{type = uniform, sample = Sample} = State) ->
-    Values = emetrics_uniform:get_values(Sample),
+    Values = emetrics_sample_uniform:get_values(Sample),
     {ok, Values, State};
 handle_call(values, #metric{type = exdec, sample = Sample} = State) ->
-    Values = emetrics_exdec:get_values(Sample),
+    Values = emetrics_sample_exdec:get_values(Sample),
+    {ok, Values, State};
+handle_call(values, #metric{type = none, sample = Sample} = State) ->
+    Values = emetrics_sample_none:get_values(Sample),
     {ok, Values, State}.
 
 %%--------------------------------------------------------------------
@@ -267,25 +218,3 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
-
-variance(Mean, [Head | Tail], Acc) ->
-    V = Acc + math:pow(Head - Mean, 2),
-    variance(Mean, Tail, V);
-variance(_, [], Acc) ->
-    Acc.
-
-% all this is too complicated, find better solution
-build_hist([Head | Tail], Hist) ->
-    {Bin, Count} = proplists:lookup(which_bin(Head, Hist, []), Hist),
-    List = proplists:delete(Bin, Hist),
-    NewHist = lists:append(List, [{Bin, Count + 1}]),
-    build_hist(Tail, NewHist);
-build_hist([], Hist) ->
-    lists:sort(Hist).
-
-which_bin(Value, [{Bin, _} = B | Tail], Acc) when Value =< Bin ->
-    which_bin(Value, Tail, lists:sort(lists:append(Acc, [B])));
-which_bin(Value, [_ | Tail], Acc) ->
-    which_bin(Value, Tail, Acc);
-which_bin(_, [], [{Bin, _} | _]) ->
-    Bin.
