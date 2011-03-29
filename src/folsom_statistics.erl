@@ -1,5 +1,5 @@
 %%%-------------------------------------------------------------------
-%%% File:      emetrics_statistics.erl
+%%% File:      folsom_statistics.erl
 %%% @author    joe williams <j@fastip.com>
 %%% @copyright 2011 fast_ip
 %%% @doc
@@ -7,7 +7,7 @@
 %%% @end
 %%%------------------------------------------------------------------
 
--module(emetrics_statistics).
+-module(folsom_statistics).
 
 -export([get_max/1,
          get_min/1,
@@ -25,7 +25,7 @@
 -define(HIST, [10, 20, 30, 50, 100, 200, 300, 400, 500, 1000, 99999999999999]).
 
 get_max(Id) when is_atom(Id) ->
-    get_max(emetrics_metrics_event:get_values(Id));
+    get_max(folsom_metrics_event:get_values(Id));
 get_max([]) ->
     0;
 get_max(Values) ->
@@ -33,7 +33,7 @@ get_max(Values) ->
     Head.
 
 get_min(Id) when is_atom(Id)->
-    get_min(emetrics_metrics_event:get_values(Id));
+    get_min(folsom_metrics_event:get_values(Id));
 get_min([]) ->
     0;
 get_min(Values) ->
@@ -45,11 +45,11 @@ get_histogram(Id) ->
 
 get_histogram(Id, Hist) ->
     Bins = [{Bin, 0} || Bin <- Hist],
-    Values = emetrics_metrics_event:get_values(Id),
+    Values = folsom_metrics_event:get_values(Id),
     build_hist(Values, Bins).
 
 get_variance(Id) ->
-    get_variance(Id, emetrics_metrics_event:get_values(Id)).
+    get_variance(Id, folsom_metrics_event:get_values(Id)).
 
 % two pass variance
 get_variance(_, []) ->
@@ -67,8 +67,8 @@ get_standard_deviation(Id) ->
 
 % two pass covariance
 get_covariance(Id1, Id2) ->
-    Values1 = emetrics_metrics_event:get_values(Id1),
-    Values2 = emetrics_metrics_event:get_values(Id2),
+    Values1 = folsom_metrics_event:get_values(Id1),
+    Values2 = folsom_metrics_event:get_values(Id2),
     Mean1 = get_mean(Id1),
     Mean2 = get_mean(Id2),
     get_covariance(Values1, Values2, Mean1, Mean2).
@@ -83,21 +83,21 @@ get_covariance(Values1, Values2, Mean1, Mean2) ->
     lists:sum(List).
 
 get_kurtosis(Id) ->
-    Values = emetrics_metrics_event:get_values(Id),
+    Values = folsom_metrics_event:get_values(Id),
     Mean = get_mean(Id),
     StdDev = get_standard_deviation(Id),
     Count = length(Values),
     get_kurtosis(Values, Mean, StdDev, Count).
 
 get_skewness(Id) ->
-    Values = emetrics_metrics_event:get_values(Id),
+    Values = folsom_metrics_event:get_values(Id),
     Mean = get_mean(Id),
     StdDev = get_standard_deviation(Id),
     Count = length(Values),
     get_skewness(Values, Mean, StdDev, Count).
 
 get_mean(Id) when is_atom(Id) ->
-    get_mean(emetrics_metrics_event:get_values(Id));
+    get_mean(folsom_metrics_event:get_values(Id));
 get_mean([]) ->
     0;
 get_mean(Values) ->
@@ -108,7 +108,7 @@ get_median(Id) ->
     get_percentile(Id, 0.5).
 
 get_percentile(Id, Percentile) when is_atom(Id) ->
-    get_percentile(lists:sort(emetrics_metrics_event:get_values(Id)), Percentile);
+    get_percentile(lists:sort(folsom_metrics_event:get_values(Id)), Percentile);
 get_percentile([], _) ->
     0;
 get_percentile(Values, Percentile) ->

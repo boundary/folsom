@@ -1,14 +1,14 @@
 %%%-------------------------------------------------------------------
-%%% File:      emetrics_sup.erl
+%%% File:      folsom_sup.erl
 %%% @author    joe williams <j@fastip.com>
 %%% @copyright 2011 fast_ip
 %%% @doc
 %%% @end
 %%%------------------------------------------------------------------
 
-%% @doc Supervisor for the emetrics application.
+%% @doc Supervisor for the folsom application.
 
--module(emetrics_sup).
+-module(folsom_sup).
 
 -behaviour(supervisor).
 
@@ -45,9 +45,9 @@ upgrade() ->
 %% @spec init([]) -> SupervisorTree
 %% @doc supervisor callback.
 init([]) ->
-    Ip = case os:getenv("EMETRICS_IP") of false -> "0.0.0.0"; Any -> Any end,
-    Port = case os:getenv("EMETRICS_PORT") of false -> "5555"; Any1 -> Any1 end,
-    LogDir = case os:getenv("EMETRICS_LOG_DIR") of false -> "priv/log"; Any2 -> Any2 end,
+    Ip = case os:getenv("folsom_IP") of false -> "0.0.0.0"; Any -> Any end,
+    Port = case os:getenv("folsom_PORT") of false -> "5555"; Any1 -> Any1 end,
+    LogDir = case os:getenv("folsom_LOG_DIR") of false -> "priv/log"; Any2 -> Any2 end,
     {ok, Dispatch} = file:consult(filename:join(
                          [filename:dirname(code:which(?MODULE)),
                           "..", "priv", "dispatch.conf"])),
@@ -65,15 +65,15 @@ init([]) ->
            worker,
            dynamic},
 
-    MetricsEventMgr = {emetrics_metrics_event_manager,
-                {gen_event, start_link, [{local, emetrics_metrics_event_manager}]},
+    MetricsEventMgr = {folsom_metrics_event_manager,
+                {gen_event, start_link, [{local, folsom_metrics_event_manager}]},
                 permanent,
                 brutal_kill,
                 worker,
                 dynamic},
 
-    EventsEventMgr = {emetrics_events_event_manager,
-                {gen_event, start_link, [{local, emetrics_events_event_manager}]},
+    EventsEventMgr = {folsom_events_event_manager,
+                {gen_event, start_link, [{local, folsom_events_event_manager}]},
                 permanent,
                 brutal_kill,
                 worker,

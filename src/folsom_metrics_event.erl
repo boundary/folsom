@@ -5,7 +5,7 @@
 %%% @end
 %%% Created : 22 Mar 2011 by joe williams <j@fastip.com>
 %%%-------------------------------------------------------------------
--module(emetrics_metrics_event).
+-module(folsom_metrics_event).
 
 -behaviour(gen_event).
 
@@ -38,40 +38,40 @@
 %%%===================================================================
 
 add_handler(Id, Type, Size) ->
-    gen_event:add_handler(emetrics_metrics_event_manager,
-                          {emetrics_metrics_event, Id}, [Id, Type, Size]).
+    gen_event:add_handler(folsom_metrics_event_manager,
+                          {folsom_metrics_event, Id}, [Id, Type, Size]).
 
 add_handler(Id, Type, Size, Alpha) ->
-    gen_event:add_handler(emetrics_metrics_event_manager,
-                          {emetrics_metrics_event, Id}, [Id, Type, Size, Alpha]).
+    gen_event:add_handler(folsom_metrics_event_manager,
+                          {folsom_metrics_event, Id}, [Id, Type, Size, Alpha]).
 
 add_sup_handler(Id, Type, Size) ->
-    gen_event:add_sup_handler(emetrics_metrics_event_manager,
-                              {emetrics_metrics_event, Id}, [Id, Type, Size]).
+    gen_event:add_sup_handler(folsom_metrics_event_manager,
+                              {folsom_metrics_event, Id}, [Id, Type, Size]).
 
 add_sup_handler(Id, Type, Size, Alpha) ->
-    gen_event:add_sup_handler(emetrics_metrics_event_manager,
-                              {emetrics_metrics_event, Id}, [Id, Type, Size, Alpha]).
+    gen_event:add_sup_handler(folsom_metrics_event_manager,
+                              {folsom_metrics_event, Id}, [Id, Type, Size, Alpha]).
 
 delete_handler(Id) ->
-    gen_event:delete_handler(emetrics_metrics_event_manager, {emetrics_metrics_event, Id}, nil).
+    gen_event:delete_handler(folsom_metrics_event_manager, {folsom_metrics_event, Id}, nil).
 
 handler_exists(Id) ->
-    {_, Handlers} = lists:unzip(gen_event:which_handlers(emetrics_metrics_event_manager)),
+    {_, Handlers} = lists:unzip(gen_event:which_handlers(folsom_metrics_event_manager)),
     lists:member(Id, Handlers).
 
 notify(Event) ->
-    gen_event:notify(emetrics_metrics_event_manager, Event).
+    gen_event:notify(folsom_metrics_event_manager, Event).
 
 get_handlers() ->
-    {_, Handlers} = lists:unzip(gen_event:which_handlers(emetrics_metrics_event_manager)),
+    {_, Handlers} = lists:unzip(gen_event:which_handlers(folsom_metrics_event_manager)),
     Handlers.
 
 get_values(Id) ->
-    gen_event:call(emetrics_metrics_event_manager, {emetrics_metrics_event,Id}, values).
+    gen_event:call(folsom_metrics_event_manager, {folsom_metrics_event,Id}, values).
 
 get_info(Id) ->
-    gen_event:call(emetrics_metrics_event_manager, {emetrics_metrics_event, Id}, info).
+    gen_event:call(folsom_metrics_event_manager, {folsom_metrics_event, Id}, info).
 
 get_all(Id) ->
     {Id, Type, Size} = get_info(Id),
@@ -79,23 +79,23 @@ get_all(Id) ->
      {id, Id},
      {type, Type},
      {size, Size},
-     {min, emetrics_statistics:get_min(Id)},
-     {max, emetrics_statistics:get_max(Id)},
-     {mean, emetrics_statistics:get_mean(Id)},
-     {median, emetrics_statistics:get_median(Id)},
-     {variance, emetrics_statistics:get_variance(Id)},
-     {standard_deviation, emetrics_statistics:get_standard_deviation(Id)},
-     {skewness, emetrics_statistics:get_skewness(Id)},
-     {kurtosis, emetrics_statistics:get_kurtosis(Id)},
+     {min, folsom_statistics:get_min(Id)},
+     {max, folsom_statistics:get_max(Id)},
+     {mean, folsom_statistics:get_mean(Id)},
+     {median, folsom_statistics:get_median(Id)},
+     {variance, folsom_statistics:get_variance(Id)},
+     {standard_deviation, folsom_statistics:get_standard_deviation(Id)},
+     {skewness, folsom_statistics:get_skewness(Id)},
+     {kurtosis, folsom_statistics:get_kurtosis(Id)},
      {percentile,
       [
-       {75, emetrics_statistics:get_percentile(Id, 0.75)},
-       {95, emetrics_statistics:get_percentile(Id, 0.95)},
-       {99, emetrics_statistics:get_percentile(Id, 0.99)},
-       {999, emetrics_statistics:get_percentile(Id, 0.999)}
+       {75, folsom_statistics:get_percentile(Id, 0.75)},
+       {95, folsom_statistics:get_percentile(Id, 0.95)},
+       {99, folsom_statistics:get_percentile(Id, 0.99)},
+       {999, folsom_statistics:get_percentile(Id, 0.999)}
       ]
      },
-     {histogram, emetrics_statistics:get_histogram(Id)}
+     {histogram, folsom_statistics:get_histogram(Id)}
      ].
 
 %%%===================================================================
@@ -112,13 +112,13 @@ get_all(Id) ->
 %% @end
 %%--------------------------------------------------------------------
 init([Id, uniform, Size]) ->
-    Sample = emetrics_sample_uniform:new(Size),
+    Sample = folsom_sample_uniform:new(Size),
     {ok, #metric{id = Id, type = uniform, size = Size, sample = Sample}};
 init([Id, none, Size]) ->
-    Sample = emetrics_sample_none:new(Size),
+    Sample = folsom_sample_none:new(Size),
     {ok, #metric{id = Id, type = none, size = Size, sample = Sample}};
 init([Id, exdec, Size, Alpha]) ->
-    Sample = emetrics_exdec:new(Alpha, Size),
+    Sample = folsom_exdec:new(Alpha, Size),
     {ok, #metric{id = Id, type = exdec, size = Size, sample = Sample}}.
 
 
@@ -136,15 +136,15 @@ init([Id, exdec, Size, Alpha]) ->
 %% @end
 %%--------------------------------------------------------------------
 handle_event({Id, Value}, #metric{id = Id1, type = uniform, sample = Sample} = State) when Id == Id1 ->
-    NewSample = emetrics_sample_uniform:update(Sample, Value),
+    NewSample = folsom_sample_uniform:update(Sample, Value),
     {ok, State#metric{
            sample = NewSample}};
 handle_event({Id, Value}, #metric{id = Id1, type = exdec, sample = Sample} = State) when Id == Id1->
-    NewSample = emetrics_sample_exdec:update(Sample, Value),
+    NewSample = folsom_sample_exdec:update(Sample, Value),
     {ok, State#metric{
            sample = NewSample}};
 handle_event({Id, Value}, #metric{id = Id1, type = none, sample = Sample} = State) when Id == Id1->
-    NewSample = emetrics_sample_none:update(Sample, Value),
+    NewSample = folsom_sample_none:update(Sample, Value),
     {ok, State#metric{
            sample = NewSample}};
 handle_event(_, State) ->
@@ -166,13 +166,13 @@ handle_event(_, State) ->
 handle_call(info, #metric{id = Id, type = Type, size = Size} = State) ->
     {ok, {Id, Type, Size}, State};
 handle_call(values, #metric{type = uniform, sample = Sample} = State) ->
-    Values = emetrics_sample_uniform:get_values(Sample),
+    Values = folsom_sample_uniform:get_values(Sample),
     {ok, Values, State};
 handle_call(values, #metric{type = exdec, sample = Sample} = State) ->
-    Values = emetrics_sample_exdec:get_values(Sample),
+    Values = folsom_sample_exdec:get_values(Sample),
     {ok, Values, State};
 handle_call(values, #metric{type = none, sample = Sample} = State) ->
-    Values = emetrics_sample_none:get_values(Sample),
+    Values = folsom_sample_none:get_values(Sample),
     {ok, Values, State}.
 
 %%--------------------------------------------------------------------

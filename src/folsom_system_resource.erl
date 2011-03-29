@@ -1,13 +1,13 @@
 %%%-------------------------------------------------------------------
-%%% File:      emetrics_memory_resource.erl
+%%% File:      folsom_system_resource.erl
 %%% @author    joe williams <j@fastip.com>
 %%% @copyright 2011 fast_ip
 %%% @doc
-%%% http end point that converts erlang:memory/0 to json
+%%% http end point that converts erlang:system_info/1 to json
 %%% @end
 %%%------------------------------------------------------------------
 
--module(emetrics_memory_resource).
+-module(folsom_system_resource).
 
 -export([init/1, content_types_provided/2, to_json/2, allowed_methods/2]).
 
@@ -22,5 +22,4 @@ allowed_methods(ReqData, Context) ->
     {['GET'], ReqData, Context}.
 
 to_json(ReqData, Context) ->
-    {mochijson2:encode(emetrics_vm_metrics:get_memory()), ReqData, Context}.
-
+    {mochijson2:encode(folsom_vm_metrics:get_system_info()), ReqData, Context}.

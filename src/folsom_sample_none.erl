@@ -1,5 +1,5 @@
 %%%-------------------------------------------------------------------
-%%% File:      emetrics_sample_none.erl
+%%% File:      folsom_sample_none.erl
 %%% @author    joe williams <j@fastip.com>
 %%% @copyright 2011 fast_ip
 %%% @doc
@@ -7,7 +7,7 @@
 %%% @end
 %%%-----------------------------------------------------------------
 
--module(emetrics_sample_none).
+-module(folsom_sample_none).
 
 -export([new/1, update/2, get_values/1, test/0]).
 

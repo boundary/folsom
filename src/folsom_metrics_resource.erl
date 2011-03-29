@@ -1,5 +1,5 @@
 %%%-------------------------------------------------------------------
-%%% File:      emetrics_metrics_resource.erl
+%%% File:      folsom_metrics_resource.erl
 %%% @author    joe williams <j@fastip.com>
 %%% @copyright 2011 fast_ip
 %%% @doc
@@ -7,7 +7,7 @@
 %%% @end
 %%%------------------------------------------------------------------
 
--module(emetrics_metrics_resource).
+-module(folsom_metrics_resource).
 
 -export([init/1,
          content_types_provided/2,
@@ -36,7 +36,7 @@ resource_exists(ReqData, Context) ->
 
 delete_resource(ReqData, Context) ->
     Id = wrq:path_info(id, ReqData),
-    emetrics_metric_event:delete_handler(list_to_atom(Id)),
+    folsom_metric_event:delete_handler(list_to_atom(Id)),
     {true, ReqData, Context}.
 
 to_json(ReqData, Context) ->
@@ -58,16 +58,16 @@ from_json(ReqData, Context) ->
 resource_exists(undefined, ReqData, Context) ->
     {true, ReqData, Context};
 resource_exists(Id, ReqData, Context) ->
-    {emetrics_metrics_event:handler_exists(list_to_atom(Id)), ReqData, Context}.
+    {folsom_metrics_event:handler_exists(list_to_atom(Id)), ReqData, Context}.
 
 get_request(undefined, _, _) ->
-    emetrics_metrics_event:get_handlers();
+    folsom_metrics_event:get_handlers();
 get_request(Id, Raw, _) when Raw == true ->
-    emetrics_metrics_event:get_values(list_to_atom(Id));
+    folsom_metrics_event:get_values(list_to_atom(Id));
 get_request(Id1, _, Id2) when Id2 /= false ->
-    [{covariance, emetrics_statistics:get_covariance(list_to_atom(Id1), Id2)}];
+    [{covariance, folsom_statistics:get_covariance(list_to_atom(Id1), Id2)}];
 get_request(Id, _, _) ->
-    emetrics_metrics_event:get_all(list_to_atom(Id)).
+    folsom_metrics_event:get_all(list_to_atom(Id)).
 
 put_request(undefined, Body) ->
     Id = list_to_atom(binary_to_list(proplists:get_value(<<"id">>, Body))),
@@ -76,14 +76,14 @@ put_request(undefined, Body) ->
     add_handler(Type, Id, Size, Body);
 put_request(Id, Body) ->
     Value = proplists:get_value(<<"value">>, Body),
-    emetrics_metrics_event:notify({list_to_atom(Id), Value}).
+    folsom_metrics_event:notify({list_to_atom(Id), Value}).
 
 add_handler(exdec, Id, Size, Body) ->
     Alpha = proplists:get_value(<<"alpha">>, Body),
-    emetrics_metrics_event:add_handler(Id, exdec, Size, Alpha);
+    folsom_metrics_event:add_handler(Id, exdec, Size, Alpha);
 add_handler(uniform, Id, Size, _) ->
-    emetrics_metrics_event:add_handler(Id, uniform, Size);
+    folsom_metrics_event:add_handler(Id, uniform, Size);
 add_handler(none, Id, Size, _) ->
-    emetrics_metrics_event:add_handler(Id, none, Size);
+    folsom_metrics_event:add_handler(Id, none, Size);
 add_handler(_, Id, Size, _) ->
-    emetrics_metrics_event:add_handler(Id, uniform, Size).
+    folsom_metrics_event:add_handler(Id, uniform, Size).

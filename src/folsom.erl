@@ -1,12 +1,12 @@
 %%%-------------------------------------------------------------------
-%%% File:      emetrics.erl
+%%% File:      folsom.erl
 %%% @author    joe williams <j@fastip.com>
 %%% @copyright 2011 fast_ip
 %%% @doc
 %%% @end
 %%%------------------------------------------------------------------
 
--module(emetrics).
+-module(folsom).
 -author('Andy Gross <andy@basho.com>').
 -author('Justin Sheehy <justin@@basho.com>').
 -export([start/0, start_link/0, stop/0]).
@@ -28,10 +28,10 @@ start_link() ->
     application:set_env(webmachine, webmachine_logger_module,
                         webmachine_logger),
     ensure_started(webmachine),
-    emetrics_sup:start_link().
+    folsom_sup:start_link().
 
 %% @spec start() -> ok
-%% @doc Start the emetrics server.
+%% @doc Start the folsom server.
 start() ->
     ensure_started(crypto),
     ensure_started(inets),
@@ -39,12 +39,12 @@ start() ->
     application:set_env(webmachine, webmachine_logger_module,
                         webmachine_logger),
     ensure_started(webmachine),
-    application:start(emetrics).
+    application:start(folsom).
 
 %% @spec stop() -> ok
-%% @doc Stop the emetrics server.
+%% @doc Stop the folsom server.
 stop() ->
-    Res = application:stop(emetrics),
+    Res = application:stop(folsom),
     application:stop(webmachine),
     application:stop(mochiweb),
     application:stop(inets),

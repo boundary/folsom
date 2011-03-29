@@ -1,4 +1,4 @@
-{application, emetrics,
+{application, folsom,
  [
   {description, ""},
   {vsn, "0.1"},
@@ -11,6 +11,6 @@
                   mochiweb,
                   webmachine
                  ]},
-  {mod, { emetrics_app, []}},
+  {mod, { folsom_app, []}},
   {env, []}
  ]}.

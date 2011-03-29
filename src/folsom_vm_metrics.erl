@@ -1,5 +1,5 @@
 %%%-------------------------------------------------------------------
-%%% File:      emetrics_vm_metrics.erl
+%%% File:      folsom_vm_metrics.erl
 %%% @author    joe williams <j@fastip.com>
 %%% @copyright 2011 fast_ip
 %%% @doc
@@ -7,11 +7,11 @@
 %%% @end
 %%%-----------------------------------------------------------------
 
--module(emetrics_vm_metrics).
+-module(folsom_vm_metrics).
 
 -export([get_system_info/0, get_statistics/0, get_memory/0]).
 
--include("emetrics.hrl").
+-include("folsom.hrl").
 
 
 % api

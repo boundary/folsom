@@ -1,5 +1,5 @@
 %%%-------------------------------------------------------------------
-%%% File:      emetrics_metrics_resource.erl
+%%% File:      folsom_metrics_resource.erl
 %%% @author    joe williams <j@fastip.com>
 %%% @copyright 2011 fast_ip
 %%% @doc
@@ -7,7 +7,7 @@
 %%% @end
 %%%------------------------------------------------------------------
 
--module(emetrics_events_resource).
+-module(folsom_events_resource).
 
 -export([init/1,
          content_types_provided/2,
@@ -18,7 +18,7 @@
          resource_exists/2,
          delete_resource/2]).
 
--include("emetrics.hrl").
+-include("folsom.hrl").
 -include_lib("webmachine/include/webmachine.hrl").
 
 init(_) -> {ok, undefined}.
@@ -37,7 +37,7 @@ resource_exists(ReqData, Context) ->
 
 delete_resource(ReqData, Context) ->
     Id = wrq:path_info(id, ReqData),
-    emetrics_events_event:delete_handler(list_to_atom(Id)),
+    folsom_events_event:delete_handler(list_to_atom(Id)),
     {true, ReqData, Context}.
 
 to_json(ReqData, Context) ->
@@ -59,18 +59,18 @@ from_json(ReqData, Context) ->
 resource_exists(undefined, ReqData, Context) ->
     {true, ReqData, Context};
 resource_exists(Id, ReqData, Context) ->
-    {emetrics_events_event:handler_exists(list_to_atom(Id)), ReqData, Context}.
+    {folsom_events_event:handler_exists(list_to_atom(Id)), ReqData, Context}.
 
 get_request(undefined, _, undefined, undefined) ->
-    emetrics_events_event:get_handlers();
+    folsom_events_event:get_handlers();
 get_request(undefined, _, undefined, "true") ->
-    emetrics_events_event:get_handlers_info();
+    folsom_events_event:get_handlers_info();
 get_request(undefined, _, Tag, _) ->
-    emetrics_events_event:get_tagged_handlers(list_to_atom(Tag));
+    folsom_events_event:get_tagged_handlers(list_to_atom(Tag));
 get_request(Id, Count, undefined, _) ->
-    emetrics_events_event:get_events(list_to_atom(Id), list_to_integer(Count));
+    folsom_events_event:get_events(list_to_atom(Id), list_to_integer(Count));
 get_request(Id, Count, Tag, _) ->
-    emetrics_events_event:get_events(list_to_atom(Id), list_to_atom(Tag), list_to_integer(Count)).
+    folsom_events_event:get_events(list_to_atom(Id), list_to_atom(Tag), list_to_integer(Count)).
 
 put_request(undefined, Body) ->
     Id = list_to_atom(binary_to_list(proplists:get_value(<<"id">>, Body))),
@@ -82,9 +82,9 @@ put_request(Id, Body) ->
     Event = proplists:get_value(<<"event">>, Body),
     Tags = proplists:get_value(<<"tags">>, Body),
     AtomTags = [list_to_atom(binary_to_list(Tag)) || Tag <- Tags],
-    emetrics_events_event:notify({list_to_atom(Id), AtomTags, Event}).
+    folsom_events_event:notify({list_to_atom(Id), AtomTags, Event}).
 
 add_handler(Id, Tags, Size) ->
-    emetrics_events_event:add_handler(Id, Tags, Size).
+    folsom_events_event:add_handler(Id, Tags, Size).
 
 

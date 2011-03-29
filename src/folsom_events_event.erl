@@ -5,11 +5,11 @@
 %%% @end
 %%% Created : 22 Mar 2011 by joe williams <j@fastip.com>
 %%%-------------------------------------------------------------------
--module(emetrics_events_event).
+-module(folsom_events_event).
 
 -behaviour(gen_event).
 
--include("emetrics.hrl").
+-include("folsom.hrl").
 
 %% API
 -export([add_handler/3,
@@ -43,25 +43,25 @@
 %%%===================================================================
 
 add_handler(Id, Tags, Size) ->
-    gen_event:add_handler(emetrics_events_event_manager,
-                          {emetrics_events_event, Id}, [Id, Tags, Size]).
+    gen_event:add_handler(folsom_events_event_manager,
+                          {folsom_events_event, Id}, [Id, Tags, Size]).
 
 add_sup_handler(Id, Tags, Size) ->
-    gen_event:add_sup_handler(emetrics_events_event_manager,
-                              {emetrics_events_event, Id}, [Id, Tags, Size]).
+    gen_event:add_sup_handler(folsom_events_event_manager,
+                              {folsom_events_event, Id}, [Id, Tags, Size]).
 
 delete_handler(Id) ->
-    gen_event:delete_handler(emetrics_events_event_manager, {emetrics_events_event, Id}, nil).
+    gen_event:delete_handler(folsom_events_event_manager, {folsom_events_event, Id}, nil).
 
 handler_exists(Id) ->
-    {_, Handlers} = lists:unzip(gen_event:which_handlers(emetrics_events_event_manager)),
+    {_, Handlers} = lists:unzip(gen_event:which_handlers(folsom_events_event_manager)),
     lists:member(Id, Handlers).
 
 notify(Event) ->
-    gen_event:notify(emetrics_events_event_manager, Event).
+    gen_event:notify(folsom_events_event_manager, Event).
 
 get_handlers() ->
-    {_, Handlers} = lists:unzip(gen_event:which_handlers(emetrics_events_event_manager)),
+    {_, Handlers} = lists:unzip(gen_event:which_handlers(folsom_events_event_manager)),
     Handlers.
 
 get_handlers_info() ->
@@ -74,7 +74,7 @@ get_tagged_handlers(Tag) ->
     build_tagged_handler_list(List, Tag, []).
 
 get_info(Id) ->
-    gen_event:call(emetrics_events_event_manager, {emetrics_events_event, Id}, info).
+    gen_event:call(folsom_events_event_manager, {folsom_events_event, Id}, info).
 
 get_events(Id) ->
     get_events(Id, ?DEFAULT_LIMIT).
@@ -85,7 +85,7 @@ get_events(Id, Count) when is_integer(Count) ->
     get_events(Id, undefined, Count).
 
 get_events(Id, Tag, Count) ->
-    gen_event:call(emetrics_events_event_manager, {emetrics_events_event, Id}, {events, Tag, Count}).
+    gen_event:call(folsom_events_event_manager, {folsom_events_event, Id}, {events, Tag, Count}).
 
 %%%===================================================================
 %%% gen_event callbacks
