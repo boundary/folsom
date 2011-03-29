@@ -65,12 +65,19 @@ init([]) ->
            worker,
            dynamic},
 
-    EventMgr = {emetrics_event_manager,
-                {gen_event, start_link, [{local, emetrics_event_manager}]},
+    MetricsEventMgr = {emetrics_metrics_event_manager,
+                {gen_event, start_link, [{local, emetrics_metrics_event_manager}]},
                 permanent,
                 brutal_kill,
                 worker,
                 dynamic},
 
-    Processes = [Web, EventMgr],
+    EventEventMgr = {emetrics_event_event_manager,
+                {gen_event, start_link, [{local, emetrics_event_event_manager}]},
+                permanent,
+                brutal_kill,
+                worker,
+                dynamic},
+
+    Processes = [Web, MetricsEventMgr, EventEventMgr],
     {ok, { {one_for_one, 10, 10}, Processes} }.
