@@ -1,3 +1,5 @@
+-define(DEFAULT_LIMIT, 5).
+
 -define(SYSTEM_INFO, [
                    allocated_areas,
                    allocator,

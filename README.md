@@ -2,7 +2,7 @@
 
 emetrics is an Erlang based metrics system. It's purpose is to collect realtime metrics from various systems via REST and Erlang API's. The basic idea is that you create a metric via either API and then alert the metric with new values as you receive them. You can then retrieve information about these metrics, such as a histogram and the mean. The metric data is stored in memory in one of two kinds of samples, uniform and expotentially decaying, "exdec". Additionally, emetrics can produce Erlang VM metrics as JSON.
 
-#### Usage
+#### _metrics API Usage
 
 Here are some examples in both HTTP and Erlang.
 
@@ -42,7 +42,63 @@ Delete a metric:
 
        $ curl -X DELETE http://localhost:5555/_metrics/a
 
-Erlang VM Metrics:
+#### _events API Usage
+
+Create a event handler named "d" with a max size of 5 and two tags:
+
+       > emetrics_events_event:add_handler(d, [test, blah], 5).
+
+       $ curl -X PUT http://localhost:5555/_events -d '{"id": "d", "size": 5, "tags": ["test", "blah"]}' -H 'Content-Type: application/json'
+
+Query available event handlers:
+
+      > emetrics_events_event:get_handlers().
+
+      $ curl http://localhost:5555/_events
+
+Query available event handlers with additional info:
+
+      > emetrics_events_event:get_handlers_info().
+
+      $ curl http://localhost:5555/_events?info=true
+
+Query handlers that have a specific tag assigned:
+
+      > emetrics_events_event:get_tagged_handlers(test).
+
+      $ curl http://localhost:5555/_events?tag=test
+
+Query a specific event handler for events:
+
+      > emetrics_events_event:get_events(d).
+
+      $ curl http://localhost:5555/_events/d
+
+Query a specific event handler for events with a limit:
+
+      > emetrics_events_event:get_events(d, 1).
+
+      $ curl http://localhost:5555/_events/d?limit=1
+
+Query a specific event_handler for events with a tag:
+
+      > emetrics_events_event:get_events(d, test).
+
+      $ curl http://localhost:5555/_events/d?tag=test
+
+Notify an event handler of an event:
+
+      > emetrics_events_event:notify({d, [test], "something"}).
+
+      $ curl -X PUT http://localhost:5555/_events/d -d '{"event": "something", "tags": ["test", "blah"]}' -H 'Content-Type: application/json'
+
+Delete a event handler:
+
+       > emetrics_events_event:delete_handler(d).
+
+       $ curl -X DELETE http://localhost:5555/_events/d
+
+#### Erlang VM Metrics:
 
 The result of `erlang:memory/0`:
 

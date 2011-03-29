@@ -18,6 +18,7 @@
          resource_exists/2,
          delete_resource/2]).
 
+-include("emetrics.hrl").
 -include_lib("webmachine/include/webmachine.hrl").
 
 init(_) -> {ok, undefined}.
@@ -36,11 +37,14 @@ resource_exists(ReqData, Context) ->
 
 delete_resource(ReqData, Context) ->
     Id = wrq:path_info(id, ReqData),
-    emetrics_event_event:delete_handler(list_to_atom(Id)),
+    emetrics_events_event:delete_handler(list_to_atom(Id)),
     {true, ReqData, Context}.
 
 to_json(ReqData, Context) ->
-    Result = get_request(wrq:path_info(id, ReqData), wrq:get_qs_value("count", "1", ReqData)),
+    Result = get_request(wrq:path_info(id, ReqData),
+                         wrq:get_qs_value("limit", integer_to_list(?DEFAULT_LIMIT), ReqData),
+                         wrq:get_qs_value("tag", undefined, ReqData),
+                         wrq:get_qs_value("info", undefined, ReqData)),
     {mochijson2:encode(Result), ReqData, Context}.
 
 from_json(ReqData, Context) ->
@@ -55,21 +59,32 @@ from_json(ReqData, Context) ->
 resource_exists(undefined, ReqData, Context) ->
     {true, ReqData, Context};
 resource_exists(Id, ReqData, Context) ->
-    {emetrics_event_event:handler_exists(list_to_atom(Id)), ReqData, Context}.
+    {emetrics_events_event:handler_exists(list_to_atom(Id)), ReqData, Context}.
 
-get_request(undefined, _) ->
-    emetrics_event_event:get_handlers();
-get_request(Id, Count) ->
-    emetrics_event_event:get_events(list_to_atom(Id), list_to_integer(Count)).
+get_request(undefined, _, undefined, undefined) ->
+    emetrics_events_event:get_handlers();
+get_request(undefined, _, undefined, "true") ->
+    emetrics_events_event:get_handlers_info();
+get_request(undefined, _, Tag, _) ->
+    emetrics_events_event:get_tagged_handlers(list_to_atom(Tag));
+get_request(Id, Count, undefined, _) ->
+    emetrics_events_event:get_events(list_to_atom(Id), list_to_integer(Count));
+get_request(Id, Count, Tag, _) ->
+    emetrics_events_event:get_events(list_to_atom(Id), list_to_atom(Tag), list_to_integer(Count)).
 
 put_request(undefined, Body) ->
     Id = list_to_atom(binary_to_list(proplists:get_value(<<"id">>, Body))),
-    Tags = binary_to_list(proplists:get_value(<<"tags">>, Body)),
+    Tags = proplists:get_value(<<"tags">>, Body),
+    AtomTags = [list_to_atom(binary_to_list(Tag)) || Tag <- Tags],
     Size = proplists:get_value(<<"size">>, Body),
-    add_handler(Id, Tags, Size);
+    add_handler(Id, AtomTags, Size);
 put_request(Id, Body) ->
     Event = proplists:get_value(<<"event">>, Body),
-    emetrics_event_event:notify({list_to_atom(Id), Event}).
+    Tags = proplists:get_value(<<"tags">>, Body),
+    AtomTags = [list_to_atom(binary_to_list(Tag)) || Tag <- Tags],
+    emetrics_events_event:notify({list_to_atom(Id), AtomTags, Event}).
 
 add_handler(Id, Tags, Size) ->
-    emetrics_event_event:add_handler(Id, Tags, Size).
+    emetrics_events_event:add_handler(Id, Tags, Size).
+
+

@@ -9,6 +9,8 @@
 
 -behaviour(gen_event).
 
+-include("emetrics.hrl").
+
 %% API
 -export([add_handler/3,
          add_sup_handler/3,
@@ -16,9 +18,12 @@
          handler_exists/1,
          notify/1,
          get_handlers/0,
+         get_handlers_info/0,
+         get_tagged_handlers/1,
          get_info/1,
          get_events/1,
-         get_events/2]).
+         get_events/2,
+         get_events/3]).
 
 %% gen_event callbacks
 -export([init/1, handle_event/2, handle_call/2,
@@ -33,15 +38,13 @@
 -define(ETSOPTS, [named_table,
                   ordered_set]).
 
--define(DEFAULT_LIMIT, 10).
-
 %%%===================================================================
 %%% API
 %%%===================================================================
 
 add_handler(Id, Tags, Size) ->
     gen_event:add_handler(emetrics_events_event_manager,
-                            {emetrics_events_event, Id}, [Id, Tags, Size]).
+                          {emetrics_events_event, Id}, [Id, Tags, Size]).
 
 add_sup_handler(Id, Tags, Size) ->
     gen_event:add_sup_handler(emetrics_events_event_manager,
@@ -61,14 +64,28 @@ get_handlers() ->
     {_, Handlers} = lists:unzip(gen_event:which_handlers(emetrics_events_event_manager)),
     Handlers.
 
+get_handlers_info() ->
+    Handlers = get_handlers(),
+    [get_info(Handler) || Handler <- Handlers].
+
+get_tagged_handlers(Tag) ->
+    Handlers = get_handlers(),
+    List = [get_tags_from_info(Handler) || Handler <- Handlers],
+    build_tagged_handler_list(List, Tag, []).
+
 get_info(Id) ->
     gen_event:call(emetrics_events_event_manager, {emetrics_events_event, Id}, info).
 
 get_events(Id) ->
     get_events(Id, ?DEFAULT_LIMIT).
-    
-get_events(Id, Count) ->
-    gen_event:call(emetrics_events_event_manager, {emetrics_events_event, Id}, {events, Count}).
+
+get_events(Id, Tag) when is_atom(Tag) ->
+    get_events(Id, Tag, ?DEFAULT_LIMIT);
+get_events(Id, Count) when is_integer(Count) ->
+    get_events(Id, undefined, Count).
+
+get_events(Id, Tag, Count) ->
+    gen_event:call(emetrics_events_event_manager, {emetrics_events_event, Id}, {events, Tag, Count}).
 
 %%%===================================================================
 %%% gen_event callbacks
@@ -101,10 +118,12 @@ init([Id, Tags, Size]) ->
 %%                          remove_handler
 %% @end
 %%--------------------------------------------------------------------
-handle_event({Id, Tags, Event}, #events{size = _Size} = State) ->
-    Key = erlang:now(), % just use erlang time for now
-    % TODO: limit ets table size by Size
-    true = ets:insert(Id, {Key, [{tags, Tags}, {event, Event}]}),
+handle_event({Id, Tags, Event}, #events{id = Id1, size = Size} = State) when Id == Id1->
+    {Mega, Sec, Micro} = erlang:now(),
+    Key = (Mega * 1000000 + Sec) * 1000000 + Micro,
+    insert(Id, Key, Size, Tags, Event, ets:info(Id, size)),
+    {ok, State};
+handle_event(_, State) ->
     {ok, State}.
 
 %%--------------------------------------------------------------------
@@ -121,11 +140,12 @@ handle_event({Id, Tags, Event}, #events{size = _Size} = State) ->
 %% @end
 %%--------------------------------------------------------------------
 handle_call(info, #events{id = Id, size = Size, tags = Tags} = State) ->
-    {ok, {Id, Size, Tags, ets:info(Id, size)}, State};
-handle_call({events, Tag}, #events{id = Id} = State) when is_atom(Tag) ->
-    Events =  get_tagged_events(Id, Tag, ?DEFAULT_LIMIT),
-    {ok, Events, State};
-handle_call({events, Count}, #events{id = Id} = State) when is_integer(Count)->
+    {ok, [{Id, [
+                {max_size, Size},
+                {tags, Tags},
+                {current_size, ets:info(Id, size)}
+               ]}], State};
+handle_call({events, undefined, Count}, #events{id = Id} = State) ->
     Events = get_last_events(Id, Count),
     {ok, Events, State};
 handle_call({events, Tag, Count}, #events{id = Id} = State) ->
@@ -176,10 +196,59 @@ code_change(_OldVsn, State, _Extra) ->
 %%% Internal functions
 %%%===================================================================
 
-get_last_events(_Id, _Count) ->
-    % get last X events from ets table
-    ok.
+insert(Id, Key, Size, Tags, Event, Count) when is_list(Event) ->
+    insert(Id, Key, Size, Tags, list_to_binary(Event), Count);
+insert(Id, Key, Size, Tags, Event, Count) when Count < Size ->
+    true = ets:insert(Id, {Key, [{tags, Tags}, {event, Event}]});
+insert(Id, Key, _, Tags, Event, _) ->
+    FirstKey = ets:first(Id),
+    true = ets:delete(Id, FirstKey),
+    true = ets:insert(Id, {Key, [{tags, Tags}, {event, Event}]}).
 
-get_tagged_events(_Id, _Tag, _Count) ->
-    % get last X events from ets table with a tag
-    ok.
+get_last_events(Id, Count) ->
+    LastKey = ets:last(Id),
+    get_prev_event(Id, LastKey, Count, []).
+
+get_tagged_events(Id, Tag, Count) ->
+    LastKey = ets:last(Id),
+    get_prev_event(Id, LastKey, Count, Tag, []).
+
+% get_prev_event/4 used by get_last_events/2
+get_prev_event(_, '$end_of_table', _, Acc) ->
+    Acc;
+get_prev_event(Id, Key, Count, Acc) when length(Acc) < Count ->
+    Event = ets:lookup(Id, Key),
+    get_prev_event(Id, ets:prev(Id, Key), Count, lists:append(Acc, Event));
+get_prev_event(_, _, _, Acc) ->
+    Acc.
+
+% get_prev_event/5 used by get_tagged_events/3
+get_prev_event(_, '$end_of_table', _, _, Acc) ->
+    Acc;
+get_prev_event(Id, Key, Count, Tag, Acc) when length(Acc) < Count ->
+    [{Key, Value}] = ets:lookup(Id, Key),
+    Tags = proplists:get_value(tags, Value),
+    maybe_append_event(lists:member(Tag, Tags), [{Key, Value}], Id, Key, Count, Tag, Acc);
+get_prev_event(_, _, _, _, Acc) ->
+    Acc.
+
+maybe_append_event(true, Event, Id, Key, Count, Tag, Acc) ->
+    get_prev_event(Id, ets:prev(Id, Key), Count, Tag, lists:append(Acc, Event));
+maybe_append_event(false, _, Id, Key, Count, Tag, Acc) ->
+    get_prev_event(Id, ets:prev(Id, Key), Count, Tag, Acc).
+
+get_tags_from_info(Handler) ->
+    [{Id, Values}] = get_info(Handler),
+    Tags = proplists:get_value(tags, Values),
+    {Id, Tags}.
+
+build_tagged_handler_list([], _, Acc) ->
+    Acc;
+build_tagged_handler_list([{Id, Tags} | Tail], Tag, Acc) ->
+    NewAcc = maybe_append_handler(lists:member(Tag, Tags), Id, Acc),
+    build_tagged_handler_list(Tail, Tag, NewAcc).
+
+maybe_append_handler(true, Id, Acc) ->
+    lists:append([Id], Acc);
+maybe_append_handler(false, _, Acc) ->
+    Acc.
