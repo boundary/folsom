@@ -5,7 +5,7 @@
 %%% @end
 %%% Created : 22 Mar 2011 by joe williams <j@fastip.com>
 %%%-------------------------------------------------------------------
--module(emetrics_event_event).
+-module(emetrics_events_event).
 
 -behaviour(gen_event).
 
@@ -17,6 +17,7 @@
          notify/1,
          get_handlers/0,
          get_info/1,
+         get_events/1,
          get_events/2]).
 
 %% gen_event callbacks
@@ -39,32 +40,35 @@
 %%%===================================================================
 
 add_handler(Id, Tags, Size) ->
-    gen_event:add_handler(emetrics_event_event_manager,
-                          {emetrics_event, Id}, [Id, Tags, Size]).
+    gen_event:add_handler(emetrics_events_event_manager,
+                            {emetrics_events_event, Id}, [Id, Tags, Size]).
 
 add_sup_handler(Id, Tags, Size) ->
-    gen_event:add_sup_handler(emetrics_event_event_manager,
-                              {emetrics_event, Id}, [Id, Tags, Size]).
+    gen_event:add_sup_handler(emetrics_events_event_manager,
+                              {emetrics_events_event, Id}, [Id, Tags, Size]).
 
 delete_handler(Id) ->
-    gen_event:delete_handler(emetrics_event_event_manager, {emetrics_event, Id}, nil).
+    gen_event:delete_handler(emetrics_events_event_manager, {emetrics_events_event, Id}, nil).
 
 handler_exists(Id) ->
-    {_, Handlers} = lists:unzip(gen_event:which_handlers(emetrics_event_event_manager)),
+    {_, Handlers} = lists:unzip(gen_event:which_handlers(emetrics_events_event_manager)),
     lists:member(Id, Handlers).
 
 notify(Event) ->
-    gen_event:notify(emetrics_event_event_manager, Event).
+    gen_event:notify(emetrics_events_event_manager, Event).
 
 get_handlers() ->
-    {_, Handlers} = lists:unzip(gen_event:which_handlers(emetrics_event_event_manager)),
+    {_, Handlers} = lists:unzip(gen_event:which_handlers(emetrics_events_event_manager)),
     Handlers.
 
 get_info(Id) ->
-    gen_event:call(emetrics_event_event_manager, {emetrics_event_event, Id}, info).
+    gen_event:call(emetrics_events_event_manager, {emetrics_events_event, Id}, info).
 
+get_events(Id) ->
+    get_events(Id, ?DEFAULT_LIMIT).
+    
 get_events(Id, Count) ->
-    gen_event:call(emetrics_event_event_manger, {emetrics_event_event, Id}, {events, Count}).
+    gen_event:call(emetrics_events_event_manager, {emetrics_events_event, Id}, {events, Count}).
 
 %%%===================================================================
 %%% gen_event callbacks
@@ -118,9 +122,6 @@ handle_event({Id, Tags, Event}, #events{size = _Size} = State) ->
 %%--------------------------------------------------------------------
 handle_call(info, #events{id = Id, size = Size, tags = Tags} = State) ->
     {ok, {Id, Size, Tags, ets:info(Id, size)}, State};
-handle_call(events, #events{id = Id} = State) ->
-    Events = get_last_events(Id, ?DEFAULT_LIMIT),
-    {ok, Events, State};
 handle_call({events, Tag}, #events{id = Id} = State) when is_atom(Tag) ->
     Events =  get_tagged_events(Id, Tag, ?DEFAULT_LIMIT),
     {ok, Events, State};

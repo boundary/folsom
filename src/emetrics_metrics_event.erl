@@ -5,7 +5,7 @@
 %%% @end
 %%% Created : 22 Mar 2011 by joe williams <j@fastip.com>
 %%%-------------------------------------------------------------------
--module(emetrics_metric_event).
+-module(emetrics_metrics_event).
 
 -behaviour(gen_event).
 
@@ -38,40 +38,40 @@
 %%%===================================================================
 
 add_handler(Id, Type, Size) ->
-    gen_event:add_handler(emetrics_event_manager,
-                          {emetrics_event, Id}, [Id, Type, Size]).
+    gen_event:add_handler(emetrics_metrics_event_manager,
+                          {emetrics_metrics_event, Id}, [Id, Type, Size]).
 
 add_handler(Id, Type, Size, Alpha) ->
-    gen_event:add_handler(emetrics_event_manager,
-                          {emetrics_event, Id}, [Id, Type, Size, Alpha]).
+    gen_event:add_handler(emetrics_metrics_event_manager,
+                          {emetrics_metrics_event, Id}, [Id, Type, Size, Alpha]).
 
 add_sup_handler(Id, Type, Size) ->
-    gen_event:add_sup_handler(emetrics_event_manager,
-                              {emetrics_event, Id}, [Id, Type, Size]).
+    gen_event:add_sup_handler(emetrics_metrics_event_manager,
+                              {emetrics_metrics_event, Id}, [Id, Type, Size]).
 
 add_sup_handler(Id, Type, Size, Alpha) ->
-    gen_event:add_sup_handler(emetrics_event_manager,
-                              {emetrics_event, Id}, [Id, Type, Size, Alpha]).
+    gen_event:add_sup_handler(emetrics_metrics_event_manager,
+                              {emetrics_metrics_event, Id}, [Id, Type, Size, Alpha]).
 
 delete_handler(Id) ->
-    gen_event:delete_handler(emetrics_event_manager, {emetrics_event, Id}, nil).
+    gen_event:delete_handler(emetrics_metrics_event_manager, {emetrics_metrics_event, Id}, nil).
 
 handler_exists(Id) ->
-    {_, Handlers} = lists:unzip(gen_event:which_handlers(emetrics_event_manager)),
+    {_, Handlers} = lists:unzip(gen_event:which_handlers(emetrics_metrics_event_manager)),
     lists:member(Id, Handlers).
 
 notify(Event) ->
-    gen_event:notify(emetrics_event_manager, Event).
+    gen_event:notify(emetrics_metrics_event_manager, Event).
 
 get_handlers() ->
-    {_, Handlers} = lists:unzip(gen_event:which_handlers(emetrics_event_manager)),
+    {_, Handlers} = lists:unzip(gen_event:which_handlers(emetrics_metrics_event_manager)),
     Handlers.
 
 get_values(Id) ->
-    gen_event:call(emetrics_event_manager, {emetrics_event,Id}, values).
+    gen_event:call(emetrics_metrics_event_manager, {emetrics_metrics_event,Id}, values).
 
 get_info(Id) ->
-    gen_event:call(emetrics_event_manager, {emetrics_event, Id}, info).
+    gen_event:call(emetrics_metrics_event_manager, {emetrics_metrics_event, Id}, info).
 
 get_all(Id) ->
     {Id, Type, Size} = get_info(Id),

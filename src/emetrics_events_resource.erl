@@ -7,7 +7,7 @@
 %%% @end
 %%%------------------------------------------------------------------
 
--module(emetrics_event_resource).
+-module(emetrics_events_resource).
 
 -export([init/1,
          content_types_provided/2,
