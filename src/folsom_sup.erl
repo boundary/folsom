@@ -45,9 +45,9 @@ upgrade() ->
 %% @spec init([]) -> SupervisorTree
 %% @doc supervisor callback.
 init([]) ->
-    Ip = case os:getenv("folsom_IP") of false -> "0.0.0.0"; Any -> Any end,
-    Port = case os:getenv("folsom_PORT") of false -> "5555"; Any1 -> Any1 end,
-    LogDir = case os:getenv("folsom_LOG_DIR") of false -> "priv/log"; Any2 -> Any2 end,
+    Ip = case os:getenv("FOLSOM_IP") of false -> "0.0.0.0"; Any -> Any end,
+    Port = case os:getenv("FOLSOM_PORT") of false -> "5555"; Any1 -> Any1 end,
+    LogDir = case os:getenv("FOLSOM_LOG_DIR") of false -> "priv/log"; Any2 -> Any2 end,
     {ok, Dispatch} = file:consult(filename:join(
                          [filename:dirname(code:which(?MODULE)),
                           "..", "priv", "dispatch.conf"])),
