@@ -39,7 +39,8 @@
 
 -define(ETSOPTS, [
                   named_table,
-                  ordered_set
+                  ordered_set,
+                  public
                  ]).
 
 -define(EVENTMGR, folsom_events_event_manager).
