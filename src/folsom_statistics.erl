@@ -12,7 +12,6 @@
 -export([get_max/1,
          get_min/1,
          get_histogram/1,
-         get_histogram/2,
          get_variance/1,
          get_standard_deviation/1,
          get_covariance/2,
@@ -40,59 +39,64 @@ get_min(Values) ->
     [Head | _] = lists:sort(Values),
     Head.
 
-get_histogram(Id) ->
-    get_histogram(Id, ?HIST).
-
-get_histogram(Id, Hist) ->
-    Bins = [{Bin, 0} || Bin <- Hist],
+get_histogram(Id) when is_atom(Id) ->
     Values = folsom_metrics_event:get_values(Id),
+    get_histogram(Values);
+get_histogram(Values) when is_list(Values) ->
+    Bins = [{Bin, 0} || Bin <- ?HIST],
     build_hist(Values, Bins).
 
-get_variance(Id) ->
-    get_variance(Id, folsom_metrics_event:get_values(Id)).
-
 % two pass variance
-get_variance(_, []) ->
+get_variance(Id) when is_atom(Id) ->
+    Values = get_values(Id),
+    get_variance(Values);
+get_variance([]) ->
     0;
-get_variance(_, [_]) ->
+get_variance([_]) ->
     0;
-get_variance(Id, Values) ->
-    Mean = get_mean(Id),
+get_variance(Values) when is_list(Values)->
+    Mean = get_mean(Values),
     List = [(Value - Mean) * (Value - Mean) || Value <- Values],
     Sum = lists:sum(List),
     Sum / (length(Values) - 1).
 
-get_standard_deviation(Id) ->
-    math:sqrt(get_variance(Id)).
+get_standard_deviation(Id) when is_atom(Id) ->
+    Values = get_values(Id),
+    get_standard_deviation(Values);
+get_standard_deviation(Values) when is_list(Values) ->
+    math:sqrt(get_variance(Values)).
 
 % two pass covariance
-get_covariance(Id1, Id2) ->
+get_covariance(Id1, Id2) when is_atom(Id1), is_atom(Id2) ->
     Values1 = folsom_metrics_event:get_values(Id1),
     Values2 = folsom_metrics_event:get_values(Id2),
-    Mean1 = get_mean(Id1),
-    Mean2 = get_mean(Id2),
-    get_covariance(Values1, Values2, Mean1, Mean2).
-
-get_covariance([], _, _, _) ->
+    get_covariance(Values1, Values2);
+get_covariance([], _) ->
     0;
-get_covariance(_, [], _, _) ->
+get_covariance(_, []) ->
     0;
-get_covariance(Values1, Values2, Mean1, Mean2) ->
+get_covariance(Values1, Values2) when is_list(Values1), is_list(Values2) ->
+    Mean1 = get_mean(Values1),
+    Mean2 = get_mean(Values2),
     Zip = lists:zip(Values1, Values2),
     List = [((X1 - Mean1) * (X2 - Mean2))  / length(Values1) || {X1, X2} <- Zip],
     lists:sum(List).
 
-get_kurtosis(Id) ->
+get_kurtosis(Id) when is_atom(Id) ->
     Values = folsom_metrics_event:get_values(Id),
-    Mean = get_mean(Id),
-    StdDev = get_standard_deviation(Id),
+    get_kurtosis(Values);
+get_kurtosis(Values) when is_list(Values) ->
+    Mean = get_mean(Values),
+    StdDev = get_standard_deviation(Values),
     Count = length(Values),
     get_kurtosis(Values, Mean, StdDev, Count).
 
-get_skewness(Id) ->
+get_skewness(Id) when is_atom(Id) ->
     Values = folsom_metrics_event:get_values(Id),
-    Mean = get_mean(Id),
-    StdDev = get_standard_deviation(Id),
+    get_skewness(Values);
+get_skewness(Values) when is_list(Values) ->
+    Mean = get_mean(Values),
+    StdDev = get_standard_deviation(Values),
     Count = length(Values),
     get_skewness(Values, Mean, StdDev, Count).
 
@@ -104,20 +108,28 @@ get_mean(Values) ->
     Sum = lists:sum(Values),
     Sum / length(Values).
 
-get_median(Id) ->
-    get_percentile(Id, 0.5).
+get_median(Id) when is_atom(Id) ->
+    Values = get_values(Id),
+    get_percentile(Values, 0.5);
+get_median(Values) when is_list(Values) ->
+    get_percentile(Values, 0.5).
 
 get_percentile(Id, Percentile) when is_atom(Id) ->
-    get_percentile(lists:sort(folsom_metrics_event:get_values(Id)), Percentile);
+    Values = folsom_metrics_event:get_values(Id),
+    get_percentile(Values, Percentile);
 get_percentile([], _) ->
     0;
-get_percentile(Values, Percentile) ->
-    Element = round(Percentile * length(Values)),
-    lists:nth(Element, Values).
+get_percentile(Values, Percentile) when is_list(Values) ->
+    SortedValues = lists:sort(Values),
+    Element = round(Percentile * length(SortedValues)),
+    lists:nth(Element, SortedValues).
 
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
+
+get_values(Id) ->
+    folsom_metrics_event:get_values(Id).
 
 % these histogram functions are too complicated, find better solution
 build_hist([Head | Tail], Hist) ->

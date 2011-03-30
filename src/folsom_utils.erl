@@ -19,7 +19,7 @@ binary_to_atom(Binary) ->
     list_to_atom(binary_to_list(Binary)).
 
 convert_tags(Tags) ->
-    [binary_to_atom(Tag) || Tag <- Tags],
+    [binary_to_atom(Tag) || Tag <- Tags].
 
 now_epoch() ->
     {Mega, Sec, _} = erlang:now(),
