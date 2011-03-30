@@ -44,8 +44,8 @@ to_json(ReqData, Context) ->
     Id = wrq:path_info(id, ReqData),
     Limit = wrq:get_qs_value("limit", integer_to_list(?DEFAULT_LIMIT), ReqData),
     Tag = wrq:get_qs_value("tag", "undefined", ReqData),
-    Info = wrq:get_qs_value("info", "undefined", ReqData)
-    Result = get_request(Id, list_to_integer(Limit), list_to_atom(Tag), list_to_atom(info)),
+    Info = wrq:get_qs_value("info", "undefined", ReqData),
+    Result = get_request(Id, list_to_integer(Limit), list_to_atom(Tag), list_to_atom(Info)),
     {mochijson2:encode(Result), ReqData, Context}.
 
 from_json(ReqData, Context) ->
@@ -66,22 +66,22 @@ get_request(undefined, _, undefined, undefined) ->
     folsom_events_event:get_handlers();
 get_request(undefined, _, undefined, true) ->
     folsom_events_event:get_handlers_info();
-get_request(undefined, _, Tag, _) ->
+get_request(undefined, _, Tag, undefined) ->
     folsom_events_event:get_tagged_handlers(Tag);
-get_request(Id, Limit, undefined, _) ->
+get_request(Id, Limit, undefined, undefined) ->
     folsom_events_event:get_events(list_to_atom(Id), Limit);
-get_request(Id, Limit, Tag, _) ->
+get_request(Id, Limit, Tag, undefined) ->
     folsom_events_event:get_events(list_to_atom(Id), Tag, Limit).
 
 put_request(undefined, Body) ->
     Id = list_to_atom(binary_to_list(proplists:get_value(<<"id">>, Body))),
-    Tags = proplists:get_value(<<"tags">>, Body),
+    Tags = proplists:get_value(<<"tags">>, Body, []),
     AtomTags = [list_to_atom(binary_to_list(Tag)) || Tag <- Tags],
-    Size = proplists:get_value(<<"size">>, Body),
+    Size = proplists:get_value(<<"size">>, Body, 5000),
     add_handler(Id, AtomTags, Size);
 put_request(Id, Body) ->
     Event = proplists:get_value(<<"event">>, Body),
-    Tags = proplists:get_value(<<"tags">>, Body),
+    Tags = proplists:get_value(<<"tags">>, Body, []),
     AtomTags = [list_to_atom(binary_to_list(Tag)) || Tag <- Tags],
     folsom_events_event:notify({list_to_atom(Id), AtomTags, Event}).
 

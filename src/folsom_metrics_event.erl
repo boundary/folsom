@@ -10,10 +10,10 @@
 -behaviour(gen_event).
 
 %% API
--export([add_handler/3,
-         add_handler/4,
-         add_sup_handler/3,
+-export([add_handler/4,
+         add_handler/5,
          add_sup_handler/4,
+         add_sup_handler/5,
          delete_handler/1,
          handler_exists/1,
          notify/1,
@@ -36,51 +36,51 @@
           sample
          }).
 
+-define(EVENTMGR, folsom_metrics_event_manager).
+
 %%%===================================================================
 %%% API
 %%%===================================================================
 
-add_handler(Id, Type, Size) ->
-    gen_event:add_handler(folsom_metrics_event_manager,
-                          {?MODULE, Id}, [Id, Type, Size]).
+% generic event handling api
 
-add_handler(Id, Type, Size, Alpha) ->
-    gen_event:add_handler(folsom_metrics_event_manager,
-                          {?MODULE, Id}, [Id, Type, Size, Alpha]).
+add_handler(Id, Type, Tags, Size) ->
+    folsom_internal_api:add_handler(?EVENTMGR, ?MODULE, Id, [Id, Type, Tags, Size]).
 
-add_sup_handler(Id, Type, Size) ->
-    gen_event:add_sup_handler(folsom_metrics_event_manager,
-                              {?MODULE, Id}, [Id, Type, Size]).
+add_handler(Id, Type, Tags, Size, Alpha) ->
+    folsom_internal_api:add_handler(?EVENTMGR, ?MODULE, Id, [Id, Type, Tags, Size, Alpha]).
 
-add_sup_handler(Id, Type, Size, Alpha) ->
-    gen_event:add_sup_handler(folsom_metrics_event_manager,
-                              {?MODULE, Id}, [Id, Type, Size, Alpha]).
+add_sup_handler(Id, Type, Tags, Size) ->
+    folsom_internal_api:add_sup_handler(?EVENTMGR, ?MODULE, Id, [Id, Type, Tags, Size]).
+
+add_sup_handler(Id, Type, Tags, Size, Alpha) ->
+    folsom_internal_api:add_handler(?EVENTMGR, ?MODULE, Id, [Id, Type, Tags, Size, Alpha]).
 
 delete_handler(Id) ->
-    gen_event:delete_handler(folsom_metrics_event_manager, {?MODULE, Id}, nil).
+    folsom_internal_api:delete_handler(?EVENTMGR, ?MODULE, Id).
 
 handler_exists(Id) ->
-    {_, Handlers} = lists:unzip(gen_event:which_handlers(folsom_metrics_event_manager)),
-    lists:member(Id, Handlers).
+    folsom_internal_api:handler_exists(?EVENTMGR, Id).
 
 notify(Event) ->
-    gen_event:notify(folsom_metrics_event_manager, Event).
+    folsom_internal_api:notify(?EVENTMGR, Event).
 
 get_handlers() ->
-    {_, Handlers} = lists:unzip(gen_event:which_handlers(folsom_metrics_event_manager)),
-    Handlers.
+    folsom_internal_api:get_handlers(?EVENTMGR).
 
 get_handlers_info() ->
-    folsom_utils:get_handlers_info(?MODULE).
+    folsom_internal_api:get_handlers_info(?EVENTMGR, ?MODULE).
 
 get_tagged_handlers(Tag) ->
-    folsom_utils:get_tagged_handlers(?MODULE, Tag).
-        
-get_values(Id) ->
-    gen_event:call(folsom_metrics_event_manager, {?MODULE,Id}, values).
+    folsom_internal_api:get_tagged_handlers(?EVENTMGR, ?MODULE, Tag).
 
 get_info(Id) ->
-    gen_event:call(folsom_metrics_event_manager, {?MODULE, Id}, info).
+    folsom_internal_api:get_info(?EVENTMGR, ?MODULE, Id).
+
+% _metrics specific api
+
+get_values(Id) ->
+    gen_event:call(?EVENTMGR, {?MODULE, Id}, values).
 
 get_statistics(Id) ->
     [

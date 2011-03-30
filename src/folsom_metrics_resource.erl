@@ -62,24 +62,24 @@ resource_exists(undefined, ReqData, Context) ->
 resource_exists(Id, ReqData, Context) ->
     {folsom_metrics_event:handler_exists(list_to_atom(Id)), ReqData, Context}.
 
-get_request(undefined, _, _, undefined, undefined) ->
+get_request(undefined, undefined, undefined, undefined, undefined) ->
     folsom_metrics_event:get_handlers();
-get_request(Id, true, _, _, _) ->
+get_request(Id, true, undefined, undefined, undefined) ->
     folsom_metrics_event:get_values(list_to_atom(Id));
-get_request(undefined, _, _, undefined, true) ->
+get_request(undefined, undefined, undefined, undefined, true) ->
     folsom_metrics_event:get_handlers_info();
-get_request(undefined, _, _, Tag, _) ->
+get_request(undefined, undefined, undefined, Tag, undefined) ->
     folsom_metrics_event:get_tagged_handlers(Tag);
-get_request(Id1, _, true, _, _) ->
-    folsom_statistics:get_covariance(list_to_atom(Id1), Id2);
-get_request(Id, _, _, _, _) ->
-    folsom_metrics_event:get_statistics(list_to_atom(Id)).
+get_request(Id, undefined, undefined, undefined, undefined) ->
+    folsom_metrics_event:get_statistics(list_to_atom(Id));
+get_request(Id1, undefined, Id2, undefined, undefined) ->
+    folsom_statistics:get_covariance(list_to_atom(Id1), Id2).
 
 put_request(undefined, Body) ->
     Id = list_to_atom(binary_to_list(proplists:get_value(<<"id">>, Body))),
-    Type = list_to_atom(binary_to_list(proplists:get_value(<<"type">>, Body))),
-    Size = proplists:get_value(<<"size">>, Body),
-    Tags = proplists:get_value(<<"tags">>, Body),
+    Type = list_to_atom(binary_to_list(proplists:get_value(<<"type">>, Body, <<"uniform">>))),
+    Size = proplists:get_value(<<"size">>, Body, 5000),
+    Tags = proplists:get_value(<<"tags">>, Body, []),
     AtomTags = [list_to_atom(binary_to_list(Tag)) || Tag <- Tags],
     add_handler(Type, Id, AtomTags, Size, Body);
 put_request(Id, Body) ->
