@@ -10,11 +10,11 @@ Lastly, folsom as both erlang and REST API's for Erlang VM statistics.
 
 Here are some examples in both HTTP and Erlang.
 
-Create a exdec metric named "a" with a sample size of 5 values and an alpha of 1:
+Create a exdec metric named "a" with a sample size of 5 values, a tag "test" and an alpha of 1:
 
        > folsom_metrics_event:add_handler(a, exdec, 5, 1).
 
-       $ curl -X PUT http://localhost:5555/_metrics -d '{"id": "a", "size": 5, "type": "exdec", "alpha": 1}' -H 'Content-Type: application/json'
+       $ curl -X PUT http://localhost:5555/_metrics -d '{"id": "a", "size": 5, "type": "exdec", "tags": ["test"], "alpha": 1}' -H 'Content-Type: application/json'
 
 Create a uniform metric named "b" with a sample size of 5 values:
 
@@ -55,13 +55,13 @@ Query handlers that have a specific tag assigned:
 Query a specific metric for its raw sample:
 
       > folsom_metrics_event:get_values(a).
-      
+
       $ curl http://localhost:5555/_metrics/a?raw=true
 
 Query the covariance of two metrics:
 
       > folsom_statistics:get_covariance(b, a).
-      
+
       > curl http://localhost:5555/_metrics/b?covariance=a
 
 Notify a metric of an event:
