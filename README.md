@@ -60,7 +60,7 @@ Query handlers that have a specific tag assigned and aggregate their samples and
 
 Query handlers that have a specific tag assigned and aggregate their samples:
 
-      > folsom_metrics_event:get_aggregated_statistics(test).
+      > folsom_metrics_event:get_aggregated_values(test).
 
       $ curl http://localhost:5555/_metrics?tag=test&aggregate=true&raw=true
 
