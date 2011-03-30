@@ -126,8 +126,7 @@ init([Id, Tags, Size]) ->
 %% @end
 %%--------------------------------------------------------------------
 handle_event({Id, Tags, Event}, #events{id = Id1, size = Size} = State) when Id == Id1->
-    {Mega, Sec, Micro} = erlang:now(),
-    Key = (Mega * 1000000 + Sec) * 1000000 + Micro,
+    Key = folsom_utils:now_epoch_micro(),
     insert(Id, Key, Size, Tags, Event, ets:info(Id, size)),
     {ok, State};
 handle_event(_, State) ->

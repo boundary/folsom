@@ -18,6 +18,7 @@
          resource_exists/2,
          delete_resource/2]).
 
+-include("folsom.hrl").
 -include_lib("webmachine/include/webmachine.hrl").
 
 init(_) -> {ok, undefined}.
@@ -76,18 +77,18 @@ get_request(Id1, undefined, Id2, undefined, undefined) ->
     folsom_statistics:get_covariance(list_to_atom(Id1), Id2).
 
 put_request(undefined, Body) ->
-    Id = list_to_atom(binary_to_list(proplists:get_value(<<"id">>, Body))),
-    Type = list_to_atom(binary_to_list(proplists:get_value(<<"type">>, Body, <<"uniform">>))),
-    Size = proplists:get_value(<<"size">>, Body, 5000),
+    Id = folsom_utils:binary_to_atom(proplists:get_value(<<"id">>, Body)),
+    Type = folsom_utils:binary_to_atom(proplists:get_value(<<"type">>, Body, <<"uniform">>)),
+    Size = proplists:get_value(<<"size">>, Body, ?DEFAULT_SIZE),
     Tags = proplists:get_value(<<"tags">>, Body, []),
-    AtomTags = [list_to_atom(binary_to_list(Tag)) || Tag <- Tags],
+    AtomTags = folsom_utils:convert_tags(Tags),
     add_handler(Type, Id, AtomTags, Size, Body);
 put_request(Id, Body) ->
     Value = proplists:get_value(<<"value">>, Body),
     folsom_metrics_event:notify({list_to_atom(Id), Value}).
 
 add_handler(exdec, Id, Tags, Size, Body) ->
-    Alpha = proplists:get_value(<<"alpha">>, Body),
+    Alpha = proplists:get_value(<<"alpha">>, Body, 1),
     folsom_metrics_event:add_handler(Id, exdec, Tags, Size, Alpha);
 add_handler(uniform, Id, Tags, Size, _) ->
     folsom_metrics_event:add_handler(Id, uniform, Tags, Size);

@@ -20,6 +20,8 @@
          get_info/3
         ]).
 
+% apis that _metrics and _events both use
+
 add_handler(Manager, Module, Id, Args) ->
     gen_event:add_handler(Manager, {Module, Id}, Args).
 

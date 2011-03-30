@@ -74,15 +74,15 @@ get_request(Id, Limit, Tag, undefined) ->
     folsom_events_event:get_events(list_to_atom(Id), Tag, Limit).
 
 put_request(undefined, Body) ->
-    Id = list_to_atom(binary_to_list(proplists:get_value(<<"id">>, Body))),
+    Id = folsom_utils:binary_to_atom(proplists:get_value(<<"id">>, Body)),
     Tags = proplists:get_value(<<"tags">>, Body, []),
-    AtomTags = [list_to_atom(binary_to_list(Tag)) || Tag <- Tags],
-    Size = proplists:get_value(<<"size">>, Body, 5000),
+    AtomTags = folsom_utils:convert_tags(Tags),
+    Size = proplists:get_value(<<"size">>, Body, ?DEFAULT_SIZE),
     add_handler(Id, AtomTags, Size);
 put_request(Id, Body) ->
     Event = proplists:get_value(<<"event">>, Body),
     Tags = proplists:get_value(<<"tags">>, Body, []),
-    AtomTags = [list_to_atom(binary_to_list(Tag)) || Tag <- Tags],
+    AtomTags = folsom_utils:convert_tags(Tags),
     folsom_events_event:notify({list_to_atom(Id), AtomTags, Event}).
 
 add_handler(Id, Tags, Size) ->

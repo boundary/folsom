@@ -31,11 +31,11 @@
 }).
 
 new(Alpha, Size) ->
-    Now = tick(),
+    Now = folsom_utils:now_epoch(),
     #exdec{start = Now, next = Now + ?HOURSECS, alpha = Alpha, size = Size}.
 
 update(Sample, Value) ->
-    update(Sample, Value, tick()).
+    update(Sample, Value, folsom_utils:now_epoch()).
 
 update(#exdec{start = Start, alpha = Alpha, size = Size, reservoir = Reservoir} = Sample, Value, Tick) when length(Reservoir) < Size ->
     NewList = lists:append(Reservoir, [{priority(Alpha, Tick, Start), Value}]),
@@ -43,7 +43,7 @@ update(#exdec{start = Start, alpha = Alpha, size = Size, reservoir = Reservoir} 
 update(#exdec{start = Start, alpha = Alpha} = Sample, Value, Tick) ->
     Priority = priority(Alpha, Tick, Start),
     NewSample = maybe_update(Priority, Value, Sample),
-    maybe_rescale(NewSample, tick()).
+    maybe_rescale(NewSample, folsom_utils:now_epoch()).
 
 get_values(#exdec{reservoir = Reservoir}) ->
     {_, Values} = lists:unzip(Reservoir),
@@ -66,10 +66,6 @@ test() ->
 
 % internal api
 
-tick() ->
-    {Mega, Sec, _} = erlang:now(),
-    (Mega * 1000000 + Sec).
-
 weight(Alpha, T) ->
     math:exp(Alpha * T).
 
@@ -88,6 +84,6 @@ maybe_rescale(Sample, _) ->
 
 rescale(#exdec{start = OldStart, next = Next, alpha = Alpha, reservoir = Reservoir} = Sample, Now) when Next == Now ->
     NewNext = Now + ?HOURSECS,
-    NewStart = tick(),
+    NewStart = folsom_utils:now_epoch(),
     NewReservoir = [{Key * math:exp(-Alpha * (NewStart - OldStart)), Value} || {Key, Value} <- Reservoir],
     Sample#exdec{start = NewStart, next = NewNext, reservoir = NewReservoir}.
