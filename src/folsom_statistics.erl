@@ -23,6 +23,9 @@
 
 -define(HIST, [10, 20, 30, 50, 100, 200, 300, 400, 500, 1000, 99999999999999]).
 
+-define(STATS_MIN, 5).
+
+
 get_max(Id) when is_atom(Id) ->
     get_max(folsom_metrics_event:get_values(Id));
 get_max([]) ->
@@ -50,9 +53,7 @@ get_histogram(Values) when is_list(Values) ->
 get_variance(Id) when is_atom(Id) ->
     Values = get_values(Id),
     get_variance(Values);
-get_variance([]) ->
-    0;
-get_variance([_]) ->
+get_variance(Values) when length(Values) < ?STATS_MIN ->
     0;
 get_variance(Values) when is_list(Values)->
     Mean = get_mean(Values),
@@ -63,6 +64,8 @@ get_variance(Values) when is_list(Values)->
 get_standard_deviation(Id) when is_atom(Id) ->
     Values = get_values(Id),
     get_standard_deviation(Values);
+get_standard_deviation(Values) when length(Values) < ?STATS_MIN ->
+    0;
 get_standard_deviation(Values) when is_list(Values) ->
     math:sqrt(get_variance(Values)).
 
@@ -71,9 +74,9 @@ get_covariance(Id1, Id2) when is_atom(Id1), is_atom(Id2) ->
     Values1 = folsom_metrics_event:get_values(Id1),
     Values2 = folsom_metrics_event:get_values(Id2),
     get_covariance(Values1, Values2);
-get_covariance([], _) ->
+get_covariance(Values, _) when length(Values) < ?STATS_MIN ->
     0;
-get_covariance(_, []) ->
+get_covariance(_, Values) when length(Values) < ?STATS_MIN ->
     0;
 get_covariance(Values1, Values2) when is_list(Values1), is_list(Values2) ->
     Mean1 = get_mean(Values1),
@@ -85,6 +88,8 @@ get_covariance(Values1, Values2) when is_list(Values1), is_list(Values2) ->
 get_kurtosis(Id) when is_atom(Id) ->
     Values = folsom_metrics_event:get_values(Id),
     get_kurtosis(Values);
+get_kurtosis(Values) when length(Values) < ?STATS_MIN ->
+    0;
 get_kurtosis(Values) when is_list(Values) ->
     Mean = get_mean(Values),
     StdDev = get_standard_deviation(Values),
@@ -94,6 +99,8 @@ get_kurtosis(Values) when is_list(Values) ->
 get_skewness(Id) when is_atom(Id) ->
     Values = folsom_metrics_event:get_values(Id),
     get_skewness(Values);
+get_skewness(Values) when length(Values) < ?STATS_MIN ->
+    0;
 get_skewness(Values) when is_list(Values) ->
     Mean = get_mean(Values),
     StdDev = get_standard_deviation(Values),
@@ -102,7 +109,7 @@ get_skewness(Values) when is_list(Values) ->
 
 get_mean(Id) when is_atom(Id) ->
     get_mean(folsom_metrics_event:get_values(Id));
-get_mean([]) ->
+get_mean(Values) when length(Values) < ?STATS_MIN ->
     0;
 get_mean(Values) ->
     Sum = lists:sum(Values),
@@ -111,13 +118,15 @@ get_mean(Values) ->
 get_median(Id) when is_atom(Id) ->
     Values = get_values(Id),
     get_percentile(Values, 0.5);
+get_median(Values) when length(Values) < ?STATS_MIN ->
+    0;
 get_median(Values) when is_list(Values) ->
     get_percentile(Values, 0.5).
 
 get_percentile(Id, Percentile) when is_atom(Id) ->
     Values = folsom_metrics_event:get_values(Id),
     get_percentile(Values, Percentile);
-get_percentile([], _) ->
+get_percentile(Values, _) when length(Values) < ?STATS_MIN ->
     0;
 get_percentile(Values, Percentile) when is_list(Values) ->
     SortedValues = lists:sort(Values),
