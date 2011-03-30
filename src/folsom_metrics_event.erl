@@ -118,7 +118,7 @@ init([Id, none, Size]) ->
     Sample = folsom_sample_none:new(Size),
     {ok, #metric{id = Id, type = none, size = Size, sample = Sample}};
 init([Id, exdec, Size, Alpha]) ->
-    Sample = folsom_exdec:new(Alpha, Size),
+    Sample = folsom_sample_exdec:new(Alpha, Size),
     {ok, #metric{id = Id, type = exdec, size = Size, sample = Sample}}.
 
 
