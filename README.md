@@ -1,6 +1,6 @@
 ### folsom
 
-folsom is an Erlang based metrics and event system. The metrics API's purpose is to collect realtime metrics from various systems via REST and Erlang API's. The basic idea is that you create a metric via either API and then alert the metric with new values as you receive them. You can then retrieve information about these metrics, such as a histogram and the mean. The metric data is stored in memory in one of two kinds of samples, uniform and expotentially decaying, "exdec". Optionally you can choose not to sample the data whatsoever.
+folsom is an Erlang based metrics and event system. The metrics API's purpose is to collect realtime metrics from various systems via REST and Erlang API's. The basic idea is that you create a metric via either API and then alert the metric with new values as you receive them. You can then retrieve information about these metrics, such as a histogram and the mean. The metric data is stored in memory in one of two kinds of samples, uniform and exponentially decaying, "exdec". Optionally you can choose not to sample the data whatsoever. Additionally you can tag you metrics so you can query groups of them.
 
 The other half of folsom is it's event system. This can be used to track events in a system. folsom allows you to create "event handlers" that you can think of them as capped-size ordered buckets of events. Each bucket can be assigned tags upon creation which can be used later to retrieve a group of handlers. Events within these bucks are assigned a time ordered key based on epoch (in microseconds), additionally events can be assigned tags on creation which can be used later to retrieve a group of events.
 
@@ -12,33 +12,51 @@ Here are some examples in both HTTP and Erlang.
 
 Create a exdec metric named "a" with a sample size of 5 values and an alpha of 1:
 
-       > folsom_event:add_handler(a, exdec, 5, 1).
+       > folsom_metrics_event:add_handler(a, exdec, 5, 1).
 
        $ curl -X PUT http://localhost:5555/_metrics -d '{"id": "a", "size": 5, "type": "exdec", "alpha": 1}' -H 'Content-Type: application/json'
 
 Create a uniform metric named "b" with a sample size of 5 values:
 
-       > folsom_event:add_handler(b, uniform, 5).
+       > folsom_metrics_event:add_handler(b, uniform, 5).
 
        $ curl -X PUT http://localhost:5555/_metrics -d '{"id": "b", "size": 5, "type": "uniform"}' -H 'Content-Type: application/json'
 
 Create a metric without sampling named "c" with a sample size of 5 values:
 
-       > folsom_event:add_handler(c, none, 5).
+       > folsom_metrics_event:add_handler(c, none, 5).
 
        $ curl -X PUT http://localhost:5555/_metrics -d '{"id": "c", "size": 5, "type": "uniform"}' -H 'Content-Type: application/json'
 
 Query available metrics:
 
-      > folsom_event:get_handlers().
+      > folsom_metrics_event:get_handlers().
 
       $ curl -X GET http://localhost:5555/_metrics
 
+Query available event handlers with additional info:
+
+      > folsom_metrics_event:get_handlers_info().
+
+      $ curl http://localhost:5555/_metrics?info=true
+
 Query a specific metric:
 
-      > folsom_event:get_all(a).
+      > folsom_metrics_event:get_statistics(a).
 
       $ curl -X GET http://localhost:5555/_metrics/a
+
+Query handlers that have a specific tag assigned:
+
+      > folsom_metrics_event:get_tagged_handlers(test).
+
+      $ curl http://localhost:5555/_metrics?tag=test
+
+Query a specific metric for its raw sample:
+
+      > folsom_metrics_event:get_values(a).
+      
+      $ curl http://localhost:5555/_metrics/a?raw=true
 
 Query the covariance of two metrics:
 
@@ -48,13 +66,13 @@ Query the covariance of two metrics:
 
 Notify a metric of an event:
 
-      > folsom_event:notify({a, 1}).
+      > folsom_metrics_event:notify({a, 1}).
 
       $ curl -X PUT http://localhost:5555/_metrics/a -d '{"value": 1}' -H 'Content-Type: application/json'
 
 Delete a metric:
 
-       > folsom_event:delete_handler(a).
+       > folsom_metrics_event:delete_handler(a).
 
        $ curl -X DELETE http://localhost:5555/_metrics/a
 
