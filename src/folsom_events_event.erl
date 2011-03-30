@@ -44,14 +44,14 @@
 
 add_handler(Id, Tags, Size) ->
     gen_event:add_handler(folsom_events_event_manager,
-                          {folsom_events_event, Id}, [Id, Tags, Size]).
+                          {?MODULE, Id}, [Id, Tags, Size]).
 
 add_sup_handler(Id, Tags, Size) ->
     gen_event:add_sup_handler(folsom_events_event_manager,
-                              {folsom_events_event, Id}, [Id, Tags, Size]).
+                              {?MODULE, Id}, [Id, Tags, Size]).
 
 delete_handler(Id) ->
-    gen_event:delete_handler(folsom_events_event_manager, {folsom_events_event, Id}, nil).
+    gen_event:delete_handler(folsom_events_event_manager, {?MODULE, Id}, nil).
 
 handler_exists(Id) ->
     {_, Handlers} = lists:unzip(gen_event:which_handlers(folsom_events_event_manager)),
@@ -71,7 +71,7 @@ get_tagged_handlers(Tag) ->
     folsom_utils:get_tagged_handlers(?MODULE, Tag).
 
 get_info(Id) ->
-    gen_event:call(folsom_events_event_manager, {folsom_events_event, Id}, info).
+    gen_event:call(folsom_events_event_manager, {?MODULE, Id}, info).
 
 get_events(Id) ->
     get_events(Id, ?DEFAULT_LIMIT).

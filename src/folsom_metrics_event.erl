@@ -42,22 +42,22 @@
 
 add_handler(Id, Type, Size) ->
     gen_event:add_handler(folsom_metrics_event_manager,
-                          {folsom_metrics_event, Id}, [Id, Type, Size]).
+                          {?MODULE, Id}, [Id, Type, Size]).
 
 add_handler(Id, Type, Size, Alpha) ->
     gen_event:add_handler(folsom_metrics_event_manager,
-                          {folsom_metrics_event, Id}, [Id, Type, Size, Alpha]).
+                          {?MODULE, Id}, [Id, Type, Size, Alpha]).
 
 add_sup_handler(Id, Type, Size) ->
     gen_event:add_sup_handler(folsom_metrics_event_manager,
-                              {folsom_metrics_event, Id}, [Id, Type, Size]).
+                              {?MODULE, Id}, [Id, Type, Size]).
 
 add_sup_handler(Id, Type, Size, Alpha) ->
     gen_event:add_sup_handler(folsom_metrics_event_manager,
-                              {folsom_metrics_event, Id}, [Id, Type, Size, Alpha]).
+                              {?MODULE, Id}, [Id, Type, Size, Alpha]).
 
 delete_handler(Id) ->
-    gen_event:delete_handler(folsom_metrics_event_manager, {folsom_metrics_event, Id}, nil).
+    gen_event:delete_handler(folsom_metrics_event_manager, {?MODULE, Id}, nil).
 
 handler_exists(Id) ->
     {_, Handlers} = lists:unzip(gen_event:which_handlers(folsom_metrics_event_manager)),
@@ -77,10 +77,10 @@ get_tagged_handlers(Tag) ->
     folsom_utils:get_tagged_handlers(?MODULE, Tag).
         
 get_values(Id) ->
-    gen_event:call(folsom_metrics_event_manager, {folsom_metrics_event,Id}, values).
+    gen_event:call(folsom_metrics_event_manager, {?MODULE,Id}, values).
 
 get_info(Id) ->
-    gen_event:call(folsom_metrics_event_manager, {folsom_metrics_event, Id}, info).
+    gen_event:call(folsom_metrics_event_manager, {?MODULE, Id}, info).
 
 get_statistics(Id) ->
     [
