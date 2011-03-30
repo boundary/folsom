@@ -16,7 +16,11 @@
 
 -module(folsom_sample_uniform).
 
--export([new/1, update/2, get_values/1, test/0]).
+-export([
+         new/1,
+         update/2,
+         get_values/1
+        ]).
 
 -define(RAND, 999999999999).
 
@@ -38,20 +42,6 @@ update(#uniform{reservoir = Reservoir} = Sample, Value) ->
 
 get_values(#uniform{reservoir = Reservoir}) ->
     Reservoir.
-
-test() ->
-    List = new(5),
-    List1 = update(List, 1),
-    List2 = update(List1, 2),
-    List3 = update(List2, 3),
-    List4 = update(List3, 4),
-    List5 = update(List4, 5),
-    List6 = update(List5, 6),
-    List7 = update(List6, 7),
-    List8 = update(List7, 8),
-    List9 = update(List8, 9),
-    List10 = update(List9, 10),
-    io:format("~p~n", [get_values(List10)]).
 
 % internal api
 

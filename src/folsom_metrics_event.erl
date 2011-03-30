@@ -1,7 +1,7 @@
 %%%-------------------------------------------------------------------
 %%% @author joe williams <j@fastip.com>
 %%% @doc
-%%%
+%%% _metrics
 %%% @end
 %%% Created : 22 Mar 2011 by joe williams <j@fastip.com>
 %%%-------------------------------------------------------------------
@@ -48,37 +48,37 @@
 % generic event handling api
 
 add_handler(Id, Type, Tags, Size) ->
-    folsom_internal_api:add_handler(?EVENTMGR, ?MODULE, Id, [Id, Type, Tags, Size]).
+    folsom_handler_api:add_handler(?EVENTMGR, ?MODULE, Id, [Id, Type, Tags, Size]).
 
 add_handler(Id, Type, Tags, Size, Alpha) ->
-    folsom_internal_api:add_handler(?EVENTMGR, ?MODULE, Id, [Id, Type, Tags, Size, Alpha]).
+    folsom_handler_api:add_handler(?EVENTMGR, ?MODULE, Id, [Id, Type, Tags, Size, Alpha]).
 
 add_sup_handler(Id, Type, Tags, Size) ->
-    folsom_internal_api:add_sup_handler(?EVENTMGR, ?MODULE, Id, [Id, Type, Tags, Size]).
+    folsom_handler_api:add_sup_handler(?EVENTMGR, ?MODULE, Id, [Id, Type, Tags, Size]).
 
 add_sup_handler(Id, Type, Tags, Size, Alpha) ->
-    folsom_internal_api:add_handler(?EVENTMGR, ?MODULE, Id, [Id, Type, Tags, Size, Alpha]).
+    folsom_handler_api:add_handler(?EVENTMGR, ?MODULE, Id, [Id, Type, Tags, Size, Alpha]).
 
 delete_handler(Id) ->
-    folsom_internal_api:delete_handler(?EVENTMGR, ?MODULE, Id).
+    folsom_handler_api:delete_handler(?EVENTMGR, ?MODULE, Id).
 
 handler_exists(Id) ->
-    folsom_internal_api:handler_exists(?EVENTMGR, Id).
+    folsom_handler_api:handler_exists(?EVENTMGR, Id).
 
 notify(Event) ->
-    folsom_internal_api:notify(?EVENTMGR, Event).
+    folsom_handler_api:notify(?EVENTMGR, Event).
 
 get_handlers() ->
-    folsom_internal_api:get_handlers(?EVENTMGR).
+    folsom_handler_api:get_handlers(?EVENTMGR).
 
 get_handlers_info() ->
-    folsom_internal_api:get_handlers_info(?EVENTMGR, ?MODULE).
+    folsom_handler_api:get_handlers_info(?EVENTMGR, ?MODULE).
 
 get_tagged_handlers(Tag) ->
-    folsom_internal_api:get_tagged_handlers(?EVENTMGR, ?MODULE, Tag).
+    folsom_handler_api:get_tagged_handlers(?EVENTMGR, ?MODULE, Tag).
 
 get_info(Id) ->
-    folsom_internal_api:get_info(?EVENTMGR, ?MODULE, Id).
+    folsom_handler_api:get_info(?EVENTMGR, ?MODULE, Id).
 
 % _metrics specific api
 
@@ -131,15 +131,12 @@ get_statistics(Values) when is_list(Values) ->
 %% @spec init(Args) -> {ok, State}
 %% @end
 %%--------------------------------------------------------------------
-init([Id, uniform, Tags, Size]) ->
-    Sample = folsom_sample_uniform:new(Size),
-    {ok, #metric{id = Id, type = uniform, tags = Tags, size = Size, sample = Sample}};
-init([Id, none, Tags, Size]) ->
-    Sample = folsom_sample_none:new(Size),
-    {ok, #metric{id = Id, type = none, tags = Tags, size = Size, sample = Sample}};
-init([Id, exdec, Tags, Size, Alpha]) ->
-    Sample = folsom_sample_exdec:new(Alpha, Size),
-    {ok, #metric{id = Id, type = exdec, tags = Tags, size = Size, sample = Sample}}.
+init([Id, Type, Tags, Size]) ->
+    Sample = folsom_sample_api:new(Type, Size),
+    {ok, #metric{id = Id, type = Type, tags = Tags, size = Size, sample = Sample}};
+init([Id, Type, Tags, Size, Alpha]) ->
+    Sample = folsom_sample_api:new(Type, Size, Alpha),
+    {ok, #metric{id = Id, type = Type, tags = Tags, size = Size, sample = Sample}}.
 
 
 %%--------------------------------------------------------------------
@@ -155,18 +152,9 @@ init([Id, exdec, Tags, Size, Alpha]) ->
 %%                          remove_handler
 %% @end
 %%--------------------------------------------------------------------
-handle_event({Id, Value}, #metric{id = Id1, type = uniform, sample = Sample} = State) when Id == Id1 ->
-    NewSample = folsom_sample_uniform:update(Sample, Value),
-    {ok, State#metric{
-           sample = NewSample}};
-handle_event({Id, Value}, #metric{id = Id1, type = exdec, sample = Sample} = State) when Id == Id1->
-    NewSample = folsom_sample_exdec:update(Sample, Value),
-    {ok, State#metric{
-           sample = NewSample}};
-handle_event({Id, Value}, #metric{id = Id1, type = none, sample = Sample} = State) when Id == Id1->
-    NewSample = folsom_sample_none:update(Sample, Value),
-    {ok, State#metric{
-           sample = NewSample}};
+handle_event({Id, Value}, #metric{id = Id1, type = Type, sample = Sample} = State) when Id == Id1 ->
+    NewSample = folsom_sample_api:update(Type, Sample, Value),
+    {ok, State#metric{sample = NewSample}};
 handle_event(_, State) ->
     {ok, State}.
 
@@ -184,19 +172,9 @@ handle_event(_, State) ->
 %% @end
 %%--------------------------------------------------------------------
 handle_call(info, #metric{id = Id, type = Type, tags = Tags, size = Size} = State) ->
-    {ok, [{Id, [
-                {size, Size},
-                {tags, Tags},
-                {type, Type}
-               ]}], State};
-handle_call(values, #metric{type = uniform, sample = Sample} = State) ->
-    Values = folsom_sample_uniform:get_values(Sample),
-    {ok, Values, State};
-handle_call(values, #metric{type = exdec, sample = Sample} = State) ->
-    Values = folsom_sample_exdec:get_values(Sample),
-    {ok, Values, State};
-handle_call(values, #metric{type = none, sample = Sample} = State) ->
-    Values = folsom_sample_none:get_values(Sample),
+    {ok, [{Id, [{size, Size}, {tags, Tags}, {type, Type}]}], State};
+handle_call(values, #metric{type = Type, sample = Sample} = State) ->
+    Values = folsom_sample_api:get_values(Type, Sample),
     {ok, Values, State}.
 
 %%--------------------------------------------------------------------

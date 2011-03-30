@@ -16,7 +16,11 @@
 
 -module(folsom_sample_exdec).
 
--export([new/2, update/2, update/3, get_values/1, test/0]).
+-export([
+         new/2,
+         update/2,
+         get_values/1
+        ]).
 
 -define(HOURSECS, 3600).
 
@@ -30,12 +34,18 @@
     reservoir = []
 }).
 
-new(Alpha, Size) ->
+new(Size, Alpha) ->
     Now = folsom_utils:now_epoch(),
     #exdec{start = Now, next = Now + ?HOURSECS, alpha = Alpha, size = Size}.
 
 update(Sample, Value) ->
     update(Sample, Value, folsom_utils:now_epoch()).
+
+get_values(#exdec{reservoir = Reservoir}) ->
+    {_, Values} = lists:unzip(Reservoir),
+    Values.
+
+% internal api
 
 update(#exdec{start = Start, alpha = Alpha, size = Size, reservoir = Reservoir} = Sample, Value, Tick) when length(Reservoir) < Size ->
     NewList = lists:append(Reservoir, [{priority(Alpha, Tick, Start), Value}]),
@@ -44,27 +54,6 @@ update(#exdec{start = Start, alpha = Alpha} = Sample, Value, Tick) ->
     Priority = priority(Alpha, Tick, Start),
     NewSample = maybe_update(Priority, Value, Sample),
     maybe_rescale(NewSample, folsom_utils:now_epoch()).
-
-get_values(#exdec{reservoir = Reservoir}) ->
-    {_, Values} = lists:unzip(Reservoir),
-    Values.
-
-test() ->
-    List = new(1, 5),
-    List1 = update(List, 1),
-    List2 = update(List1, 2),
-    List3 = update(List2, 3),
-    List4 = update(List3, 4),
-    List5 = update(List4, 5),
-    List6 = update(List5, 6),
-    List7 = update(List6, 7),
-    List8 = update(List7, 8),
-    List9 = update(List8, 9),
-    List10 = update(List9, 10),
-    io:format("~p~n", [get_values(List10)]).
-
-
-% internal api
 
 weight(Alpha, T) ->
     math:exp(Alpha * T).
