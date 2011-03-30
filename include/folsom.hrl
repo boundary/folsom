@@ -2,6 +2,8 @@
 
 -define(DEFAULT_SIZE, 5000).
 
+-define(DEFAULT_ALPHA, 1).
+
 -define(SYSTEM_INFO, [
                    allocated_areas,
                    allocator,
