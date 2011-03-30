@@ -36,14 +36,16 @@ resource_exists(ReqData, Context) ->
 
 delete_resource(ReqData, Context) ->
     Id = wrq:path_info(id, ReqData),
-    folsom_metric_event:delete_handler(list_to_atom(Id)),
+    folsom_metrics_event:delete_handler(list_to_atom(Id)),
     {true, ReqData, Context}.
 
 to_json(ReqData, Context) ->
     Id1 = wrq:path_info(id, ReqData),
-    Raw = wrq:get_qs_value("raw", "false", ReqData),
-    Id2 = wrq:get_qs_value("covariance", "false", ReqData),
-    Result = get_request(Id1, list_to_atom(Raw), list_to_atom(Id2)),
+    Raw = wrq:get_qs_value("raw", "undefined", ReqData),
+    Id2 = wrq:get_qs_value("covariance", "undefined", ReqData),
+    Tag = wrq:get_qs_value("tag", "undefined", ReqData),
+    Info = wrq:get_qs_value("info", "undefined", ReqData),
+    Result = get_request(Id1, list_to_atom(Raw), list_to_atom(Id2), list_to_atom(Tag), list_to_atom(Info)),
     {mochijson2:encode(Result), ReqData, Context}.
 
 from_json(ReqData, Context) ->
@@ -60,30 +62,36 @@ resource_exists(undefined, ReqData, Context) ->
 resource_exists(Id, ReqData, Context) ->
     {folsom_metrics_event:handler_exists(list_to_atom(Id)), ReqData, Context}.
 
-get_request(undefined, _, _) ->
+get_request(undefined, _, _, undefined, undefined) ->
     folsom_metrics_event:get_handlers();
-get_request(Id, Raw, _) when Raw == true ->
+get_request(Id, true, _, _, _) ->
     folsom_metrics_event:get_values(list_to_atom(Id));
-get_request(Id1, _, Id2) when Id2 /= false ->
-    [{covariance, folsom_statistics:get_covariance(list_to_atom(Id1), Id2)}];
-get_request(Id, _, _) ->
-    folsom_metrics_event:get_all(list_to_atom(Id)).
+get_request(undefined, _, _, undefined, true) ->
+    folsom_metrics_event:get_handlers_info();
+get_request(undefined, _, _, Tag, _) ->
+    folsom_metrics_event:get_tagged_handlers(Tag);
+get_request(Id1, _, true, _, _) ->
+    folsom_statistics:get_covariance(list_to_atom(Id1), Id2);
+get_request(Id, _, _, _, _) ->
+    folsom_metrics_event:get_statistics(list_to_atom(Id)).
 
 put_request(undefined, Body) ->
     Id = list_to_atom(binary_to_list(proplists:get_value(<<"id">>, Body))),
     Type = list_to_atom(binary_to_list(proplists:get_value(<<"type">>, Body))),
     Size = proplists:get_value(<<"size">>, Body),
-    add_handler(Type, Id, Size, Body);
+    Tags = proplists:get_value(<<"tags">>, Body),
+    AtomTags = [list_to_atom(binary_to_list(Tag)) || Tag <- Tags],
+    add_handler(Type, Id, AtomTags, Size, Body);
 put_request(Id, Body) ->
     Value = proplists:get_value(<<"value">>, Body),
     folsom_metrics_event:notify({list_to_atom(Id), Value}).
 
-add_handler(exdec, Id, Size, Body) ->
+add_handler(exdec, Id, Tags, Size, Body) ->
     Alpha = proplists:get_value(<<"alpha">>, Body),
-    folsom_metrics_event:add_handler(Id, exdec, Size, Alpha);
-add_handler(uniform, Id, Size, _) ->
-    folsom_metrics_event:add_handler(Id, uniform, Size);
-add_handler(none, Id, Size, _) ->
-    folsom_metrics_event:add_handler(Id, none, Size);
-add_handler(_, Id, Size, _) ->
-    folsom_metrics_event:add_handler(Id, uniform, Size).
+    folsom_metrics_event:add_handler(Id, exdec, Tags, Size, Alpha);
+add_handler(uniform, Id, Tags, Size, _) ->
+    folsom_metrics_event:add_handler(Id, uniform, Tags, Size);
+add_handler(none, Id, Tags, Size, _) ->
+    folsom_metrics_event:add_handler(Id, none, Tags, Size);
+add_handler(_, Id, Tags, Size, _) ->
+    folsom_metrics_event:add_handler(Id, uniform, Tags, Size).
