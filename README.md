@@ -52,6 +52,18 @@ Query handlers that have a specific tag assigned:
 
       $ curl http://localhost:5555/_metrics?tag=test
 
+Query handlers that have a specific tag assigned and aggregate their samples and returns stats:
+
+      > folsom_metrics_event:get_aggregated_statistics(test).
+
+      $ curl http://localhost:5555/_metrics?tag=test&aggregate=true
+
+Query handlers that have a specific tag assigned and aggregate their samples:
+
+      > folsom_metrics_event:get_aggregated_statistics(test).
+
+      $ curl http://localhost:5555/_metrics?tag=test&aggregate=true&raw=true
+
 Query a specific metric for its raw sample:
 
       > folsom_metrics_event:get_values(a).

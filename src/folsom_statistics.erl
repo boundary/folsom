@@ -3,7 +3,7 @@
 %%% @author    joe williams <j@fastip.com>
 %%% @copyright 2011 fast_ip
 %%% @doc
-%%% statistics functions
+%%% statistics functions for calucating based on id and a list of values
 %%% @end
 %%%------------------------------------------------------------------
 

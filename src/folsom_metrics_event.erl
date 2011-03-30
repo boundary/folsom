@@ -21,8 +21,11 @@
          get_handlers_info/0,
          get_tagged_handlers/1,
          get_values/1,
+         get_aggregated_values/1,
          get_info/1,
-         get_statistics/1]).
+         get_statistics/1,
+         get_aggregated_statistics/1
+        ]).
 
 %% gen_event callbacks
 -export([init/1, handle_event/2, handle_call/2,
@@ -82,25 +85,37 @@ get_info(Id) ->
 get_values(Id) ->
     gen_event:call(?EVENTMGR, {?MODULE, Id}, values).
 
-get_statistics(Id) ->
+get_aggregated_values(Tag) ->
+    Handlers = get_tagged_handlers(Tag),
+    List = [get_values(Id) || Id <- Handlers],
+    lists:append(List).
+
+get_aggregated_statistics(Tag) ->
+    Values = get_aggregated_values(Tag),
+    get_statistics(Values).
+
+get_statistics(Id) when is_atom(Id)->
+    Values = get_values(Id),
+    get_statistics(Values);
+get_statistics(Values) when is_list(Values) ->
     [
-     {min, folsom_statistics:get_min(Id)},
-     {max, folsom_statistics:get_max(Id)},
-     {mean, folsom_statistics:get_mean(Id)},
-     {median, folsom_statistics:get_median(Id)},
-     {variance, folsom_statistics:get_variance(Id)},
-     {standard_deviation, folsom_statistics:get_standard_deviation(Id)},
-     {skewness, folsom_statistics:get_skewness(Id)},
-     {kurtosis, folsom_statistics:get_kurtosis(Id)},
+     {min, folsom_statistics:get_min(Values)},
+     {max, folsom_statistics:get_max(Values)},
+     {mean, folsom_statistics:get_mean(Values)},
+     {median, folsom_statistics:get_median(Values)},
+     {variance, folsom_statistics:get_variance(Values)},
+     {standard_deviation, folsom_statistics:get_standard_deviation(Values)},
+     {skewness, folsom_statistics:get_skewness(Values)},
+     {kurtosis, folsom_statistics:get_kurtosis(Values)},
      {percentile,
       [
-       {75, folsom_statistics:get_percentile(Id, 0.75)},
-       {95, folsom_statistics:get_percentile(Id, 0.95)},
-       {99, folsom_statistics:get_percentile(Id, 0.99)},
-       {999, folsom_statistics:get_percentile(Id, 0.999)}
+       {75, folsom_statistics:get_percentile(Values, 0.75)},
+       {95, folsom_statistics:get_percentile(Values, 0.95)},
+       {99, folsom_statistics:get_percentile(Values, 0.99)},
+       {999, folsom_statistics:get_percentile(Values, 0.999)}
       ]
      },
-     {histogram, folsom_statistics:get_histogram(Id)}
+     {histogram, folsom_statistics:get_histogram(Values)}
      ].
 
 %%%===================================================================

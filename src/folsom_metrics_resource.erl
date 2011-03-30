@@ -46,7 +46,8 @@ to_json(ReqData, Context) ->
     Id2 = wrq:get_qs_value("covariance", "undefined", ReqData),
     Tag = wrq:get_qs_value("tag", "undefined", ReqData),
     Info = wrq:get_qs_value("info", "undefined", ReqData),
-    Result = get_request(Id1, list_to_atom(Raw), list_to_atom(Id2), list_to_atom(Tag), list_to_atom(Info)),
+    Agg = wrq:get_qs_value("aggregate", "undefined", ReqData),
+    Result = get_request(Id1, list_to_atom(Raw), list_to_atom(Id2), list_to_atom(Tag), list_to_atom(Info), list_to_atom(Agg)),
     {mochijson2:encode(Result), ReqData, Context}.
 
 from_json(ReqData, Context) ->
@@ -63,17 +64,21 @@ resource_exists(undefined, ReqData, Context) ->
 resource_exists(Id, ReqData, Context) ->
     {folsom_metrics_event:handler_exists(list_to_atom(Id)), ReqData, Context}.
 
-get_request(undefined, undefined, undefined, undefined, undefined) ->
+get_request(undefined, undefined, undefined, undefined, undefined, undefined) ->
     folsom_metrics_event:get_handlers();
-get_request(Id, true, undefined, undefined, undefined) ->
+get_request(Id, true, undefined, undefined, undefined, undefined) ->
     folsom_metrics_event:get_values(list_to_atom(Id));
-get_request(undefined, undefined, undefined, undefined, true) ->
+get_request(undefined, undefined, undefined, undefined, true, undefined) ->
     folsom_metrics_event:get_handlers_info();
-get_request(undefined, undefined, undefined, Tag, undefined) ->
+get_request(undefined, undefined, undefined, Tag, undefined, true) ->
+    folsom_metrics_event:get_aggregated_statistics(Tag);
+get_request(undefined, true, undefined, Tag, undefined, true) ->
+    folsom_metrics_event:get_aggregated_values(Tag);
+get_request(undefined, undefined, undefined, Tag, undefined, undefined) ->
     folsom_metrics_event:get_tagged_handlers(Tag);
-get_request(Id, undefined, undefined, undefined, undefined) ->
+get_request(Id, undefined, undefined, undefined, undefined, undefined) ->
     folsom_metrics_event:get_statistics(list_to_atom(Id));
-get_request(Id1, undefined, Id2, undefined, undefined) ->
+get_request(Id1, undefined, Id2, undefined, undefined, undefined) ->
     folsom_statistics:get_covariance(list_to_atom(Id1), Id2).
 
 put_request(undefined, Body) ->
