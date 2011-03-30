@@ -83,12 +83,7 @@ get_info(Id) ->
     gen_event:call(folsom_metrics_event_manager, {folsom_metrics_event, Id}, info).
 
 get_statistics(Id) ->
-    [{Id, Values}] = get_info(Id),
     [
-     {id, Id},
-     {type, proplists:get_value(type, Values)},
-     {size, proplists:get_value(size, Values)},
-     {tags, proplists:get_value(tags, Values)},
      {min, folsom_statistics:get_min(Id)},
      {max, folsom_statistics:get_max(Id)},
      {mean, folsom_statistics:get_mean(Id)},
