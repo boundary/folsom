@@ -1,7 +1,7 @@
 %%%-------------------------------------------------------------------
 %%% @author joe williams <j@fastip.com>
 %%% @doc
-%%%
+%%% _event
 %%% @end
 %%% Created : 22 Mar 2011 by joe williams <j@fastip.com>
 %%%-------------------------------------------------------------------
@@ -37,8 +37,10 @@
           size = 5000
          }).
 
--define(ETSOPTS, [named_table,
-                  ordered_set]).
+-define(ETSOPTS, [
+                  named_table,
+                  ordered_set
+                 ]).
 
 -define(EVENTMGR, folsom_events_event_manager).
 
@@ -49,37 +51,39 @@
 % generic event handling api
 
 add_handler(Id, Type, Size) ->
-    folsom_internal_api:add_handler(?EVENTMGR, ?MODULE, Id, [Id, Type, Size]).
+    folsom_handler_api:add_handler(?EVENTMGR, ?MODULE, Id, [Id, Type, Size]).
 
 add_handler(Id, Type, Size, Alpha) ->
-    folsom_internal_api:add_handler(?EVENTMGR, ?MODULE, Id, [Id, Type, Size, Alpha]).
+    folsom_handler_api:add_handler(?EVENTMGR, ?MODULE, Id, [Id, Type, Size, Alpha]).
 
 add_sup_handler(Id, Type, Size) ->
-    folsom_internal_api:add_sup_handler(?EVENTMGR, ?MODULE, Id, [Id, Type, Size]).
+    folsom_handler_api:add_sup_handler(?EVENTMGR, ?MODULE, Id, [Id, Type, Size]).
 
 add_sup_handler(Id, Type, Size, Alpha) ->
-    folsom_internal_api:add_handler(?EVENTMGR, ?MODULE, Id, [Id, Type, Size, Alpha]).
+    folsom_handler_api:add_handler(?EVENTMGR, ?MODULE, Id, [Id, Type, Size, Alpha]).
 
 delete_handler(Id) ->
-    folsom_internal_api:delete_handler(?EVENTMGR, ?MODULE, Id).
+    folsom_handler_api:delete_handler(?EVENTMGR, ?MODULE, Id),
+    % delete the ets table too
+    true = ets:delete(Id).
 
 handler_exists(Id) ->
-    folsom_internal_api:handler_exists(?EVENTMGR, Id).
+    folsom_handler_api:handler_exists(?EVENTMGR, Id).
 
 notify(Event) ->
-    folsom_internal_api:notify(?EVENTMGR, Event).
+    folsom_handler_api:notify(?EVENTMGR, Event).
 
 get_handlers() ->
-    folsom_internal_api:get_handlers(?EVENTMGR).
+    folsom_handler_api:get_handlers(?EVENTMGR).
 
 get_handlers_info() ->
-    folsom_internal_api:get_handlers_info(?EVENTMGR, ?MODULE).
+    folsom_handler_api:get_handlers_info(?EVENTMGR, ?MODULE).
 
 get_tagged_handlers(Tag) ->
-    folsom_internal_api:get_tagged_handlers(?EVENTMGR, ?MODULE, Tag).
+    folsom_handler_api:get_tagged_handlers(?EVENTMGR, ?MODULE, Tag).
 
 get_info(Id) ->
-    folsom_internal_api:get_info(?EVENTMGR, {?MODULE, Id}, info).
+    folsom_handler_api:get_info(?EVENTMGR, {?MODULE, Id}, info).
 
 % _events specific api
 
@@ -146,10 +150,7 @@ handle_event(_, State) ->
 %% @end
 %%--------------------------------------------------------------------
 handle_call(info, #events{id = Id, size = Size, tags = Tags} = State) ->
-    {ok, [{Id, [
-                {size, Size},
-                {tags, Tags}
-               ]}], State};
+    {ok, [{Id, [{size, Size}, {tags, Tags}]}], State};
 handle_call({events, undefined, Count}, #events{id = Id} = State) ->
     Events = get_last_events(Id, Count),
     {ok, Events, State};
