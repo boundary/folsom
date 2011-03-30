@@ -65,13 +65,10 @@ get_handlers() ->
     Handlers.
 
 get_handlers_info() ->
-    Handlers = get_handlers(),
-    [get_info(Handler) || Handler <- Handlers].
+    folsom_utils:get_handlers_info(?MODULE).
 
 get_tagged_handlers(Tag) ->
-    Handlers = get_handlers(),
-    List = [get_tags_from_info(Handler) || Handler <- Handlers],
-    build_tagged_handler_list(List, Tag, []).
+    folsom_utils:get_tagged_handlers(?MODULE, Tag).
 
 get_info(Id) ->
     gen_event:call(folsom_events_event_manager, {folsom_events_event, Id}, info).
@@ -141,9 +138,8 @@ handle_event(_, State) ->
 %%--------------------------------------------------------------------
 handle_call(info, #events{id = Id, size = Size, tags = Tags} = State) ->
     {ok, [{Id, [
-                {max_size, Size},
-                {tags, Tags},
-                {current_size, ets:info(Id, size)}
+                {size, Size},
+                {tags, Tags}
                ]}], State};
 handle_call({events, undefined, Count}, #events{id = Id} = State) ->
     Events = get_last_events(Id, Count),
@@ -236,19 +232,3 @@ maybe_append_event(true, Event, Id, Key, Count, Tag, Acc) ->
     get_prev_event(Id, ets:prev(Id, Key), Count, Tag, lists:append(Acc, Event));
 maybe_append_event(false, _, Id, Key, Count, Tag, Acc) ->
     get_prev_event(Id, ets:prev(Id, Key), Count, Tag, Acc).
-
-get_tags_from_info(Handler) ->
-    [{Id, Values}] = get_info(Handler),
-    Tags = proplists:get_value(tags, Values),
-    {Id, Tags}.
-
-build_tagged_handler_list([], _, Acc) ->
-    Acc;
-build_tagged_handler_list([{Id, Tags} | Tail], Tag, Acc) ->
-    NewAcc = maybe_append_handler(lists:member(Tag, Tags), Id, Acc),
-    build_tagged_handler_list(Tail, Tag, NewAcc).
-
-maybe_append_handler(true, Id, Acc) ->
-    lists:append([Id], Acc);
-maybe_append_handler(false, _, Acc) ->
-    Acc.
