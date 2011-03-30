@@ -26,7 +26,7 @@ Create a metric without sampling named "c" with a sample size of 5 values:
 
        > folsom_event:add_handler(c, none, 5).
 
-       $ curl -X PUT http://localhost:5555/_metrics -d '{"id": "b", "size": 5, "type": "uniform"}' -H 'Content-Type: application/json'
+       $ curl -X PUT http://localhost:5555/_metrics -d '{"id": "c", "size": 5, "type": "uniform"}' -H 'Content-Type: application/json'
 
 Query available metrics:
 
@@ -39,6 +39,12 @@ Query a specific metric:
       > folsom_event:get_all(a).
 
       $ curl -X GET http://localhost:5555/_metrics/a
+
+Query the covariance of two metrics:
+
+      > folsom_statistics:get_covariance(b, a).
+      
+      > curl http://localhost:5555/_metrics/b?covariance=a
 
 Notify a metric of an event:
 
