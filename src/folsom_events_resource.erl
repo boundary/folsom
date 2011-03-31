@@ -74,7 +74,7 @@ get_request(Id, Limit, Tag, undefined) ->
     folsom_events_event:get_events(list_to_atom(Id), Tag, Limit).
 
 put_request(undefined, Body) ->
-    Id = folsom_utils:binary_to_atom(proplists:get_value(<<"id">>, Body)),
+    Id = folsom_utils:to_atom(proplists:get_value(<<"id">>, Body)),
     Tags = proplists:get_value(<<"tags">>, Body, []),
     AtomTags = folsom_utils:convert_tags(Tags),
     Size = proplists:get_value(<<"size">>, Body, ?DEFAULT_SIZE),

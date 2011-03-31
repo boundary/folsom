@@ -21,6 +21,8 @@
 -include("folsom.hrl").
 -include_lib("webmachine/include/webmachine.hrl").
 
+-define(DEFAULT_TYPE, <<"uniform">>).
+
 init(_) -> {ok, undefined}.
 
 content_types_provided(ReqData, Context) ->
@@ -82,8 +84,8 @@ get_request(Id1, undefined, Id2, undefined, undefined, undefined) ->
     folsom_statistics:get_covariance(list_to_atom(Id1), Id2).
 
 put_request(undefined, Body) ->
-    Id = folsom_utils:binary_to_atom(proplists:get_value(<<"id">>, Body)),
-    Type = folsom_utils:binary_to_atom(proplists:get_value(<<"type">>, Body, <<"uniform">>)),
+    Id = folsom_utils:to_atom(proplists:get_value(<<"id">>, Body)),
+    Type = folsom_utils:to_atom(proplists:get_value(<<"type">>, Body, ?DEFAULT_TYPE)),
     Size = proplists:get_value(<<"size">>, Body, ?DEFAULT_SIZE),
     Tags = proplists:get_value(<<"tags">>, Body, []),
     AtomTags = folsom_utils:convert_tags(Tags),

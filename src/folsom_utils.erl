@@ -9,17 +9,19 @@
 -module(folsom_utils).
 
 -export([
-         binary_to_atom/1,
+         to_atom/1,
          convert_tags/1,
          now_epoch/0,
          now_epoch_micro/0
         ]).
 
-binary_to_atom(Binary) ->
-    list_to_atom(binary_to_list(Binary)).
+to_atom(Binary) when is_binary(Binary) ->
+    list_to_atom(binary_to_list(Binary));
+to_atom(List) when is_list(List) ->
+    list_to_atom(List).
 
 convert_tags(Tags) ->
-    [binary_to_atom(Tag) || Tag <- Tags].
+    [to_atom(Tag) || Tag <- Tags].
 
 now_epoch() ->
     {Mega, Sec, _} = erlang:now(),
