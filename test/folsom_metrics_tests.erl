@@ -29,7 +29,7 @@
 -include_lib("eunit/include/eunit.hrl").
 
 -define(BASE_METRICS_URL, "http://localhost:5565/_metrics").
--define(RAND, 1500).
+-define(RAND, 50000).
 -define(DEFAULT_SIZE, 5).
 
 -export([run/0]).
