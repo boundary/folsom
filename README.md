@@ -1,6 +1,8 @@
 ### folsom
 
-folsom is an Erlang based metrics and event system. The metrics API's purpose is to collect realtime metrics from various systems via REST and Erlang API's. The basic idea is that you create a metric via either API and then alert the metric with new values as you receive them. You can then retrieve information about these metrics, such as a histogram and the mean. The metric data is stored in memory in one of two kinds of samples, uniform and exponentially decaying, "exdec". Optionally you can choose not to sample the data whatsoever. Additionally you can tag you metrics so you can query groups of them.
+folsom is an Erlang based metrics and event system. The metrics API's purpose is to collect realtime metrics from various systems via REST and Erlang API's. folsom is *not* a persistent store, it uses ETS and state to hold values in memory. Generally an external service should be used to consume folsom's data and calculations.
+
+The basic idea is that you create a metric via either API and then alert the metric with new values as you receive them. A common metric to track would be HTTP response times. You can then retrieve information about these metrics, such as a histogram and the mean. The metric data is stored in memory in one of three kinds of samples, none (circular list), uniform and exponentially decaying. Additionally you can tag you metrics so you can query groups of them.
 
 The other half of folsom is it's event system. This can be used to track events in a system. folsom allows you to create "event handlers" that you can think of them as capped-size ordered buckets of events. Each bucket can be assigned tags upon creation which can be used later to retrieve a group of handlers. Events within these bucks are assigned a time ordered key based on epoch (in microseconds), additionally events can be assigned tags on creation which can be used later to retrieve a group of events.
 
