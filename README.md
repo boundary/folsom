@@ -43,7 +43,7 @@ Create a metric without sampling named "c" with a sample size of 5 values:
 
        > folsom_metrics_event:add_handler(c, none, 5).
 
-       $ curl -X PUT http://localhost:5565/_metrics -d '{"id": "c", "size": 5, "type": "uniform"}' -H 'Content-Type: application/json'
+       $ curl -X PUT http://localhost:5565/_metrics -d '{"id": "c", "size": 5, "type": "none"}' -H 'Content-Type: application/json'
 
 Query available metrics:
 
