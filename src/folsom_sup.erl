@@ -1,3 +1,20 @@
+%%%
+%%% Copyright 2011, fast_ip
+%%%
+%%% Licensed under the Apache License, Version 2.0 (the "License");
+%%% you may not use this file except in compliance with the License.
+%%% You may obtain a copy of the License at
+%%%
+%%%     http://www.apache.org/licenses/LICENSE-2.0
+%%%
+%%% Unless required by applicable law or agreed to in writing, software
+%%% distributed under the License is distributed on an "AS IS" BASIS,
+%%% WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+%%% See the License for the specific language governing permissions and
+%%% limitations under the License.
+%%%
+
+
 %%%-------------------------------------------------------------------
 %%% File:      folsom_sup.erl
 %%% @author    joe williams <j@fastip.com>
@@ -45,8 +62,8 @@ upgrade() ->
 %% @spec init([]) -> SupervisorTree
 %% @doc supervisor callback.
 init([]) ->
-    Ip = case os:getenv("FOLSOM_IP") of false -> "0.0.0.0"; Any -> Any end,
-    Port = case os:getenv("FOLSOM_PORT") of false -> "5555"; Any1 -> Any1 end,
+    Ip = case os:getenv("FOLSOM_IP") of false -> "127.0.0.1"; Any -> Any end,
+    Port = case os:getenv("FOLSOM_PORT") of false -> "5565"; Any1 -> Any1 end,
     LogDir = case os:getenv("FOLSOM_LOG_DIR") of false -> "priv/log"; Any2 -> Any2 end,
     {ok, Dispatch} = file:consult(filename:join(
                          [filename:dirname(code:which(?MODULE)),
