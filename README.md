@@ -2,7 +2,7 @@
 
 folsom is an Erlang based metrics and event system. The metrics API's purpose is to collect realtime metrics from various systems via REST and Erlang API's. folsom is *not* a persistent store, it uses ETS and state to hold values in memory. Generally an external service should be used to consume folsom's data and calculations.
 
-The basic idea is that you create a metric via either API and then alert the metric with new values as you receive them. A common metric to track would be HTTP response times. You can then retrieve information about these metrics, such as a histogram and the mean. The metric data is stored in memory in one of three kinds of samples, none (circular list), uniform and exponentially decaying. Additionally you can tag you metrics so you can query groups of them.
+The basic idea is that you create a metric via either API and then alert the metric with new values as you receive them. A common metric to track would be HTTP response times. You can then retrieve information about these metrics, such as a histogram and the mean. The metric data is stored in memory in one of three kinds of samples, none (circular buffer), uniform and exponentially decaying. Additionally you can tag you metrics so you can query groups of them.
 
 The other half of folsom is it's event system. This can be used to track events in a system. folsom allows you to create "event handlers" that you can think of them as capped-size ordered buckets of events. Each bucket can be assigned tags upon creation which can be used later to retrieve a group of handlers. Events within these bucks are assigned a time ordered key based on epoch (in microseconds), additionally events can be assigned tags on creation which can be used later to retrieve a group of events.
 
@@ -195,7 +195,7 @@ Stats for metric 'a':
 
       {"min":1,"max":1000,"mean":322.2,"median":100,"variance":185259.19999999998,"standard_deviation":430.4174717643325,"skewness":1.2670136514902162,"kurtosis":-1.2908313302242205,"percentile":{"75":500,"95":1000,"99":1000,"999":1000},"histogram":{"10":2,"20":0,"30":0,"50":0,"100":1,"200":0,"300":0,"400":0,"500":1,"1000":1,"99999999999999":0}}
 
-Events for event handler 'a':
+Events for event handler 'd':
 
        $ curl http://localhost:5565/_events/d
 
@@ -206,3 +206,10 @@ Erlang VM memory metrics:
        $ curl http://localhost:5565/_memory
 
        {"total":11044608,"processes":3240936,"processes_used":3233888,"system":7803672,"atom":532137,"atom_used":524918,"binary":696984,"code":4358030,"ets":385192}
+
+
+#### To Do
+
+* Better statistical functions test coverage?
+* Production testing embedded in an already existing Erlang system
+* ETS for metrics values?
