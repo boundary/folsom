@@ -6,6 +6,21 @@ The other half of folsom is it's event system. This can be used to track events 
 
 Lastly, folsom as both erlang and REST API's for Erlang VM statistics.
 
+#### Building and running
+
+You need a (preferably recent) version of Erlang installed but that should be it.
+
+       ./rebar get-deps
+       ./rebar compile
+
+* Note that ibrowse is only a dep for the test suite.
+
+folsom can be run standalone or embedded in an Erlang application.
+
+       $ erl -pa ebin deps/*/ebin
+
+       > folsom:start(). % or start_link ...
+
 #### _metrics API Usage
 
 Here are some examples in both HTTP and Erlang.
