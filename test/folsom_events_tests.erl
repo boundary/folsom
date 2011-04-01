@@ -32,17 +32,17 @@ events_populate() ->
     % create a event handler
     create_event(a, ?DEFAULT_SIZE, ["a", "taco"]),
     % populate handler 'a' with values
-    AList = populate_event(a, 10),
+    populate_event(a, 10),
 
     % create a event handler
     create_event(b, ?DEFAULT_SIZE, ["b", "taco"]),
     % populate handler 'b' with values
-    BList = populate_event(b, 10),
+    populate_event(b, 10),
 
     % create a event handler
     create_event(c, ?DEFAULT_SIZE, ["c", "taco"]),
     % populate handler 'c' with values
-    CList = populate_event(c, 10).
+    populate_event(c, 10).
 
 base_events_checks() ->
     % check _events list
