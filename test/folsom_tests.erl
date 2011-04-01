@@ -33,6 +33,7 @@ api_test() ->
     folsom_metrics_tests:run(),
     folsom_events_tests:run(),
     folsom_vm_tests:run(),
+    folsom_statistics_tests:run(),
     teardown().
 
 setup() ->
