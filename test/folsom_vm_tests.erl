@@ -24,7 +24,7 @@ run() ->
 
 system_checks() ->
     % check _system stats
-    {"200", _, Body1} = http_helpers:http_get(?SYSTEM_URL),
+    Body1 = http_helpers:http_get(?SYSTEM_URL),
     {struct, List1} = mochijson2:decode(Body1),
 
     % verify one of the many keys exist
@@ -32,7 +32,7 @@ system_checks() ->
 
 statistics_checks() ->
     % check _statistics stats
-    {"200", _, Body1} = http_helpers:http_get(?STATISTICS_URL),
+    Body1 = http_helpers:http_get(?STATISTICS_URL),
     {struct, List1} = mochijson2:decode(Body1),
 
     % verify one of the many keys exist
@@ -40,7 +40,7 @@ statistics_checks() ->
 
 memory_checks() ->
     % check _memory stats
-    {"200", _, Body1} = http_helpers:http_get(?MEMORY_URL),
+    Body1 = http_helpers:http_get(?MEMORY_URL),
     {struct, List1} = mochijson2:decode(Body1),
 
     % verify one of the many keys exist

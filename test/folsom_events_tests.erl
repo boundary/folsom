@@ -31,29 +31,22 @@ run() ->
 events_populate() ->
     % create a event handler
     create_event(a, ?DEFAULT_SIZE, ["a", "taco"]),
-
     % populate handler 'a' with values
     AList = populate_event(a, 10),
-    [http_helpers:check_put_response_code(Response) || Response <- AList],
-
 
     % create a event handler
     create_event(b, ?DEFAULT_SIZE, ["b", "taco"]),
-
     % populate handler 'b' with values
     BList = populate_event(b, 10),
-    [http_helpers:check_put_response_code(Response) || Response <- BList],
 
     % create a event handler
     create_event(c, ?DEFAULT_SIZE, ["c", "taco"]),
-
     % populate handler 'c' with values
-    CList = populate_event(c, 10),
-    [http_helpers:check_put_response_code(Response) || Response <- CList].
+    CList = populate_event(c, 10).
 
 base_events_checks() ->
     % check _events list
-    {"200", _, Body1} = http_helpers:http_get(?BASE_EVENTS_URL),
+    Body1 = http_helpers:http_get(?BASE_EVENTS_URL),
     List1 = mochijson2:decode(Body1),
 
     % make sure list length is 3 since we created a, b and c
@@ -62,8 +55,8 @@ base_events_checks() ->
 base_events_info_checks() ->
     % check _events?info=true list
     Url1 = lists:append(io_lib:format("~s~s", [?BASE_EVENTS_URL, "?info=true"])),
-    {"200", _, Body2} = http_helpers:http_get(Url1),
-    [{struct, C}, {struct, B}, {struct, A}] = mochijson2:decode(Body2),
+    Body1 = http_helpers:http_get(Url1),
+    [{struct, C}, {struct, B}, {struct, A}] = mochijson2:decode(Body1),
 
     % make sure the keys we setup are in there
     true = lists:keymember(<<"a">>, 1, A),
@@ -73,15 +66,15 @@ base_events_info_checks() ->
 individual_events_checks() ->
     % build events urls, _events/a, etc
     Url1 = lists:append(io_lib:format("~s~s~p", [?BASE_EVENTS_URL, "/", a])),
-    {"200", _, Body1} = http_helpers:http_get(Url1),
+    Body1 = http_helpers:http_get(Url1),
     {struct, List1} = mochijson2:decode(Body1),
 
     Url2 = lists:append(io_lib:format("~s~s~p", [?BASE_EVENTS_URL, "/", b])),
-    {"200", _, Body2} = http_helpers:http_get(Url2),
+    Body2 = http_helpers:http_get(Url2),
     {struct, List2} = mochijson2:decode(Body2),
 
     Url3 = lists:append(io_lib:format("~s~s~p", [?BASE_EVENTS_URL, "/", c])),
-    {"200", _, Body3} = http_helpers:http_get(Url3),
+    Body3 = http_helpers:http_get(Url3),
     {struct, List3} = mochijson2:decode(Body3),
 
     % check each handler for events
@@ -92,7 +85,7 @@ individual_events_checks() ->
 tagged_handlers_checks() ->
     % check _events?tag=taco for 3 items
     Url1 = lists:append(io_lib:format("~s~s", [?BASE_EVENTS_URL, "?tag=taco"])),
-    {"200", _, Body1} = http_helpers:http_get(Url1),
+    Body1 = http_helpers:http_get(Url1),
     List1 = mochijson2:decode(Body1),
 
     % make sure there are 3 items with taco as a tag
@@ -103,22 +96,22 @@ tagged_handlers_checks() ->
     Url3 = lists:append(io_lib:format("~s~s", [?BASE_EVENTS_URL, "?tag=b"])),
     Url4 = lists:append(io_lib:format("~s~s", [?BASE_EVENTS_URL, "?tag=c"])),
 
-    {"200", _, Body2} = http_helpers:http_get(Url2),
+    Body2 = http_helpers:http_get(Url2),
     List2 = mochijson2:decode(Body2),
     1 = length(List2),
 
-    {"200", _, Body3} = http_helpers:http_get(Url3),
+    Body3 = http_helpers:http_get(Url3),
     List3 = mochijson2:decode(Body3),
     1 = length(List3),
 
-    {"200", _, Body4} = http_helpers:http_get(Url4),
+    Body4 = http_helpers:http_get(Url4),
     List4 = mochijson2:decode(Body4),
     1 = length(List4).
 
 event_limits_checks() ->
     % check _events/a?limit=1
     Url1 = lists:append(io_lib:format("~s~s~p~s", [?BASE_EVENTS_URL, "/", a, "?limit=1"])),
-    {"200", _, Body1} = http_helpers:http_get(Url1),
+    Body1 = http_helpers:http_get(Url1),
     {struct, List1} = mochijson2:decode(Body1),
 
     % make sure there is 1 item when limit=1 is used
@@ -126,7 +119,7 @@ event_limits_checks() ->
 
     % check _events/b?limit=5
     Url2 = lists:append(io_lib:format("~s~s~p~s", [?BASE_EVENTS_URL, "/", b, "?limit=5"])),
-    {"200", _, Body2} = http_helpers:http_get(Url2),
+    Body2 = http_helpers:http_get(Url2),
     {struct, List2} = mochijson2:decode(Body2),
 
     % make sure there are 5 items when limit=5 is used
@@ -135,7 +128,7 @@ event_limits_checks() ->
 event_tags_checks() ->
     % check _events/a?tag=error
     Url1 = lists:append(io_lib:format("~s~s~p~s", [?BASE_EVENTS_URL, "/", a, "?tag=error"])),
-    {"200", _, Body1} = http_helpers:http_get(Url1),
+    Body1 = http_helpers:http_get(Url1),
     {struct, List1} = mochijson2:decode(Body1),
 
     % make sure there are 5 events with the tag error
@@ -143,7 +136,7 @@ event_tags_checks() ->
 
     % check _events/a?tag=error&limit=1
     Url2 = lists:append(io_lib:format("~s~s~p~s", [?BASE_EVENTS_URL, "/", a, "?tag=error&limit=1"])),
-    {"200", _, Body2} = http_helpers:http_get(Url2),
+    Body2 = http_helpers:http_get(Url2),
     {struct, List2} = mochijson2:decode(Body2),
 
     % make sure there are 1 events with the tag error
@@ -151,17 +144,17 @@ event_tags_checks() ->
 
 delete_events_checks() ->
     Url1 = lists:append(io_lib:format("~s~s~p", [?BASE_EVENTS_URL, "/", a])),
-    {"204", _, _} = http_helpers:http_delete(Url1),
+    ok = http_helpers:http_delete(Url1),
 
     Url2 = lists:append(io_lib:format("~s~s~p", [?BASE_EVENTS_URL, "/", b])),
-    {"204", _, _} = http_helpers:http_delete(Url2),
+    ok = http_helpers:http_delete(Url2),
 
     Url3 = lists:append(io_lib:format("~s~s~p", [?BASE_EVENTS_URL, "/", c])),
-    {"204", _, _} = http_helpers:http_delete(Url3),
+    ok = http_helpers:http_delete(Url3),
 
     % check _events list
-    {"200", _, Body4} = http_helpers:http_get(?BASE_EVENTS_URL),
-    List = mochijson2:decode(Body4),
+    Body1 = http_helpers:http_get(?BASE_EVENTS_URL),
+    List = mochijson2:decode(Body1),
 
     % make sure list length is 3 since we created a, b and c
     0 = length(List).
@@ -175,13 +168,12 @@ create_event(Name, Size, Tags) ->
                 {tags, Tags}
                ],
     Body = mochijson2:encode(Proplist),
-    Response = http_helpers:http_put(?BASE_EVENTS_URL, Body),
-    http_helpers:check_put_response_code(Response).
+    ok = http_helpers:http_put(?BASE_EVENTS_URL, Body).
 
 populate_event(Name, Count) ->
     Values = get_sample_values(Count),
     Url = lists:append(io_lib:format("~s~s~p", [?BASE_EVENTS_URL, "/", Name])),
-    [http_helpers:http_put(Url, mochijson2:encode([{event, Value}, {tags, ["error"]}])) || Value <- Values].
+    [ok = http_helpers:http_put(Url, mochijson2:encode([{event, Value}, {tags, ["error"]}])) || Value <- Values].
 
 get_sample_values(Count) ->
     get_sample_values(Count, []).
