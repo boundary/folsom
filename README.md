@@ -132,6 +132,12 @@ Query a specific event_handler for events with a tag:
 
       $ curl http://localhost:5555/_events/d?tag=test
 
+Query a specific event_handler for events with a tag and limit results to 1 event:
+
+      > folsom_events_event:get_events(d, test).
+
+      $ curl http://localhost:5555/_events/d?tag=test&limit=1
+
 Notify an event handler of an event:
 
       > folsom_events_event:notify({d, [test], "something"}).
