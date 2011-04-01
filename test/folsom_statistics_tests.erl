@@ -67,7 +67,9 @@ stats_values_checks(List) ->
     2.3535226547841104 = proplists:get_value(<<"skewness">>, List),
     2.190080666007587 = proplists:get_value(<<"kurtosis">>, List),
     {struct, List1} = proplists:get_value(<<"percentile">>, List),
-    {struct, List2} = proplists:get_value(<<"histogram">>, List).
+    percentile_check(List1),
+    {struct, List2} = proplists:get_value(<<"histogram">>, List),
+    histogram_check(List2).
 
 percentile_check(List) ->
     1000 = proplists:get_value(<<"75">>, List),
