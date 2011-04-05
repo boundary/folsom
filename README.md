@@ -210,6 +210,8 @@ Erlang VM memory metrics:
 
 #### To Do
 
-* Better statistical functions test coverage?
-* Production testing embedded in an already existing Erlang system
+* Better statistical functions test coverage
+* Sampling functions test coverage
+* More production testing
 * ETS for metrics values?
+* API for counters?
