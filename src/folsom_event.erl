@@ -22,7 +22,7 @@
 %%% @end
 %%% Created : 22 Mar 2011 by joe williams <j@fastip.com>
 %%%-------------------------------------------------------------------
--module(folsom_metrics_event).
+-module(folsom_event).
 
 -behaviour(gen_event).
 
@@ -56,7 +56,7 @@
           sample
          }).
 
--define(EVENTMGR, folsom_metrics_event_manager).
+-define(EVENTMGR, folsom_event_manager).
 
 %%%===================================================================
 %%% API

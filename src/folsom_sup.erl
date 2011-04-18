@@ -86,21 +86,14 @@ init([]) ->
            worker,
            dynamic},
 
-    MetricsEventMgr = {folsom_metrics_event_manager,
-                {gen_event, start_link, [{local, folsom_metrics_event_manager}]},
+    EventMgr = {folsom_event_manager,
+                {gen_event, start_link, [{local, folsom_event_manager}]},
                 permanent,
                 brutal_kill,
                 worker,
                 dynamic},
 
-    EventsEventMgr = {folsom_events_event_manager,
-                {gen_event, start_link, [{local, folsom_events_event_manager}]},
-                permanent,
-                brutal_kill,
-                worker,
-                dynamic},
-
-    Processes = [Web, MetricsEventMgr, EventsEventMgr],
+    Processes = [Web, EventMgr],
     {ok, { {one_for_one, 10, 10}, Processes} }.
 
 setup_ets_tables() ->
