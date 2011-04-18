@@ -35,6 +35,8 @@
 %% supervisor callbacks
 -export([init/1]).
 
+-include("folsom.hrl").
+
 %% @spec start_link() -> ServerRet
 %% @doc API for starting the supervisor.
 start_link() ->
@@ -62,6 +64,8 @@ upgrade() ->
 %% @spec init([]) -> SupervisorTree
 %% @doc supervisor callback.
 init([]) ->
+    setup_ets_tables(),
+
     Ip = case os:getenv("FOLSOM_IP") of false -> "127.0.0.1"; Any -> Any end,
     Port = case os:getenv("FOLSOM_PORT") of false -> "5565"; Any1 -> Any1 end,
     LogDir = case os:getenv("FOLSOM_LOG_DIR") of false -> "priv/log"; Any2 -> Any2 end,
@@ -98,3 +102,10 @@ init([]) ->
 
     Processes = [Web, MetricsEventMgr, EventsEventMgr],
     {ok, { {one_for_one, 10, 10}, Processes} }.
+
+setup_ets_tables() ->
+    ets:new(?COUNTER_TABLE, [set, named_table, public]),
+    ets:new(?GAUGE_TABLE, [set, named_table, public]),
+    ets:new(?HISTOGRAM_TABLE, [set, named_table, public]),
+    ets:new(?METER_TABLE, [set, named_table, public]),
+    ets:new(?TIMER_TABLE, [set, named_table, public]).
