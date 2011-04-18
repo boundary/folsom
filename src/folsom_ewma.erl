@@ -20,6 +20,10 @@
 %%% @author    joe williams <j@boundary.com>
 %%% @copyright 2011 Boundary
 %%% @doc
+%%% based on https://github.com/codahale/metrics/blob/development/src/main/java/com/yammer/metrics/stats/EWMA.java
+%%% references:
+%%% http://www.teamquest.com/pdfs/whitepaper/ldavg1.pdf
+%%% http://www.teamquest.com/pdfs/whitepaper/ldavg2.pdf
 %%% @end
 %%%-----------------------------------------------------------------
 
