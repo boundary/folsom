@@ -32,12 +32,6 @@
 
 -include("folsom.hrl")
 
--record(history, {
-          id,
-          tags = [],
-          size = 5000
-         }).
-
 -define(ETSOPTS, [
                   named_table,
                   ordered_set,

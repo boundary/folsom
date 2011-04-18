@@ -48,11 +48,12 @@
 -export([init/1, handle_event/2, handle_call/2,
          handle_info/2, terminate/2, code_change/3]).
 
+
 -record(metric, {
           id,
           size,
           tags = [],
-          type = uniform,
+          type,
           sample
          }).
 
@@ -64,38 +65,56 @@
 
 % generic event handling api
 
-add_handler(Id, Type, Tags, Size) ->
-    folsom_handler_api:add_handler(?EVENTMGR, ?MODULE, Id, [Id, Type, Tags, Size]).
+add_handler(Manager, Module, Id, Args) ->
+    gen_event:add_handler(Manager, {Module, Id}, Args).
 
-add_handler(Id, Type, Tags, Size, Alpha) ->
-    folsom_handler_api:add_handler(?EVENTMGR, ?MODULE, Id, [Id, Type, Tags, Size, Alpha]).
+add_sup_handler(Manager, Module, Id, Args) ->
+    gen_event:add_sup_handler(Manager, {Module, Id}, Args).
 
-add_sup_handler(Id, Type, Tags, Size) ->
-    folsom_handler_api:add_sup_handler(?EVENTMGR, ?MODULE, Id, [Id, Type, Tags, Size]).
+delete_handler(Manager, Module, Id) ->
+    gen_event:delete_handler(Manager, {Module, Id}, nil).
 
-add_sup_handler(Id, Type, Tags, Size, Alpha) ->
-    folsom_handler_api:add_handler(?EVENTMGR, ?MODULE, Id, [Id, Type, Tags, Size, Alpha]).
+handler_exists(Manager, Id) ->
+    {_, Handlers} = lists:unzip(gen_event:which_handlers(Manager)),
+    lists:member(Id, Handlers).
 
-delete_handler(Id) ->
-    folsom_handler_api:delete_handler(?EVENTMGR, ?MODULE, Id).
+notify(Manager, Event) ->
+    gen_event:notify(Manager, Event).
 
-handler_exists(Id) ->
-    folsom_handler_api:handler_exists(?EVENTMGR, Id).
+get_handlers_info(Manager, Module) ->
+    Handlers = get_handlers(Manager),
+    [get_info(Manager, Module, Id) || Id <- Handlers].
 
-notify(Event) ->
-    folsom_handler_api:notify(?EVENTMGR, Event).
+get_tagged_handlers(Manager, Module, Tag) ->
+    Handlers = get_handlers(Manager),
+    List = [get_tags_from_info(Manager, Module, Id) || Id <- Handlers],
+    build_tagged_handler_list(List, Tag, []).
 
-get_handlers() ->
-    folsom_handler_api:get_handlers(?EVENTMGR).
+get_handlers(Manager) ->
+    {_, Handlers} = lists:unzip(gen_event:which_handlers(Manager)),
+    Handlers.
 
-get_handlers_info() ->
-    folsom_handler_api:get_handlers_info(?EVENTMGR, ?MODULE).
+get_info(Manager, Module, Id) ->
+    gen_event:call(Manager, {Module, Id}, info).
 
-get_tagged_handlers(Tag) ->
-    folsom_handler_api:get_tagged_handlers(?EVENTMGR, ?MODULE, Tag).
+% internal functions
 
-get_info(Id) ->
-    folsom_handler_api:get_info(?EVENTMGR, ?MODULE, Id).
+get_tags_from_info(Manager, Module, Id) ->
+    [{Id, Values}] = get_info(Manager, Module, Id),
+    Tags = proplists:get_value(tags, Values),
+    {Id, Tags}.
+
+build_tagged_handler_list([], _, Acc) ->
+    Acc;
+build_tagged_handler_list([{Id, Tags} | Tail], Tag, Acc) ->
+    NewAcc = maybe_append_handler(lists:member(Tag, Tags), Id, Acc),
+    build_tagged_handler_list(Tail, Tag, NewAcc).
+
+maybe_append_handler(true, Id, Acc) ->
+    lists:append([Id], Acc);
+maybe_append_handler(false, _, Acc) ->
+    Acc.
+
 
 % _metrics specific api
 
