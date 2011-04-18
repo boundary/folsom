@@ -44,12 +44,12 @@
 -define(RAND, 999999999999).
 
 -record(exdec, {
-    start = 0,
-    next = 0,
-    alpha = 1,
-    size = 5000,
-    reservoir = []
-}).
+          start = 0,
+          next = 0,
+          alpha = 1,
+          size = 5000,
+          reservoir = []
+         }).
 
 new(Size, Alpha) ->
     Now = folsom_utils:now_epoch(),
