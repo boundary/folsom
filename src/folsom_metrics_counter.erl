@@ -30,8 +30,10 @@
          inc/2,
          dec/1,
          dec/2,
-         get/1,
+         get_value/1,
          clear/1]).
+
+-include("folsom.hrl").
 
 new(Name) ->
     Counter = {Name, 0},
@@ -49,8 +51,9 @@ dec(Name) ->
 dec(Name, Value) ->
     ets:update_counter(?COUNTER_TABLE, Name, Value * -1).
 
-get(Name) ->
-    ets:lookup(?COUNTER_TABLE, Name).
+get_value(Name) ->
+    {_, Values} = ets:lookup(?COUNTER_TABLE, Name),
+    Values.
 
 clear(Name) ->
-    ets:insert(?COUNTER_TABLE, {Name, 0}),
+    new(Name).

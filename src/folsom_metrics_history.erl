@@ -24,13 +24,13 @@
 
 -module(folsom_metrics_history).
 
--export([new/3
-         update/3,
+-export([new/1,
+         update/4,
          get_events/1,
-         get_events/2,
-         get_tagged_events/3]).
+         get_events/2
+        ]).
 
--include("folsom.hrl")
+-include("folsom.hrl").
 
 -define(ETSOPTS, [
                   named_table,
@@ -38,64 +38,56 @@
                   public
                  ]).
 
-new(Id, Size, Tags) ->
-    Id = ets:new(Id, ?ETSOPTS),
-    {ok, #events{id = Id, size = Size, tags = Tags}}.
+-compile({no_auto_import,[get/1]}).
 
-update(Id, Tags, Value) ->
+new(Name) ->
+    ets:new(Name, ?ETSOPTS).
+
+update(Name, Size, Tags, Value) ->
     Key = folsom_utils:now_epoch_micro(),
-    insert(Id, Key, Size, Tags, Event, ets:info(Id, size)).
+    insert(Name, Key, Size, Tags, Value, ets:info(Name, size)).
 
-get_info(Id) ->
-    ok.
+get_events(Name) ->
+    get_events(Name, ?DEFAULT_LIMIT).
 
-get_events(Id) ->
-    get_events(Id, ?DEFAULT_LIMIT).
-
-get_events(Id, Tag) when is_atom(Tag) ->
-    get_tagged_events(Id, Tag, ?DEFAULT_LIMIT);
-get_events(Id, Count) when is_integer(Count) ->
-    get_last_events(Id, Count).
-
-get_tagged_events(Id, Tag, Count) ->
-    LastKey = ets:last(Id),
-    get_prev_event(Id, LastKey, Count, Tag, []).
+get_events(Name, Count) ->
+    get_last_events(Name, Count).
 
 % Internal API
 
-insert(Id, Key, Size, Tags, Event, Count) when is_list(Event) ->
-    insert(Id, Key, Size, Tags, list_to_binary(Event), Count);
-insert(Id, Key, Size, Tags, Event, Count) when Count < Size ->
-    true = ets:insert(Id, {Key, [{tags, Tags}, {event, Event}]});
-insert(Id, Key, _, Tags, Event, _) ->
-    FirstKey = ets:first(Id),
-    true = ets:delete(Id, FirstKey),
-    true = ets:insert(Id, {Key, [{tags, Tags}, {event, Event}]}).
+insert(Name, Key, Size, Tags, Value, Count) when is_list(Value) ->
+    insert(Name, Key, Size, Tags, list_to_binary(Value), Count);
+insert(Name, Key, Size, Tags, Value, Count) when Count < Size ->
+    true = ets:insert(Name, {Key, [{tags, Tags}, {event, Value}]});
+insert(Name, Key, _, Tags, Value, _) ->
+    FirstKey = ets:first(Name),
+    true = ets:delete(Name, FirstKey),
+    true = ets:insert(Name, {Key, [{tags, Tags}, {event, Value}]}).
 
-get_last_events(Id, Count) ->
-    LastKey = ets:last(Id),
-    get_prev_event(Id, LastKey, Count, []).
+get_last_events(Name, Count) ->
+    LastKey = ets:last(Name),
+    get_prev_event(Name, LastKey, Count, []).
 
 % get_prev_event/4 used by get_last_events/2
 get_prev_event(_, '$end_of_table', _, Acc) ->
     Acc;
-get_prev_event(Id, Key, Count, Acc) when length(Acc) < Count ->
-    Event = ets:lookup(Id, Key),
-    get_prev_event(Id, ets:prev(Id, Key), Count, lists:append(Acc, Event));
+get_prev_event(Name, Key, Count, Acc) when length(Acc) < Count ->
+    Event = ets:lookup(Name, Key),
+    get_prev_event(Name, ets:prev(Name, Key), Count, lists:append(Acc, Event));
 get_prev_event(_, _, _, Acc) ->
     Acc.
 
 % get_prev_event/5 used by get_tagged_events/3
 get_prev_event(_, '$end_of_table', _, _, Acc) ->
     Acc;
-get_prev_event(Id, Key, Count, Tag, Acc) when length(Acc) < Count ->
-    [{Key, Value}] = ets:lookup(Id, Key),
+get_prev_event(Name, Key, Count, Tag, Acc) when length(Acc) < Count ->
+    [{Key, Value}] = ets:lookup(Name, Key),
     Tags = proplists:get_value(tags, Value),
-    maybe_append_event(lists:member(Tag, Tags), [{Key, Value}], Id, Key, Count, Tag, Acc);
+    maybe_append_event(lists:member(Tag, Tags), [{Key, Value}], Name, Key, Count, Tag, Acc);
 get_prev_event(_, _, _, _, Acc) ->
     Acc.
 
-maybe_append_event(true, Event, Id, Key, Count, Tag, Acc) ->
-    get_prev_event(Id, ets:prev(Id, Key), Count, Tag, lists:append(Acc, Event));
-maybe_append_event(false, _, Id, Key, Count, Tag, Acc) ->
-    get_prev_event(Id, ets:prev(Id, Key), Count, Tag, Acc).
+maybe_append_event(true, Event, Name, Key, Count, Tag, Acc) ->
+    get_prev_event(Name, ets:prev(Name, Key), Count, Tag, lists:append(Acc, Event));
+maybe_append_event(false, _, Name, Key, Count, Tag, Acc) ->
+    get_prev_event(Name, ets:prev(Name, Key), Count, Tag, Acc).

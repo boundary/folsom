@@ -2,7 +2,7 @@
 -define(GAUGE_TABLE, gauges).
 -define(HISTOGRAM_TABLE, histograms).
 -define(METER_TABLE, meters).
--define(TIMER_TABLE, timers).
+-define(HISTORY_TABLE, history).
 
 -define(DEFAULT_LIMIT, 5).
 

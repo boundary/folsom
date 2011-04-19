@@ -23,32 +23,75 @@
 
 -module(folsom_metrics_histogram).
 
--exports([new/2,
+-export([new/2,
           new/3,
           update/2,
-          clear/1]).
+          clear/1,
+          time_and_update/4,
+          get_value/1,
+          get_values/1,
+          get_statistics/1
+         ]).
 
 -record(histogram, {
-          id,
           size,
           type = uniform,
           sample
          }).
 
+-include("folsom.hrl").
 
 new(Name, SampleType) ->
     new(Name, SampleType, ?DEFAULT_SIZE).
 
 new(Name, SampleType, SampleSize) ->
-    Sample = folsom_sample_api:new(Type, Size),
-    Hist = #histogram{id = Name, size = SampleSize, type = SampleType, sample = Sample},
+    Sample = folsom_sample_api:new(SampleType, SampleSize),
+    Hist = #histogram{size = SampleSize, type = SampleType, sample = Sample},
     ets:insert(?HISTOGRAM_TABLE, {Name, Hist}).
 
 update(Name, Value) ->
-    {_, Hist} = ets:lookup(?HISTOGRAM_TABLE, Name),
+    Hist = get(Name),
     NewSample = folsom_sample_api:update(Hist#histogram.type, Hist#histogram.sample, Value),
     ets:insert(?HISTOGRAM_TABLE, {Name, Hist#histogram{sample = NewSample}}).
 
 clear(Name) ->
-    {_, Hist} = ets:lookup(?HISTOGRAM_TABLE, Name),
+    Hist = get(Name),
     ets:insert(?HISTOGRAM_TABLE, {Name, Hist#histogram{sample = []}}).
+
+time_and_update(Name, Module, Fun, Args) ->
+    Start = folsom_utils:now_epoch_micro(),
+    erlang:apply(Module, Fun, Args),
+    Stop = folsom_utils:now_epoch_micro(),
+    update(Name, Stop - Start).
+
+get_value(Name) ->
+    {_, Value} = ets:lookup(?HISTOGRAM_TABLE, Name),
+    Value.
+
+get_values(Name) ->
+    #histogram{sample = Sample} = get_value(Name),
+    Sample.
+
+get_statistics(Name) when is_atom(Name)->
+    Values = get_values(Name),
+    get_statistics(Values);
+get_statistics(Values) when is_list(Values) ->
+    [
+     {min, folsom_statistics:get_min(Values)},
+     {max, folsom_statistics:get_max(Values)},
+     {mean, folsom_statistics:get_mean(Values)},
+     {median, folsom_statistics:get_median(Values)},
+     {variance, folsom_statistics:get_variance(Values)},
+     {standard_deviation, folsom_statistics:get_standard_deviation(Values)},
+     {skewness, folsom_statistics:get_skewness(Values)},
+     {kurtosis, folsom_statistics:get_kurtosis(Values)},
+     {percentile,
+      [
+       {75, folsom_statistics:get_percentile(Values, 0.75)},
+       {95, folsom_statistics:get_percentile(Values, 0.95)},
+       {99, folsom_statistics:get_percentile(Values, 0.99)},
+       {999, folsom_statistics:get_percentile(Values, 0.999)}
+      ]
+     },
+     {histogram, folsom_statistics:get_histogram(Values)}
+     ].

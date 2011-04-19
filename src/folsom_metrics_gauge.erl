@@ -27,7 +27,10 @@
 
 -export([new/1,
          update/2,
-         clear/1]).
+         clear/1,
+         get_value/1]).
+
+-include("folsom.hrl").
 
 new(Name) ->
     Gauge = {Name, 0},
@@ -39,3 +42,7 @@ update(Name, Value) ->
 
 clear(Name) ->
     new(Name).
+
+get_value(Name) ->
+    {_, Values} = ets:lookup(?GAUGE_TABLE, Name),
+    Values.
