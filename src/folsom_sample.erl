@@ -23,7 +23,7 @@
 %%% Created : 22 Mar 2011 by joe williams <j@fastip.com>
 %%%-------------------------------------------------------------------
 
--module(folsom_sample_api).
+-module(folsom_sample).
 
 -export([
          new/1,
@@ -34,6 +34,8 @@
         ]).
 
 -include("folsom.hrl").
+
+%% API
 
 new(Type) ->
     new(Type, ?DEFAULT_SIZE, ?DEFAULT_ALPHA).

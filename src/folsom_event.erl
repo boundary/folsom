@@ -27,14 +27,11 @@
 -behaviour(gen_event).
 
 %% API
--export([add_handler/3,
+-export([
+         add_handler/3,
          add_handler/4,
          add_handler/5,
          add_handler/6,
-         add_sup_handler/3,
-         add_sup_handler/4,
-         add_sup_handler/5,
-         add_sup_handler/6,
          delete_handler/1,
          handler_exists/1,
          notify/1,
@@ -42,7 +39,7 @@
          get_handlers_info/0,
          get_info/1,
          get_values/1,
-         get_histogram_statistics/1
+         get_histogram_sample/1
         ]).
 
 %% gen_event callbacks
@@ -57,6 +54,8 @@
           type,
           history_size
          }).
+
+-include("folsom.hrl").
 
 %%%===================================================================
 %%% API
@@ -74,18 +73,6 @@ add_handler(Type, Name, Tags, SampleType, SampleSize) ->
     gen_event:add_handler(?EVENTMGR, {?MODULE, Name}, [Type, Name, Tags, SampleType, SampleSize]).
 
 add_handler(Type, Name, Tags, SampleType, SampleSize, Alpha) ->
-    gen_event:add_handler(?EVENTMGR, {?MODULE, Name}, [Type, Name, Tags, SampleType, SampleSize, Alpha]).
-
-add_sup_handler(Type, Name, Tags) ->
-    gen_event:add_handler(?EVENTMGR, {?MODULE, Name}, [Type, Name, Tags]).
-
-add_sup_handler(Type, Name, Tags, SampleSize) ->
-    gen_event:add_handler(?EVENTMGR, {?MODULE, Name}, [Type, Name, Tags, SampleSize]).
-
-add_sup_handler(Type, Name, Tags, SampleType, SampleSize) ->
-    gen_event:add_handler(?EVENTMGR, {?MODULE, Name}, [Type, Name, Tags, SampleType, SampleSize]).
-
-add_sup_handler(Type, Name, Tags, SampleType, SampleSize, Alpha) ->
     gen_event:add_handler(?EVENTMGR, {?MODULE, Name}, [Type, Name, Tags, SampleType, SampleSize, Alpha]).
 
 delete_handler(Id) ->
@@ -113,8 +100,8 @@ get_values(Name) ->
     [{_, Info}] = get_info(Name),
     gen_event:call(?EVENTMGR, {?MODULE, Name}, {proplists:get_value(type, Info), Name}).
 
-get_histogram_statistics(Name) ->
-    gen_event:call(?EVENTMGR, {?MODULE, Name}, {histogram_statistics, Name}).
+get_histogram_sample(Name) ->
+    gen_event:call(?EVENTMGR, {?MODULE, Name}, {histogram_sample, Name}).
 
 % internal functions
 
@@ -156,8 +143,8 @@ init([histogram, Name, Tags, SampleType, SampleSize, Alpha]) ->
     {ok, #metric{name = Name, type = histogram, tags = Tags}};
 %% History
 init([history, Name, SampleSize, Tags]) ->
-    folsom_metrics_history:new(Name, SampleSize),
-    {ok, #metric{name = Name, type = history, tags = Tags}};
+    folsom_metrics_history:new(Name),
+    {ok, #metric{name = Name, type = history, history_size = SampleSize, tags = Tags}};
 %% Meter
 init([meter, Name, Interval, Tags]) ->
     folsom_metrics_meter:new(Name, Interval),
@@ -228,11 +215,11 @@ handle_call({gauge, Name}, State) ->
     Values = folsom_metrics_gauge:get_value(Name),
     {ok, Values, State};
 %% Histogram
-handle_call({histogram_statistics, Name}, State) ->
+handle_call({histogram, Name}, State) ->
     Values = folsom_metrics_histogram:get_values(Name),
     Stats = folsom_statistics:get_statistics(Values),
     {ok, Stats, State};
-handle_call({histogram, Name}, State) ->
+handle_call({histogram_sample, Name}, State) ->
     Values = folsom_metrics_histogram:get_values(Name),
     {ok, Values, State};
 %% History

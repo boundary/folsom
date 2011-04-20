@@ -48,18 +48,18 @@ new(Name, SampleType) ->
     new(Name, SampleType, ?DEFAULT_SIZE).
 
 new(Name, SampleType, SampleSize) ->
-    Sample = folsom_sample_api:new(SampleType, SampleSize),
+    Sample = folsom_sample:new(SampleType, SampleSize),
     Hist = #histogram{type = SampleType, sample = Sample},
     ets:insert(?HISTOGRAM_TABLE, {Name, Hist}).
 
 new(Name, SampleType, SampleSize, Alpha) ->
-    Sample = folsom_sample_api:new(SampleType, SampleSize, Alpha),
+    Sample = folsom_sample:new(SampleType, SampleSize, Alpha),
     Hist = #histogram{type = SampleType, sample = Sample},
     ets:insert(?HISTOGRAM_TABLE, {Name, Hist}).
 
 update(Name, Value) ->
     Hist = get_value(Name),
-    NewSample = folsom_sample_api:update(Hist#histogram.type, Hist#histogram.sample, Value),
+    NewSample = folsom_sample:update(Hist#histogram.type, Hist#histogram.sample, Value),
     ets:insert(?HISTOGRAM_TABLE, {Name, Hist#histogram{sample = NewSample}}).
 
 clear(Name) ->
@@ -80,4 +80,4 @@ get_value(Name) ->
 % pulls the sample out of the record gotten from ets
 get_values(Name) ->
     Hist = get_value(Name),
-    folsom_sample_api:get_values(Hist#histogram.type, Hist#histogram.sample).
+    folsom_sample:get_values(Hist#histogram.type, Hist#histogram.sample).

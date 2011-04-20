@@ -5,10 +5,9 @@
 -define(HISTORY_TABLE, history).
 
 -define(DEFAULT_LIMIT, 5).
-
 -define(DEFAULT_SIZE, 5000).
-
 -define(DEFAULT_ALPHA, 1).
+-define(DEFAULT_INTERVAL, 5).
 
 -record(uniform, {
     size = 5000,
