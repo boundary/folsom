@@ -10,6 +10,24 @@
 
 -define(DEFAULT_ALPHA, 1).
 
+-record(uniform, {
+    size = 5000,
+    reservoir = []
+}).
+
+-record(exdec, {
+          start = 0,
+          next = 0,
+          alpha = 1,
+          size = 5000,
+          reservoir = []
+         }).
+
+-record(none, {
+    size = 5000,
+    reservoir = []
+}).
+
 -define(SYSTEM_INFO, [
                    allocated_areas,
                    allocator,

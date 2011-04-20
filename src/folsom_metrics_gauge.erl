@@ -44,5 +44,5 @@ clear(Name) ->
     new(Name).
 
 get_value(Name) ->
-    {_, Values} = ets:lookup(?GAUGE_TABLE, Name),
+    [{_, Values}] = ets:lookup(?GAUGE_TABLE, Name),
     Values.

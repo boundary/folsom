@@ -24,7 +24,7 @@
 %%% @end
 %%%------------------------------------------------------------------
 
--module(folsom_metrics_statistics).
+-module(folsom_statistics).
 
 -export([get_max/1,
          get_min/1,

@@ -92,7 +92,7 @@ mean_rate(Name) ->
     calc_mean_rate(Start, Count).
 
 get_value(Name) ->
-    {_, Value} = ets:lookup(?METER_TABLE, Name),
+    [{_, Value}] = ets:lookup(?METER_TABLE, Name),
     Value.
 
 % Internal Functions

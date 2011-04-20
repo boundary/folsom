@@ -23,14 +23,16 @@
 
 -module(folsom_metrics_histogram).
 
--export([new/2,
-          new/3,
-          update/2,
-          clear/1,
-          time_and_update/4,
-          get_value/1,
-          get_values/1,
-          get_statistics/1
+-export([new/1,
+         new/2,
+         new/3,
+         new/4,
+         update/2,
+         clear/1,
+         time_and_update/4,
+         get_value/1,
+         get_values/1,
+         get_statistics/1
          ]).
 
 -record(histogram, {
@@ -41,11 +43,19 @@
 
 -include("folsom.hrl").
 
+new(Name) ->
+    new(Name, uniform).
+
 new(Name, SampleType) ->
     new(Name, SampleType, ?DEFAULT_SIZE).
 
 new(Name, SampleType, SampleSize) ->
     Sample = folsom_sample_api:new(SampleType, SampleSize),
+    Hist = #histogram{size = SampleSize, type = SampleType, sample = Sample},
+    ets:insert(?HISTOGRAM_TABLE, {Name, Hist}).
+
+new(Name, SampleType, SampleSize, Alpha) ->
+    Sample = folsom_sample_api:new(SampleType, SampleSize, Alpha),
     Hist = #histogram{size = SampleSize, type = SampleType, sample = Sample},
     ets:insert(?HISTOGRAM_TABLE, {Name, Hist}).
 
@@ -64,14 +74,26 @@ time_and_update(Name, Module, Fun, Args) ->
     Stop = folsom_utils:now_epoch_micro(),
     update(Name, Stop - Start).
 
+% gets the histogram record from ets
 get_value(Name) ->
-    {_, Value} = ets:lookup(?HISTOGRAM_TABLE, Name),
+    [{_, Value}] = ets:lookup(?HISTOGRAM_TABLE, Name),
     Value.
 
+% pulls the sample out of the record gotten from ets
 get_values(Name) ->
-    #histogram{sample = Sample} = get_value(Name),
-    Sample.
+    Hist = get_value(Name),
+    Sample = Hist#histogram.sample,
+    Type = Hist#histogram.type,
+    get_values(Type, Sample).
 
+get_values(uniform, Sample) ->
+    Sample#uniform.reservoir;
+get_values(none, Sample) ->
+    Sample#none.reservoir;
+get_values(exdec, Sample) ->
+    Sample#exdec.reservoir.
+
+% calculates stats on a sample
 get_statistics(Name) when is_atom(Name)->
     Values = get_values(Name),
     get_statistics(Values);

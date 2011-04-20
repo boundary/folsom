@@ -41,10 +41,8 @@
 
 -define(RAND, 999999999999).
 
--record(uniform, {
-    size = 5000,
-    reservoir = []
-}).
+-include("folsom.hrl").
+
 
 new(Size) ->
     #uniform{size = Size}.

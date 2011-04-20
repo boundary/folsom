@@ -32,10 +32,7 @@
          get_values/1
         ]).
 
--record(none, {
-    size = 5000,
-    reservoir = []
-}).
+-include("folsom.hrl").
 
 new(Size) ->
     #none{size = Size}.

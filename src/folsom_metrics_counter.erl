@@ -52,7 +52,7 @@ dec(Name, Value) ->
     ets:update_counter(?COUNTER_TABLE, Name, Value * -1).
 
 get_value(Name) ->
-    {_, Values} = ets:lookup(?COUNTER_TABLE, Name),
+    [{_, Values}] = ets:lookup(?COUNTER_TABLE, Name),
     Values.
 
 clear(Name) ->
