@@ -45,7 +45,6 @@
 
 -include("folsom.hrl").
 
-
 new(Size, Alpha) ->
     Now = folsom_utils:now_epoch(),
     #exdec{start = Now, next = Now + ?HOURSECS, alpha = Alpha, size = Size}.

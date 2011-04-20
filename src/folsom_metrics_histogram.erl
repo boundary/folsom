@@ -31,17 +31,15 @@
          clear/1,
          time_and_update/4,
          get_value/1,
-         get_values/1,
-         get_statistics/1
+         get_values/1
          ]).
 
--record(histogram, {
-          size,
-          type = uniform,
-          sample
-         }).
-
 -include("folsom.hrl").
+
+-record(histogram, {
+          type = uniform,
+          sample = #uniform{}
+         }).
 
 new(Name) ->
     new(Name, uniform).
@@ -51,21 +49,21 @@ new(Name, SampleType) ->
 
 new(Name, SampleType, SampleSize) ->
     Sample = folsom_sample_api:new(SampleType, SampleSize),
-    Hist = #histogram{size = SampleSize, type = SampleType, sample = Sample},
+    Hist = #histogram{type = SampleType, sample = Sample},
     ets:insert(?HISTOGRAM_TABLE, {Name, Hist}).
 
 new(Name, SampleType, SampleSize, Alpha) ->
     Sample = folsom_sample_api:new(SampleType, SampleSize, Alpha),
-    Hist = #histogram{size = SampleSize, type = SampleType, sample = Sample},
+    Hist = #histogram{type = SampleType, sample = Sample},
     ets:insert(?HISTOGRAM_TABLE, {Name, Hist}).
 
 update(Name, Value) ->
-    Hist = get(Name),
+    Hist = get_value(Name),
     NewSample = folsom_sample_api:update(Hist#histogram.type, Hist#histogram.sample, Value),
     ets:insert(?HISTOGRAM_TABLE, {Name, Hist#histogram{sample = NewSample}}).
 
 clear(Name) ->
-    Hist = get(Name),
+    Hist = get_value(Name),
     ets:insert(?HISTOGRAM_TABLE, {Name, Hist#histogram{sample = []}}).
 
 time_and_update(Name, Module, Fun, Args) ->
@@ -82,38 +80,4 @@ get_value(Name) ->
 % pulls the sample out of the record gotten from ets
 get_values(Name) ->
     Hist = get_value(Name),
-    Sample = Hist#histogram.sample,
-    Type = Hist#histogram.type,
-    get_values(Type, Sample).
-
-get_values(uniform, Sample) ->
-    Sample#uniform.reservoir;
-get_values(none, Sample) ->
-    Sample#none.reservoir;
-get_values(exdec, Sample) ->
-    Sample#exdec.reservoir.
-
-% calculates stats on a sample
-get_statistics(Name) when is_atom(Name)->
-    Values = get_values(Name),
-    get_statistics(Values);
-get_statistics(Values) when is_list(Values) ->
-    [
-     {min, folsom_statistics:get_min(Values)},
-     {max, folsom_statistics:get_max(Values)},
-     {mean, folsom_statistics:get_mean(Values)},
-     {median, folsom_statistics:get_median(Values)},
-     {variance, folsom_statistics:get_variance(Values)},
-     {standard_deviation, folsom_statistics:get_standard_deviation(Values)},
-     {skewness, folsom_statistics:get_skewness(Values)},
-     {kurtosis, folsom_statistics:get_kurtosis(Values)},
-     {percentile,
-      [
-       {75, folsom_statistics:get_percentile(Values, 0.75)},
-       {95, folsom_statistics:get_percentile(Values, 0.95)},
-       {99, folsom_statistics:get_percentile(Values, 0.99)},
-       {999, folsom_statistics:get_percentile(Values, 0.999)}
-      ]
-     },
-     {histogram, folsom_statistics:get_histogram(Values)}
-     ].
+    folsom_sample_api:get_values(Hist#histogram.type, Hist#histogram.sample).

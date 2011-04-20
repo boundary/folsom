@@ -43,7 +43,6 @@
 
 -include("folsom.hrl").
 
-
 new(Size) ->
     #uniform{size = Size}.
 

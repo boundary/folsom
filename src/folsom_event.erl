@@ -41,7 +41,8 @@
          get_handlers/0,
          get_handlers_info/0,
          get_info/1,
-         get_values/1
+         get_values/1,
+         get_histogram_statistics/1
         ]).
 
 %% gen_event callbacks
@@ -111,6 +112,9 @@ get_info(Name) ->
 get_values(Name) ->
     [{_, Info}] = get_info(Name),
     gen_event:call(?EVENTMGR, {?MODULE, Name}, {proplists:get_value(type, Info), Name}).
+
+get_histogram_statistics(Name) ->
+    gen_event:call(?EVENTMGR, {?MODULE, Name}, {histogram_statistics, Name}).
 
 % internal functions
 
@@ -224,10 +228,11 @@ handle_call({gauge, Name}, State) ->
     Values = folsom_metrics_gauge:get_value(Name),
     {ok, Values, State};
 %% Histogram
+handle_call({histogram_statistics, Name}, State) ->
+    Values = folsom_metrics_histogram:get_values(Name),
+    Stats = folsom_statistics:get_statistics(Values),
+    {ok, Stats, State};
 handle_call({histogram, Name}, State) ->
-    Values = folsom_metrics_histogram:get_statistics(Name),
-    {ok, Values, State};
-handle_call({histogram_values, Name}, State) ->
     Values = folsom_metrics_histogram:get_values(Name),
     {ok, Values, State};
 %% History
