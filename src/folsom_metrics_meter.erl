@@ -25,15 +25,10 @@
 -module(folsom_metrics_meter).
 
 -export([new/1,
-         new/2,
          tick/1,
          mark/1,
          mark/2,
-         one_minute_rate/1,
-         five_minute_rate/1,
-         fifteen_minute_rate/1,
-         mean_rate/1,
-         get_value/1
+         get_values/1
         ]).
 
 
@@ -42,24 +37,19 @@
           five,
           fifteen,
           count = 0,
-          start_time,
-          interval
+          start_time
          }).
 
 -include("folsom.hrl").
 
 new(Name) ->
-    new(Name, 5).
-
-new(Name, Interval) ->
     OneMin = folsom_ewma:one_minute_ewma(),
     FiveMin = folsom_ewma:five_minute_ewma(),
     FifteenMin = folsom_ewma:fifteen_minute_ewma(),
-    timer:send_interval(Interval, {meter_tick, Name}),
-    ets:insert(?METER_TABLE,{Name, #meter{one = OneMin, five = FiveMin, fifteen = FifteenMin, interval = Interval, start_time = folsom_utils:now_epoch_micro()}}).
+    ets:insert(?METER_TABLE,{Name, #meter{one = OneMin, five = FiveMin, fifteen = FifteenMin, start_time = folsom_utils:now_epoch_micro()}}).
 
 tick(Name) ->
-    #meter{one = OneMin, five = FiveMin, fifteen = FifteenMin} = Meter = get(Name),
+    #meter{one = OneMin, five = FiveMin, fifteen = FifteenMin} = Meter = get_value(Name),
     OneMin1 = folsom_ewma:tick(OneMin),
     FiveMin1 = folsom_ewma:tick(FiveMin),
     FifteenMin1 = folsom_ewma:tick(FifteenMin),
@@ -69,33 +59,32 @@ mark(Name) ->
     mark(Name, 1).
 
 mark(Name, Value) ->
-    #meter{count = Count, one = OneMin, five = FiveMin, fifteen = FifteenMin} = Meter = get(Name),
+    #meter{count = Count, one = OneMin, five = FiveMin, fifteen = FifteenMin} = Meter = get_value(Name),
     OneMin1 = folsom_ewma:update(OneMin, Value),
     FiveMin1 = folsom_ewma:update(FiveMin, Value),
     FifteenMin1 = folsom_ewma:update(FifteenMin, Value),
     ets:insert(?METER_TABLE, {Name, Meter#meter{count = Count + Value, one = OneMin1, five = FiveMin1, fifteen = FifteenMin1}}).
 
-one_minute_rate(Name) ->
-    #meter{one = OneMin} = get(Name),
-    folsom_ewma:rate(OneMin).
+get_values(Name) ->
+    #meter{one = OneMin, five = FiveMin, fifteen = FifteenMin} = Meter = get_value(Name),
+    [
+     {one, get_rate(OneMin)},
+     {five, get_rate(FiveMin)},
+     {fifteen, get_rate(FifteenMin)},
+     {mean, get_mean_rate(Meter)}
+    ].
 
-five_minute_rate(Name) ->
-    #meter{five = FiveMin} = get(Name),
-    folsom_ewma:rate(FiveMin).
+% internal functions
 
-fifteen_minute_rate(Name) ->
-    #meter{fifteen = FifteenMin} = get(Name),
-    folsom_ewma:rate(FifteenMin).
+get_rate(EWMA) ->
+    folsom_ewma:rate(EWMA).
 
-mean_rate(Name) ->
-    #meter{count = Count, start_time = Start} = get(Name),
+get_mean_rate(#meter{count = Count, start_time = Start}) ->
     calc_mean_rate(Start, Count).
 
 get_value(Name) ->
     [{_, Value}] = ets:lookup(?METER_TABLE, Name),
     Value.
-
-% Internal Functions
 
 calc_mean_rate(_, 0) ->
     0.0;

@@ -79,7 +79,7 @@ rate(#ewma{rate = Rate}) ->
 % Internal API
 
 rate_calc(true, Alpha, Rate, InstantRate) ->
-    Rate1 = (Alpha * (InstantRate - Rate)),
+    Rate1 = Rate + (Alpha * (InstantRate - Rate)),
     Rate1;
 rate_calc(false, _, _, InstantRate) ->
     InstantRate.

@@ -28,10 +28,10 @@
 
 %% API
 -export([
+         add_handler/2,
          add_handler/3,
          add_handler/4,
          add_handler/5,
-         add_handler/6,
          delete_handler/1,
          handler_exists/1,
          notify/1,
@@ -63,24 +63,24 @@
 
 % generic event handling api
 
-add_handler(Type, Name, Tags) ->
-    gen_event:add_handler(?EVENTMGR, {?MODULE, Name}, [Type, Name, Tags]).
+add_handler(Type, Name) ->
+    maybe_add_handler(Type, Name, handler_exists(Name)).
 
-add_handler(Type, Name, Tags, SampleSize) ->
-    gen_event:add_handler(?EVENTMGR, {?MODULE, Name}, [Type, Name, Tags, SampleSize]).
+add_handler(Type, Name, SampleSize) ->
+    maybe_add_handler(Type, Name, SampleSize, handler_exists(Name)).
 
-add_handler(Type, Name, Tags, SampleType, SampleSize) ->
-    gen_event:add_handler(?EVENTMGR, {?MODULE, Name}, [Type, Name, Tags, SampleType, SampleSize]).
+add_handler(Type, Name, SampleType, SampleSize) ->
+    maybe_add_handler(Type, Name, SampleType, SampleSize, handler_exists(Name)).
 
-add_handler(Type, Name, Tags, SampleType, SampleSize, Alpha) ->
-    gen_event:add_handler(?EVENTMGR, {?MODULE, Name}, [Type, Name, Tags, SampleType, SampleSize, Alpha]).
+add_handler(Type, Name, SampleType, SampleSize, Alpha) ->
+    maybe_add_handler(Type, Name, SampleType, SampleSize, Alpha, handler_exists(Name)).
 
-delete_handler(Id) ->
-    gen_event:delete_handler(?EVENTMGR, ?MODULE, Id).
+delete_handler(Name) ->
+    gen_event:delete_handler(?EVENTMGR, ?MODULE, Name).
 
-handler_exists(Id) ->
+handler_exists(Name) ->
     {_, Handlers} = lists:unzip(gen_event:which_handlers(?EVENTMGR)),
-    lists:member(Id, Handlers).
+    lists:member(Name, Handlers).
 
 notify(Event) ->
     gen_event:notify(?EVENTMGR, Event).
@@ -121,34 +121,35 @@ get_histogram_sample(Name) ->
 %%--------------------------------------------------------------------
 
 %% Counter
-init([counter, Name, Tags]) ->
+init([counter, Name]) ->
     folsom_metrics_counter:new(Name),
-    {ok, #metric{name = Name, type = counter, tags = Tags}};
+    {ok, #metric{name = Name, type = counter}};
 %% Gauge
-init([gauge, Name, Tags]) ->
+init([gauge, Name]) ->
     folsom_metrics_gauge:new(Name),
-    {ok, #metric{name = Name, type = gauge, tags = Tags}};
+    {ok, #metric{name = Name, type = gauge}};
 %% Histogram
-init([histogram, Name, Tags]) ->
+init([histogram, Name]) ->
     folsom_metrics_histogram:new(Name),
-    {ok, #metric{name = Name, type = histogram, tags = Tags}};
-init([histogram, Name, Tags, SampleType]) ->
+    {ok, #metric{name = Name, type = histogram}};
+init([histogram, Name, SampleType]) ->
     folsom_metrics_histogram:new(Name, SampleType),
-    {ok, #metric{name = Name, type = histogram, tags = Tags}};
-init([histogram, Name, Tags, SampleType, SampleSize]) ->
+    {ok, #metric{name = Name, type = histogram}};
+init([histogram, Name, SampleType, SampleSize]) ->
     folsom_metrics_histogram:new(Name, SampleType, SampleSize),
-    {ok, #metric{name = Name, type = histogram, tags = Tags}};
-init([histogram, Name, Tags, SampleType, SampleSize, Alpha]) ->
+    {ok, #metric{name = Name, type = histogram}};
+init([histogram, Name, SampleType, SampleSize, Alpha]) ->
     folsom_metrics_histogram:new(Name, SampleType, SampleSize, Alpha),
-    {ok, #metric{name = Name, type = histogram, tags = Tags}};
+    {ok, #metric{name = Name, type = histogram}};
 %% History
-init([history, Name, SampleSize, Tags]) ->
+init([history, Name, SampleSize]) ->
     folsom_metrics_history:new(Name),
-    {ok, #metric{name = Name, type = history, history_size = SampleSize, tags = Tags}};
+    {ok, #metric{name = Name, type = history, history_size = SampleSize}};
 %% Meter
-init([meter, Name, Interval, Tags]) ->
-    folsom_metrics_meter:new(Name, Interval),
-    {ok, #metric{name = Name, type = meter, tags = Tags}}.
+init([meter, Name]) ->
+    {ok, _} = timer:send_interval(?DEFAULT_INTERVAL, {meter_tick, Name}),
+    folsom_metrics_meter:new(Name),
+    {ok, #metric{name = Name, type = meter}}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -181,8 +182,8 @@ handle_event({Name, Value}, #metric{name = Name1, type = histogram} = State) whe
     folsom_metrics_histogram:update(Name, Value),
     {ok, State};
 %% History
-handle_event({Name, {Tags, Value}}, #metric{name = Name1, type = history, history_size = HistorySize} = State) when Name == Name1 ->
-    folsom_metrics_history:update(Name, HistorySize, Tags, Value),
+handle_event({Name, {Value}}, #metric{name = Name1, type = history, history_size = HistorySize} = State) when Name == Name1 ->
+    folsom_metrics_history:update(Name, HistorySize, Value),
     {ok, State};
 %% Meter
 handle_event({Name, Value}, #metric{name = Name1, type = meter} = State) when Name == Name1 ->
@@ -204,8 +205,8 @@ handle_event(_, State) ->
 %%                   {remove_handler, Reply}
 %% @end
 %%--------------------------------------------------------------------
-handle_call(info, #metric{name = Name, type = Type, tags = Tags} = State) ->
-    {ok, [{Name, [{tags, Tags}, {type, Type}]}], State};
+handle_call(info, #metric{name = Name, type = Type} = State) ->
+    {ok, [{Name, [{type, Type}]}], State};
 %% Counter
 handle_call({counter, Name}, State) ->
     Values = folsom_metrics_counter:get_value(Name),
@@ -231,19 +232,7 @@ handle_call({history, Name}, State) ->
     {ok, Values, State};
 %% Meter
 handle_call({meter, Name}, State) ->
-    Values = folsom_metrics_meter:get_value(Name),
-    {ok, Values, State};
-handle_call({meter_mean_rate, Name}, State) ->
-    Values = folsom_metrics_meter:mean_rate(Name),
-    {ok, Values, State};
-handle_call({meter_one_rate, Name}, State) ->
-    Values = folsom_metrics_meter:one_minute_rate(Name),
-    {ok, Values, State};
-handle_call({meter_five_rate, Name}, State) ->
-    Values = folsom_metrics_meter:five_minute_rate(Name),
-    {ok, Values, State};
-handle_call({meter_fifteen_rate, Name}, State) ->
-    Values = folsom_metrics_meter:fifteen_minute_rate(Name),
+    Values = folsom_metrics_meter:get_values(Name),
     {ok, Values, State}.
 
 %%--------------------------------------------------------------------
@@ -259,6 +248,9 @@ handle_call({meter_fifteen_rate, Name}, State) ->
 %%                         remove_handler
 %% @end
 %%--------------------------------------------------------------------
+handle_info({meter_tick, Name}, #metric{name = Name1} = State) when Name == Name1->
+    folsom_metrics_meter:tick(Name),
+    {ok, State};
 handle_info(_Info, State) ->
     {ok, State}.
 
@@ -289,3 +281,23 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
+
+maybe_add_handler(Type, Name, false) ->
+    gen_event:add_handler(?EVENTMGR, {?MODULE, Name}, [Type, Name]);
+maybe_add_handler(_, Name, true) ->
+    {metric_already_exists, Name}.
+
+maybe_add_handler(Type, Name, SampleSize, false) ->
+    gen_event:add_handler(?EVENTMGR, {?MODULE, Name}, [Type, Name, SampleSize]);
+maybe_add_handler(_, Name, _, true) ->
+    {metric_already_exists, Name}.
+
+maybe_add_handler(Type, Name, SampleType, SampleSize, false) ->
+    gen_event:add_handler(?EVENTMGR, {?MODULE, Name}, [Type, Name, SampleType, SampleSize]);
+maybe_add_handler(_, Name, _, _, true) ->
+    {metric_already_exists, Name}.
+
+maybe_add_handler(Type, Name, SampleType, SampleSize, Alpha, false) ->
+    gen_event:add_handler(?EVENTMGR, {?MODULE, Name}, [Type, Name, SampleType, SampleSize, Alpha]);
+maybe_add_handler(_, Name, _, _, _, true) ->
+    {metric_already_exists, Name}.
