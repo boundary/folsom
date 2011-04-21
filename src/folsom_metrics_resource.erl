@@ -28,7 +28,6 @@
 
 -export([init/1,
          content_types_provided/2,
-         content_types_accepted/2,
          to_json/2,
          allowed_methods/2,
          resource_exists/2
@@ -43,9 +42,6 @@ init(_) -> {ok, undefined}.
 
 content_types_provided(ReqData, Context) ->
     {[{"application/json", to_json}], ReqData, Context}.
-
-content_types_accepted(ReqData, Context) ->
-    {[{"application/json", from_json}], ReqData, Context}.
 
 allowed_methods(ReqData, Context) ->
     {['GET'], ReqData, Context}.
