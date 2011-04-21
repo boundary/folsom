@@ -182,7 +182,7 @@ handle_event({Name, Value}, #metric{name = Name1, type = histogram} = State) whe
     folsom_metrics_histogram:update(Name, Value),
     {ok, State};
 %% History
-handle_event({Name, {Value}}, #metric{name = Name1, type = history, history_size = HistorySize} = State) when Name == Name1 ->
+handle_event({Name, Value}, #metric{name = Name1, type = history, history_size = HistorySize} = State) when Name == Name1 ->
     folsom_metrics_history:update(Name, HistorySize, Value),
     {ok, State};
 %% Meter
