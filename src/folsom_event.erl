@@ -76,7 +76,7 @@ add_handler(Type, Name, SampleType, SampleSize, Alpha) ->
     maybe_add_handler(Type, Name, SampleType, SampleSize, Alpha, handler_exists(Name)).
 
 delete_handler(Name) ->
-    gen_event:delete_handler(?EVENTMGR, ?MODULE, Name).
+    gen_event:delete_handler(?EVENTMGR, {?MODULE, Name}, []).
 
 handler_exists(Name) ->
     {_, Handlers} = lists:unzip(gen_event:which_handlers(?EVENTMGR)),
@@ -264,6 +264,22 @@ handle_info(_Info, State) ->
 %% @spec terminate(Reason, State) -> void()
 %% @end
 %%--------------------------------------------------------------------
+terminate(_, #metric{name = Name, type = counter}) ->
+    ets:delete(?COUNTER_TABLE, Name),
+    ok;
+terminate(_, #metric{name = Name, type = gauge}) ->
+    ets:delete(?GAUGE_TABLE, Name),
+    ok;
+terminate(_, #metric{name = Name, type = histogram}) ->
+    ets:delete(?HISTOGRAM_TABLE, Name),
+    ok;
+terminate(_, #metric{name = Name, type = history}) ->
+    ets:delete(Name),
+    ets:delete(?HISTORY_TABLE, Name),
+    ok;
+terminate(_, #metric{name = Name, type = meter}) ->
+    ets:delete(?METER_TABLE, Name),
+    ok;
 terminate(_Reason, _State) ->
     ok.
 
