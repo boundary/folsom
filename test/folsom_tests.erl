@@ -19,7 +19,6 @@ create_metrics() ->
     ok = folsom_metrics:new_history(historytest),
     ok = folsom_metrics:new_meter(meter),
 
-    io:format("metrics created: ~p~n", [folsom_metrics:get_metrics()]),
     5 = length(folsom_metrics:get_metrics()).
 
 populate_metrics() ->
