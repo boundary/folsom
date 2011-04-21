@@ -30,21 +30,14 @@ populate_metrics() ->
     folsom_metrics:notify({meter, 5}).
 
 check_metrics() ->
-
-    io:format("here2", []),
-
     1 = folsom_metrics:get_metric_value(counter),
-    io:format("here3", []),
 
     2 = folsom_metrics:get_metric_value(gauge),
-    io:format("here4", []),
 
     Histogram = folsom_metrics:get_metric_value(histogram),
     3 = proplists:get_value(min, Histogram),
-    io:format("here5", []),
 
     1 = length(folsom_metrics:get_metric_value(historytest)),
-    io:format("here6", []),
 
     Meter = folsom_metrics:get_metric_value(meter),
     0 > proplists:get_value(one, Meter).
