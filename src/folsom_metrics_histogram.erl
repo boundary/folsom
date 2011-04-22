@@ -29,7 +29,6 @@
          new/4,
          update/2,
          clear/1,
-         time_and_update/4,
          get_value/1,
          get_values/1
          ]).
@@ -65,12 +64,6 @@ update(Name, Value) ->
 clear(Name) ->
     Hist = get_value(Name),
     ets:insert(?HISTOGRAM_TABLE, {Name, Hist#histogram{sample = []}}).
-
-time_and_update(Name, Module, Fun, Args) ->
-    Start = folsom_utils:now_epoch_micro(),
-    erlang:apply(Module, Fun, Args),
-    Stop = folsom_utils:now_epoch_micro(),
-    update(Name, Stop - Start).
 
 % gets the histogram record from ets
 get_value(Name) ->

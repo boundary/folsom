@@ -42,7 +42,9 @@
          get_metrics_info/0,
          get_metric_info/1,
          get_metric_value/1,
-         get_histogram_sample/1
+         get_histogram_sample/1,
+         get_history_values/2,
+         histogram_timed_update/4
         ]).
 
 -include("folsom.hrl").
@@ -99,3 +101,12 @@ get_metric_value(Name) ->
 
 get_histogram_sample(Name) ->
     folsom_event:get_histogram_sample(Name).
+
+get_history_values(Name, Count) ->
+    folsom_event:get_history_values(Name, Count).
+
+histogram_timed_update(Name, Mod, Fun, Args) ->
+    Start = folsom_utils:now_epoch_micro(),
+    erlang:apply(Mod, Fun, Args),
+    Stop = folsom_utils:now_epoch_micro(),
+    notify({Name, Stop - Start}).

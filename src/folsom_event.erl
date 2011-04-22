@@ -39,7 +39,8 @@
          get_handlers_info/0,
          get_info/1,
          get_values/1,
-         get_histogram_sample/1
+         get_histogram_sample/1,
+         get_history_values/2
         ]).
 
 %% gen_event callbacks
@@ -99,6 +100,9 @@ get_info(Name) ->
 get_values(Name) ->
     [{_, Info}] = get_info(Name),
     gen_event:call(?EVENTMGR, {?MODULE, Name}, {proplists:get_value(type, Info), Name}).
+
+get_history_values(Name, Count) ->
+    gen_event:call(?EVENTMGR, {?MODULE, Name}, {history, {Name, Count}}).
 
 get_histogram_sample(Name) ->
     gen_event:call(?EVENTMGR, {?MODULE, Name}, {histogram_sample, Name}).
