@@ -1,5 +1,5 @@
 %%%
-%%% Copyright 2011, fast_ip
+%%% Copyright 2011, Boundary
 %%%
 %%% Licensed under the Apache License, Version 2.0 (the "License");
 %%% you may not use this file except in compliance with the License.
@@ -16,12 +16,12 @@
 
 
 %%%-------------------------------------------------------------------
-%%% @author joe williams <j@fastip.com>
+%%% File:      folsom_event.erl
+%%% @author    joe williams <j@boundary.com>
 %%% @doc
-%%% _metrics
 %%% @end
-%%% Created : 22 Mar 2011 by joe williams <j@fastip.com>
-%%%-------------------------------------------------------------------
+%%%------------------------------------------------------------------
+
 -module(folsom_event).
 
 -behaviour(gen_event).

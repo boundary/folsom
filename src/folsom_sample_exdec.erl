@@ -1,5 +1,5 @@
 %%%
-%%% Copyright 2011, fast_ip
+%%% Copyright 2011, Boundary
 %%%
 %%% Licensed under the Apache License, Version 2.0 (the "License");
 %%% you may not use this file except in compliance with the License.
@@ -17,8 +17,7 @@
 
 %%%-------------------------------------------------------------------
 %%% File:      folsom_sample_exdec.erl
-%%% @author    joe williams <j@fastip.com>
-%%% @copyright 2011 fast_ip
+%%% @author    joe williams <j@boundary.com>
 %%% @doc
 %%% erlang implementation of a exponentially-decaying random sample
 %%% based on a java implementation by coda hale, which can be found at:

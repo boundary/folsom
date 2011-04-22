@@ -18,7 +18,6 @@
 %%%-------------------------------------------------------------------
 %%% File:      folsom_ewma.erl
 %%% @author    joe williams <j@boundary.com>
-%%% @copyright 2011 Boundary
 %%% @doc
 %%% based on https://github.com/codahale/metrics/blob/development/src/main/java/com/yammer/metrics/stats/EWMA.java
 %%% references:

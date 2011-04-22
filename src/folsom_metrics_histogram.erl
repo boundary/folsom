@@ -1,3 +1,4 @@
+%%%
 %%% Copyright 2011, Boundary
 %%%
 %%% Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,10 +16,10 @@
 
 
 %%%-------------------------------------------------------------------
-%%% @author joe williams <j@boundary.com>
+%%% File:      folsom_metrics_histogram.erl
+%%% @author    joe williams <j@boundary.com>
 %%% @doc
 %%% @end
-%%% Created : 22 Mar 2011 by joe williams <j@boundary.com>
 %%%------------------------------------------------------------------
 
 -module(folsom_metrics_histogram).
