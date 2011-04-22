@@ -2,7 +2,7 @@
 
 folsom is an Erlang based metrics system inspired by Coda Hale's metrics (https://github.com/codahale/metrics/). The metrics API's purpose is to collect realtime metrics from your Erlang applications and publish them via HTTP+JSON. folsom is *not* a persistent store, it uses ETS and state to hold values in memory. Generally an external service should be used to consume folsom's data and calculations. There are 5 types of metrics, counters, gauges, histograms, histories and meters. One of two differences from Coda's metrics system is the lack of a timer metric. In folsom something very similar can be done using the folsom_metrics:histogram_timed_update/4 which will time a function call and update the histogram with the time it took (in microseconds). Second, I have added a history metric, this can be used to track errors or other messages (generally strings) and will do in order with time stamps. Running folsom_metrics:get_metric_value/1 on a history metric will return the last five messages sent to folsom. Should work nicely for populating dashboards and etc.
 
-Lastly, folsom as both erlang and REST API's for Erlang VM statistics.
+Lastly, folsom has both erlang and HTTP API's for Erlang VM statistics.
 
 #### Building and running
 
