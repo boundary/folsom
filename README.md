@@ -17,7 +17,7 @@ folsom can be run standalone or embedded in an Erlang application.
 
        > folsom:start(). % or start_link ...
 
-By default folsom will listen on localhost, port 5565 and log to 'priv/log'. All three can be adjusted by changing evinvorment variables FOLSOM_IP, FOLSOM_PORT and FOLSOM_LOG_DIR.
+By default folsom will listen on localhost, port 5565 and log to 'priv/log'. All three can be adjusted by changing environment variables FOLSOM_IP, FOLSOM_PORT and FOLSOM_LOG_DIR.
 
 #### Metrics API
 
@@ -57,6 +57,7 @@ Histograms are collections of values that have statistical analysis done to them
       > folsom_metrics:new_histogram(Name).
       > folsom_metrics:histogram_timed_update(Name, Mod, Fun, Args).
       > folsom_metrics:histogram_timed_update(Name, Fun, Args).
+      > folsom_metrics:histogram_timed_update(Name, Fun).
       > folsom_metrics:notify({Name, Value}).
 
 ##### Histories
@@ -69,7 +70,7 @@ Histories are a collection of past events, such as errors or log messages.
 
 ##### Meters
 
-Meters are increment only counters with mean rates and exponentially-weighted moving averages applied to them, similar to a unix load average
+Meters are increment only counters with mean rates and exponentially-weighted moving averages applied to them, similar to a unix load average.
 
       > folsom_metrics:new_meter(Name).
       > folsom_metrics:notify({Name, Value}).

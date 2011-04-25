@@ -104,6 +104,12 @@ get_histogram_sample(Name) ->
 get_history_values(Name, Count) ->
     folsom_event:get_history_values(Name, Count).
 
+histogram_timed_update(Name, Fun) ->
+    Start = folsom_utils:now_epoch_micro(),
+    Fun(),
+    Stop = folsom_utils:now_epoch_micro(),
+    notify({Name, Stop - Start}).
+
 histogram_timed_update(Name, Fun, Args) ->
     Start = folsom_utils:now_epoch_micro(),
     erlang:apply(Fun, Args),
