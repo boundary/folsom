@@ -1,6 +1,6 @@
 ### folsom
 
-Folsom is an Erlang based metrics system inspired by Coda Hale's metrics (https://github.com/codahale/metrics/). The metrics API's purpose is to collect realtime metrics from your Erlang applications and publish them via HTTP+JSON. folsom is *not* a persistent store. There are 5 types of metrics, counters, gauges, histograms, histories and meters. Metrics can be created, read, and updated via the `folsom_metrics` module.
+Folsom is an Erlang based metrics system inspired by Coda Hale's metrics (https://github.com/codahale/metrics/). The metrics API's purpose is to collect realtime metrics from your Erlang applications and publish them via HTTP+JSON. folsom is *not* a persistent store. There are 5 types of metrics, counters, gauges, histograms (and timers), histories and meters. Metrics can be created, read, and updated via the `folsom_metrics` module.
 
 #### Building and running
 
@@ -52,7 +52,7 @@ Gauges are "point in time" single value metrics.
 
 ##### Histograms (and Timers)
 
-Histograms are collections of values that have statistical analysis done to them. One can use use these like "timers" as well with the timed update functions.
+Histograms are collections of values that have statistical analysis done to them, such as mean, min, max, kurtosis and percentile. One can use use these like "timers" as well with the timed update functions.
 
       > folsom_metrics:new_histogram(Name).
       > folsom_metrics:histogram_timed_update(Name, Mod, Fun, Args).
