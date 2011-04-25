@@ -1,8 +1,6 @@
 ### folsom
 
-folsom is an Erlang based metrics system inspired by Coda Hale's metrics (https://github.com/codahale/metrics/). The metrics API's purpose is to collect realtime metrics from your Erlang applications and publish them via HTTP+JSON. folsom is *not* a persistent store, it uses ETS and state to hold values in memory. Generally an external service should be used to consume folsom's data and calculations. There are 5 types of metrics, counters, gauges, histograms, histories and meters. One of two differences from Coda's metrics system is the lack of a timer metric. In folsom something very similar can be done using the folsom_metrics:histogram_timed_update/4 which will time a function call and update the histogram with the time it took (in microseconds). Second, I have added a history metric, this can be used to track errors or other messages (generally strings) and will do in order with time stamps. Running folsom_metrics:get_metric_value/1 on a history metric will return the last five messages sent to folsom. Should work nicely for populating dashboards and etc.
-
-Lastly, folsom has both erlang and HTTP API's for Erlang VM statistics.
+Folsom is an Erlang based metrics system inspired by Coda Hale's metrics (https://github.com/codahale/metrics/). The metrics API's purpose is to collect realtime metrics from your Erlang applications and publish them via HTTP+JSON. folsom is *not* a persistent store. There are 5 types of metrics, counters, gauges, histograms, histories and meters. Metrics can be created, read, and updated via the `folsom_metrics` module.
 
 #### Building and running
 
@@ -19,45 +17,66 @@ folsom can be run standalone or embedded in an Erlang application.
 
        > folsom:start(). % or start_link ...
 
-#### metrics API
+By default folsom will listen on localhost, port 5565 and log to 'priv/log'. All three can be adjusted by changing evinvorment variables FOLSOM_IP, FOLSOM_PORT and FOLSOM_LOG_DIR.
+
+#### Metrics API
 
 folsom_metrics.erl is the API module you will need to use most of the time.
 
 Retreive a list of current installed metrics:
 
-       > folsom_metrics:get_metrics().
+      > folsom_metrics:get_metrics().
 
-       $ curl http://localhost:5565/_metrics
+      $ curl http://localhost:5565/_metrics
 
 Query a specific metric:
 
-       > folsom_metrics:get_metric_value(Name).
+      > folsom_metrics:get_metric_value(Name).
 
-       $ curl http://localhost:5565/_metrics/name
+      $ curl http://localhost:5565/_metrics/name
 
-In some cases there are more advanced function calls:
+##### Counters
 
-       > folsom_metrics:get_history_values(Name, Count). % get more than the default number of history items back
+Counter metrics provide increment and decrement capabilities for a single scalar value.
 
-Create a new metric:
+      > folsom_metrics:new_counter(Name).
+      > folsom_metrics:notify({Name, {inc, Value}}).
+      > folsom_metrics:notify({Name, {dec, Value}}).
 
-       > folsom_metrics:new_counter(Name).
-       > folsom_metrics:new_gauge(Name).
-       > folsom_metrics:new_histogram(Name).
-       > folsom_metrics:new_history(Name).
-       > folsom_metrics:new_meter(Name).
+##### Gauges
 
-Updating a metric:
+Gauges are "point in time" single value metrics.
 
-       > folsom_metrics:notify({Name, Value}).
-       > folsom_metrics:notify({Name, {inc, Value}}). % for counters
-       > folsom_metrics:notify({Name, {dec, Value}}). % for counters
+      > folsom_metrics:new_gauge(Name).
+      > folsom_metrics:notify({Name, Value}).
 
-Histograms support timed function calls:
+##### Histograms (and Timers)
 
-       > histogram_timed_update(Name, Mod, Fun, Args).
+Histograms are collections of values that have statistical analysis done to them. One can use use these like "timers" as well with the timed update functions.
 
-#### Erlang VM Metrics:
+      > folsom_metrics:new_histogram(Name).
+      > folsom_metrics:histogram_timed_update(Name, Mod, Fun, Args).
+      > folsom_metrics:histogram_timed_update(Name, Fun, Args).
+      > folsom_metrics:notify({Name, Value}).
+
+##### Histories
+
+Histories are a collection of past events, such as errors or log messages.
+
+      > folsom_metrics:new_history(Name).
+      > folsom_metrics:get_history_values(Name, Count). % get more than the default number of history items back
+      > folsom_metrics:notify({Name, Value}).
+
+##### Meters
+
+Meters are increment only counters with mean rates and exponentially-weighted moving averages applied to them, similar to a unix load average
+
+      > folsom_metrics:new_meter(Name).
+      > folsom_metrics:notify({Name, Value}).
+
+##### Erlang VM
+
+folsom also produces Erlang VM statistics.
 
 The result of `erlang:memory/0`:
 
