@@ -23,8 +23,6 @@
 %%%------------------------------------------------------------------
 
 -module(folsom).
--author('Andy Gross <andy@basho.com>').
--author('Justin Sheehy <justin@@basho.com>').
 -export([start/0, start_link/0, stop/0]).
 
 ensure_started(App) ->
