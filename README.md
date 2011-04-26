@@ -45,14 +45,14 @@ Counter metrics provide increment and decrement capabilities for a single scalar
 
 ##### Gauges
 
-Gauges are "point in time" single value metrics.
+Gauges are point-in-time single value metrics.
 
       > folsom_metrics:new_gauge(Name).
       > folsom_metrics:notify({Name, Value}).
 
 ##### Histograms (and Timers)
 
-Histograms are collections of values that have statistical analysis done to them, such as mean, min, max, kurtosis and percentile. One can use use these like "timers" as well with the timed update functions.
+Histograms are collections of values that have statistical analysis done to them, such as mean, min, max, kurtosis and percentile. The can be used like "timers" as well with the timed update functions.
 
       > folsom_metrics:new_histogram(Name).
       > folsom_metrics:histogram_timed_update(Name, Mod, Fun, Args).
@@ -70,7 +70,7 @@ Histories are a collection of past events, such as errors or log messages.
 
 ##### Meters
 
-Meters are increment only counters with mean rates and exponentially-weighted moving averages applied to them, similar to a unix load average.
+Meters are increment only counters with mean rates and exponentially weighted moving averages applied to them, similar to a unix load average.
 
       > folsom_metrics:new_meter(Name).
       > folsom_metrics:notify({Name, Value}).
