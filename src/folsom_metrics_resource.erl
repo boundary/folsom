@@ -35,8 +35,6 @@
 -include("folsom.hrl").
 -include_lib("webmachine/include/webmachine.hrl").
 
--define(DEFAULT_TYPE, <<"uniform">>).
-
 init(_) -> {ok, undefined}.
 
 content_types_provided(ReqData, Context) ->

@@ -43,6 +43,8 @@
          get_metric_value/1,
          get_histogram_sample/1,
          get_history_values/2,
+         histogram_timed_update/2,
+         histogram_timed_update/3,
          histogram_timed_update/4
         ]).
 

@@ -38,8 +38,6 @@
                   public
                  ]).
 
--compile({no_auto_import,[get/1]}).
-
 new(Name) ->
     ets:new(Name, ?ETSOPTS).
 
