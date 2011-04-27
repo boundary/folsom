@@ -95,7 +95,7 @@ get_metrics_info() ->
     folsom_event:get_handlers_info().
 
 get_metric_info(Name) ->
-    folsom_event:get_handler_info(Name).
+    folsom_event:get_info(Name).
 
 get_metric_value(Name) ->
     folsom_event:get_values(Name).
