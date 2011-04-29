@@ -39,7 +39,7 @@ get_statistics() ->
     [{Key, convert_statistics({Key, erlang:statistics(Key)})} || Key <- ?STATISTICS].
 
 get_system_info() ->
-    [{Key, convert_system_info({Key, erlang:system_info(Key)})} || Key <- ?SYSTEM_INFO].
+    [{Key, get_system_info(Key)} || Key <- ?SYSTEM_INFO].
 
 
 % internal functions
@@ -66,6 +66,12 @@ convert_statistics({wall_clock, {TotalWallclockTime, WallclockTimeSinceLastCall}
      {"wall_clock_time_since_last_call", WallclockTimeSinceLastCall}];
 convert_statistics({_, Value}) ->
     Value.
+
+get_system_info(Key) ->
+    Val = try erlang:system_info(Key) catch 
+        error:badarg->undefined % older versions are missing some keys
+    end,
+    convert_system_info({Key, Val}).
 
 %% conversion functions for erlang:system_info(Key)
 
