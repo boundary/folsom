@@ -1,0 +1,119 @@
+#!/usr/bin/env ruby
+
+#
+# Copyright 2011, Boundary
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+#
+# This is a munin plugin for the folsom _statistics and _memory resources.
+#
+# _system resource tracking is disabled since it is mostly static data about the 
+# vm itself and not running statistics. If it proves useful to have it in munin 
+# in the future it shouldn't be hard to had the appropriate stats to this plugin.
+#
+
+require 'rubygems'
+require 'rest_client'
+require 'json'
+
+BASE_URL = "http://localhost:5565"
+
+__FILE__[/folsom_erlang_(.*)/]
+METRIC = $1
+
+def main
+  metric = JSON.parse(RestClient.get("#{BASE_URL}/_#{METRIC}"))
+  
+  if ARGV[0] == "config"
+    puts 'graph_category Folsom'
+    puts "graph_title Erlang #{METRIC}"
+    puts 'graph_vlabel value'
+    
+    case METRIC
+    when "system"
+      # dont do anything since this is basically static info about the vm
+    when "statistics"
+      puts "#{METRIC}_context_switches.type COUNTER"
+      puts "#{METRIC}_context_switches.label context_switches"
+      puts "#{METRIC}_run_queue.label run_queue"
+      
+      metric["garbage_collection"].keys.each do |key|
+        puts "#{METRIC}_#{key}.type COUNTER"
+        puts "#{METRIC}_#{key}.label #{key}"
+      end
+      
+      metric["io"].keys.each do |key|
+        puts "#{METRIC}_#{key}.type COUNTER"
+        puts "#{METRIC}_#{key}.label #{key}"
+      end
+      
+      metric["reductions"].keys.each do |key|
+        puts "#{METRIC}_#{key}.type COUNTER"
+        puts "#{METRIC}_#{key}.label #{key}"
+      end
+      
+      metric["runtime"].keys.each do |key|
+        puts "#{METRIC}_#{key}.label #{key}"
+      end
+      
+      metric["wall_clock"].keys.each do |key|
+        puts "#{METRIC}_#{key}.label #{key}"
+      end
+      
+    when "memory"
+      metric.keys.each do |key|
+        puts "#{METRIC}_#{key}.label #{key}"
+      end
+    end
+
+  else
+    
+    case METRIC
+    when "system"
+      # dont do anything since this is basically static info about the vm
+    when "statistics"
+      puts "#{METRIC}_context_switches.value #{METRIC["context_switches"]}"
+      puts "#{METRIC}_run_queue.value #{METRIC["run_queue"]}"
+      
+      metric["garbage_collection"].each do |key, value|
+        puts "#{METRIC}_#{key}.value #{value}"
+      end
+      
+      metric["io"].each do |key, value|
+        puts "#{METRIC}_#{key}.value #{value}"
+      end
+      
+      metric["reductions"].each do |key, value|
+        puts "#{METRIC}_#{key}.value #{value}"
+      end
+      
+      metric["runtime"].each do |key, value|
+        puts "#{METRIC}_#{key}.value #{value}"
+      end
+      
+      metric["wall_clock"].each do |key, value|
+        puts "#{METRIC}_#{key}.value #{value}"
+      end
+    when "memory"
+      metric.each do |key, value|
+        puts "#{METRIC}_#{key}.value #{value}"
+      end
+    end
+    
+  end
+  
+end
+
+main

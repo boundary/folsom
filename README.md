@@ -116,3 +116,10 @@ Erlang VM memory metrics:
        $ curl http://localhost:5565/_memory
 
        {"total":11044608,"processes":3240936,"processes_used":3233888,"system":7803672,"atom":532137,"atom_used":524918,"binary":696984,"code":4358030,"ets":385192}
+
+#### Monitoring System Plugins
+
+##### Munin
+
+Basic munin plugins can be found in priv. folsom_ can be symlinked into place in the form folsom_METRICNAME to start collecting a specific metric's values. For histories it tracks the seconds since the last event. folsom_erlang_ can be symlinked to folsom_erlang_memory and folsom_erlang_statistics to track those resources. _system is not supported currently since it is basically static information about the VM.
+

@@ -1,0 +1,114 @@
+#!/usr/bin/env ruby
+
+#
+# Copyright 2011, Boundary
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+#
+# This is a munin plugin for the folsom _metrics resource
+#
+
+require 'rubygems'
+require 'rest_client'
+require 'json'
+
+BASE_URL = "http://localhost:5565/_metrics"
+
+__FILE__[/folsom_(.*)/]
+METRIC = $1
+
+def main
+  # get the metrics info
+  metrics = JSON.parse(RestClient.get("#{BASE_URL}?info=true"))
+  info = metrics[METRIC]
+  
+  # get the metric data
+  metric = JSON.parse(RestClient.get("#{BASE_URL}/#{METRIC}"))
+  
+  if ARGV[0] == "config"
+    puts 'graph_category Folsom'
+    puts "graph_title #{METRIC}"
+    puts 'graph_vlabel value'
+    
+    case info["type"]
+    when "counter"
+      puts "#{METRIC}.type COUNTER"
+      puts "#{METRIC}.label value"
+    when "gauge"
+      puts "#{METRIC}.label value"
+    when "histogram"
+      puts "#{METRIC}_min.label min"
+      puts "#{METRIC}_max.label max"
+      puts "#{METRIC}_mean.label mean"
+      puts "#{METRIC}_var.label var"
+      puts "#{METRIC}_stddev.label stddev"
+      puts "#{METRIC}_skew.label skew"
+      puts "#{METRIC}_kurt.label kurt"
+      
+      sorted_p_keys = metric["value"]["percentile"].keys.sort_by {|key| key.to_i}
+      sorted_p_keys.each do |p|
+        puts "#{METRIC}_#{p}ptile.label #{p}th percentile"
+      end
+      
+      sorted_hist_keys = metric["value"]["histogram"].keys.sort_by {|key| key.to_i}
+      sorted_hist_keys.each do |h|
+        puts "#{METRIC}_#{h}hist.type COUNTER"
+        puts "#{METRIC}_#{h}hist.label histogram - #{h} bucket"
+      end
+    when "history"
+      puts "#{METRIC}.label seconds_since_last_event"
+    when "meter"
+      metric["value"].keys.each do |m|
+        puts "#{METRIC}_#{m}.label #{m}"
+      end
+    end
+    
+  else
+    
+    case info["type"]
+    when "history"
+      sorted_keys = metric["value"].keys.sort_by {|key| key.to_i}
+      last_event_time = sorted_keys.last
+      value = Time.now.to_i - ( last_event_time.to_i / 1000000 ) # trim to seconds
+      puts "#{METRIC}.value #{value}"
+    when "histogram"
+      puts "#{METRIC}_min.value #{metric["value"]["min"]}"
+      puts "#{METRIC}_max.value #{metric["value"]["max"]}"
+      puts "#{METRIC}_mean.value #{metric["value"]["mean"]}"
+      puts "#{METRIC}_var.value #{metric["value"]["variance"]}"
+      puts "#{METRIC}_stddev.value #{metric["value"]["stddev"]}"
+      puts "#{METRIC}_skew.value #{metric["value"]["skewness"]}"
+      puts "#{METRIC}_kurt.value #{metric["value"]["kurtosis"]}"
+      
+      metric["value"]["percentile"].each do |key, value|
+        puts "#{METRIC}_#{key}ptile.value #{value}"
+      end
+      
+      metric["value"]["histogram"].each do |key, value|
+        puts "#{METRIC}_#{key}hist.value #{value}"
+      end
+    when "meter"
+      metric["value"].each do |key, value|
+        puts "#{METRIC}_#{key}.value #{value}"
+      end
+    else
+      puts "#{METRIC}.value #{metric["value"]}"
+    end
+    
+  end
+  
+end
+
+main
