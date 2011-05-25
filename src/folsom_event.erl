@@ -98,7 +98,7 @@ get_info(Name) ->
     gen_event:call(?EVENTMGR, {?MODULE, Name}, info).
 
 get_values(Name) ->
-    [{_, Info}] = get_info(Name),
+    {_, Info} = get_info(Name),
     gen_event:call(?EVENTMGR, {?MODULE, Name}, {proplists:get_value(type, Info), Name}).
 
 get_history_values(Name, Count) ->
@@ -210,7 +210,7 @@ handle_event(_, State) ->
 %% @end
 %%--------------------------------------------------------------------
 handle_call(info, #metric{name = Name, type = Type} = State) ->
-    {ok, [{Name, [{type, Type}]}], State};
+    {ok, {Name, [{type, Type}]}, State};
 %% Counter
 handle_call({counter, Name}, State) ->
     Values = folsom_metrics_counter:get_value(Name),

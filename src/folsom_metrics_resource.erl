@@ -48,7 +48,8 @@ resource_exists(ReqData, Context) ->
 
 to_json(ReqData, Context) ->
     Id = wrq:path_info(id, ReqData),
-    Result = get_request(Id),
+    Info = wrq:get_qs_value("info", undefined, ReqData),
+    Result = get_request(Id, Info),
     {mochijson2:encode(Result), ReqData, Context}.
 
 % internal fuctions
@@ -58,7 +59,9 @@ resource_exists(undefined, ReqData, Context) ->
 resource_exists(Id, ReqData, Context) ->
     {folsom_metrics:metric_exists(list_to_atom(Id)), ReqData, Context}.
 
-get_request(undefined) ->
+get_request(undefined, undefined) ->
     folsom_metrics:get_metrics();
-get_request(Id) ->
-    [{value, folsom_metrics:get_metric_value(list_to_atom(Id))}].
+get_request(Id, undefined) ->
+    [{value, folsom_metrics:get_metric_value(list_to_atom(Id))}];
+get_request(undefined, "true") ->
+    folsom_metrics:get_metrics_info().
