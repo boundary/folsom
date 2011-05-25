@@ -121,5 +121,5 @@ Erlang VM memory metrics:
 
 ##### Munin
 
-Basic munin plugins can be found in priv. These plugins are written in ruby and depend on the rest-client and json gems. folsom_ can be symlinked into place in the form folsom_METRICNAME to start collecting a specific metric's values. For histories it tracks the seconds since the last event. folsom_erlang_ can be symlinked to folsom_erlang_memory and folsom_erlang_statistics to track those resources. _system is not supported currently since it is basically static information about the VM.
+Basic munin plugins can be found in priv. These plugins are written in ruby and depend on the rest-client and json gems. `folsom_` can be symlinked into place in the form `folsom_METRICNAME` to start collecting a specific metric's values. For histories it tracks the seconds since the last event. `folsom_erlang_` can be symlinked to `folsom_erlang_memory` and `folsom_erlang_statistics` to track those resources. `_system` is not supported currently since it is basically static information about the VM.
 
