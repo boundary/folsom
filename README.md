@@ -103,13 +103,13 @@ Stats for metric 'a':
 
       $ curl http://localhost:5565/_metrics/a
 
-      {"min":1,"max":1000,"mean":322.2,"median":100,"variance":185259.19999999998,"standard_deviation":430.4174717643325,"skewness":1.2670136514902162,"kurtosis":-1.2908313302242205,"percentile":{"75":500,"95":1000,"99":1000,"999":1000},"histogram":{"10":2,"20":0,"30":0,"50":0,"100":1,"200":0,"300":0,"400":0,"500":1,"1000":1,"99999999999999":0}}
+      {"value":{"min":1,"max":1000,"mean":322.2,"median":100,"variance":185259.19999999998,"standard_deviation":430.4174717643325,"skewness":1.2670136514902162,"kurtosis":-1.2908313302242205,"percentile":{"75":500,"95":1000,"99":1000,"999":1000},"histogram":{"10":2,"20":0,"30":0,"50":0,"100":1,"200":0,"300":0,"400":0,"500":1,"1000":1,"99999999999999":0}}}
 
 Results of history metric 'test':
 
        $ curl http://localhost:5565/_metrics/test
 
-       {"1303483997384193":{"event":"asdfasdf"}}
+       {"value":{"1303483997384193":{"event":"asdfasdf"}}}
 
 Erlang VM memory metrics:
 
