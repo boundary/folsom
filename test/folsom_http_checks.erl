@@ -46,7 +46,8 @@ metrics_checks() ->
 
     Url1 = lists:append(io_lib:format("~s~s~p", [?BASE_METRICS_URL, "/", counter])),
     Body2 = http_helpers:http_get(Url1),
-    0 = mochijson2:decode(Body2).
+    {struct, List2} = mochijson2:decode(Body2),
+    0 = proplists:get_value(<<"value">>, List2).
 
 system_checks() ->
     % check _system stats
