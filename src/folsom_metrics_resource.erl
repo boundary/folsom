@@ -61,4 +61,4 @@ resource_exists(Id, ReqData, Context) ->
 get_request(undefined) ->
     folsom_metrics:get_metrics();
 get_request(Id) ->
-    folsom_metrics:get_metric_value(list_to_atom(Id)).
+    [{value, folsom_metrics:get_metric_value(list_to_atom(Id))}].
