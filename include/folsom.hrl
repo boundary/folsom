@@ -10,6 +10,12 @@
 -define(DEFAULT_INTERVAL, 5000).
 -define(DEFAULT_SAMPLE_TYPE, uniform).
 
+-define(DISPATCH, [{["_system"],folsom_system_resource,[]},
+                    {["_memory"],folsom_memory_resource,[]},
+                    {["_statistics"],folsom_statistics_resource,[]},
+                    {["_metrics"],folsom_metrics_resource,[]},
+                    {["_metrics",id],folsom_metrics_resource,[]}]).
+
 -record(uniform, {
     size = 5000,
     reservoir = []

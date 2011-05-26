@@ -68,14 +68,12 @@ init([]) ->
     Ip = case os:getenv("FOLSOM_IP") of false -> "127.0.0.1"; Any -> Any end,
     Port = case os:getenv("FOLSOM_PORT") of false -> "5565"; Any1 -> Any1 end,
     LogDir = case os:getenv("FOLSOM_LOG_DIR") of false -> "priv/log"; Any2 -> Any2 end,
-    {ok, Dispatch} = file:consult(filename:join(
-                         [filename:dirname(code:which(?MODULE)),
-                          "..", "priv", "dispatch.conf"])),
+
     WebConfig = [
                  {ip, Ip},
                  {port, Port},
                  {log_dir, LogDir},
-                 {dispatch, Dispatch}
+                 {dispatch, ?DISPATCH}
                 ],
 
     Web = {webmachine_mochiweb,
