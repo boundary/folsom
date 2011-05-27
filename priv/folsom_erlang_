@@ -100,8 +100,8 @@ def main
       metric["runtime"].each do |key, value|
         puts "#{METRIC}_#{key}.value #{value}"
       end
-      
-      puts "#{METRIC}_#{key}.value #{metric["wall_clock"]["wall_clock_time_since_last_call"]}"
+    
+      puts "#{METRIC}_wall_clock_time_since_last_call.value #{metric["wall_clock"]["wall_clock_time_since_last_call"]}"  
     when "memory"
       metric.each do |key, value|
         puts "#{METRIC}_#{key}.value #{value}"
