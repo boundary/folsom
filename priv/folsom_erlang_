@@ -68,9 +68,7 @@ def main
         puts "#{METRIC}_#{key}.label #{key}"
       end
       
-      metric["wall_clock"].keys.each do |key|
-        puts "#{METRIC}_#{key}.label #{key}"
-      end
+      puts "#{METRIC}_wall_clock_time_since_last_call.label wall_clock_time_since_last_call"
       
     when "memory"
       metric.keys.each do |key|
@@ -103,9 +101,7 @@ def main
         puts "#{METRIC}_#{key}.value #{value}"
       end
       
-      metric["wall_clock"].each do |key, value|
-        puts "#{METRIC}_#{key}.value #{value}"
-      end
+      puts "#{METRIC}_#{key}.value #{metric["wall_clock"]["wall_clock_time_since_last_call"]}"
     when "memory"
       metric.each do |key, value|
         puts "#{METRIC}_#{key}.value #{value}"
