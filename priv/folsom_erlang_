@@ -84,8 +84,8 @@ def main
     when "system"
       # dont do anything since this is basically static info about the vm
     when "statistics"
-      puts "#{METRIC}_context_switches.value #{METRIC["context_switches"]}"
-      puts "#{METRIC}_run_queue.value #{METRIC["run_queue"]}"
+      puts "#{METRIC}_context_switches.value #{metric["context_switches"]}"
+      puts "#{METRIC}_run_queue.value #{metric["run_queue"]}"
       
       metric["garbage_collection"].each do |key, value|
         puts "#{METRIC}_#{key}.value #{value}"
