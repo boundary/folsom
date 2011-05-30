@@ -27,6 +27,8 @@
 
 -export([get_max/1,
          get_min/1,
+         get_rate/3,
+         get_rate/4,
          get_histogram/1,
          get_variance/1,
          get_standard_deviation/1,
@@ -58,6 +60,15 @@ get_min([]) ->
 get_min(Values) ->
     [Head | _] = lists:sort(Values),
     Head.
+
+get_rate(Value1, Value2, Interval) ->
+    Delta = erlang:abs(Value2 - Value1),
+    Delta / Interval.
+
+% time values here are based on epoch i.e. an integer
+get_rate(Value1, Value2, Time1, Time2) ->
+    Interval = Time2 - Time1,
+    get_rate(Value1, Value2, Interval).
 
 get_histogram(Values) ->
     Bins = [{Bin, 0} || Bin <- ?HIST],
