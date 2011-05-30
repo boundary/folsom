@@ -31,7 +31,8 @@
          populate_metrics/0,
          check_metrics/0,
          delete_metrics/0,
-         vm_metrics/0
+         vm_metrics/0,
+         counter_metric/2
         ]).
 
 -define(DATA, [1, 5, 10, 100, 200, 500, 750, 1000, 2000, 5000]).
@@ -100,6 +101,17 @@ vm_metrics() ->
     List3 = folsom_vm_metrics:get_system_info(),
     true = lists:keymember(allocated_areas, 1, List3).
 
+counter_metric(Count, Counter) ->
+    ok = folsom_metrics:new_counter(Counter),
+
+    ?debugFmt("running ~p counter inc/dec rounds~n", [Count]),
+    for(Count, Counter),
+
+    Result = folsom_metrics:get_metric_value(Counter),
+    ?debugFmt("counter result: ~p~n", [Result]),
+
+    0 = Result.
+
 %% internal function
 
 histogram_checks(List) ->
@@ -150,3 +162,15 @@ histogram_check(List) ->
     0 = proplists:get_value(30000, List),
     0 = proplists:get_value(50000, List),
     0 = proplists:get_value(99999999999999, List).
+
+counter_inc_dec(Counter) ->
+    ok = folsom_metrics:notify({Counter, {inc, 1}}),
+    ok = folsom_metrics:notify({Counter, {dec, 1}}).
+
+for(N, Counter) ->
+    for(N, 0, Counter).
+for(N, Count, Counter) when N == Count ->
+    ok;
+for(N, LoopCount, Counter) ->
+    counter_inc_dec(Counter),
+    for(N, LoopCount + 1, Counter).
