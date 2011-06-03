@@ -2,7 +2,7 @@
 
 * Tag based query API
 * Metric metadata
-* Rate and velocity metric
+* Velocity and acceleration metric
 * Covariance between two histograms
 * Various API features (raw histogram values,  multiple metirc aggregates)
 * Create/Delete/Notify metrics from REST
