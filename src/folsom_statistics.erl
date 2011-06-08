@@ -62,7 +62,7 @@ get_min(Values) ->
     Head.
 
 get_rate(Value1, Value2, Interval) ->
-    Delta = erlang:abs(Value2 - Value1),
+    Delta = Value1 - Value2,
     Delta / Interval.
 
 % time values here are based on epoch i.e. an integer
