@@ -28,7 +28,8 @@
          tick/1,
          mark/1,
          mark/2,
-         get_values/1
+         get_values/1,
+         get_acceleration/1
         ]).
 
 
@@ -71,7 +72,16 @@ get_values(Name) ->
      {one, get_rate(OneMin)},
      {five, get_rate(FiveMin)},
      {fifteen, get_rate(FifteenMin)},
-     {mean, get_mean_rate(Meter)}
+     {mean, get_mean_rate(Meter)},
+     {acceleration, get_acceleration(Name)}
+    ].
+
+get_acceleration(Name) ->
+    #meter{one = OneMin, five = FiveMin, fifteen = FifteenMin} = get_value(Name),
+    [
+     {one_to_five, calc_acceleration(get_rate(OneMin), get_rate(FiveMin), 300)},
+     {five_to_fifteen, calc_acceleration(get_rate(FiveMin), get_rate(FifteenMin), 600)},
+     {one_to_fifteen, calc_acceleration(get_rate(OneMin), get_rate(FifteenMin), 900)}
     ].
 
 % internal functions
@@ -91,3 +101,7 @@ calc_mean_rate(_, 0) ->
 calc_mean_rate(Start, Count) ->
     Elapsed = folsom_utils:now_epoch_micro() - Start,
     Count / Elapsed.
+
+calc_acceleration(Rate1, Rate2, Interval) ->
+    Delta = Rate1 - Rate2, % most current velocity minus previous velocity
+    Delta / Interval.
