@@ -4,7 +4,7 @@
 * Metric metadata
 * Velocity and acceleration metric
 * Covariance between two histograms
-* Various API features (raw histogram values,  multiple metirc aggregates)
+* Various API features (raw histogram values,  multiple metric aggregates)
 * Create/Delete/Notify metrics from REST
 * Better statistical functions test coverage
 * Sampling functions test coverage
