@@ -169,7 +169,7 @@ counter_inc_dec(Counter) ->
 
 for(N, Counter) ->
     for(N, 0, Counter).
-for(N, Count, Counter) when N == Count ->
+for(N, Count, _Counter) when N == Count ->
     ok;
 for(N, LoopCount, Counter) ->
     counter_inc_dec(Counter),

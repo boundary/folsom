@@ -29,16 +29,22 @@
 run_test() ->
     folsom:start(),
 
+    ?debugFmt("creating metrics", []),
     folsom_erlang_checks:create_metrics(),
+    
+    ?debugFmt("populating metrics", []),
     folsom_erlang_checks:populate_metrics(),
+    
+    ?debugFmt("checking metrics", []),
     folsom_erlang_checks:check_metrics(),
+    
+    ?debugFmt("checking counter metric", []),
     folsom_erlang_checks:counter_metric(10000, testcounter),
+    
+    ?debugFmt("checking erlang vm metrics", []),
     folsom_erlang_checks:vm_metrics(),
-
-    ibrowse:start(),
-    folsom_http_checks:run(),
-    ibrowse:stop(),
-
+    
+    ?debugFmt("deleting metrics", []),
     folsom_erlang_checks:delete_metrics(),
 
     folsom:stop().

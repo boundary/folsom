@@ -5,11 +5,7 @@
   {registered, []},
   {applications, [
                   kernel,
-                  stdlib,
-                  crypto,
-                  inets,
-                  mochiweb,
-                  webmachine
+                  stdlib
                  ]},
   {mod, { folsom_app, []}},
   {env, []}
