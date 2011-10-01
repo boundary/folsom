@@ -80,7 +80,7 @@ convert_system_info({cpu_topology, [{processor, List}]}) ->
 convert_system_info({dist_ctrl, List}) ->
     lists:map(fun({Node, Socket}) ->
                       {ok, Stats} = inet:getstat(Socket),
-                      {Node, {Stats}}
+                      {Node, Stats}
               end, List);
 convert_system_info({driver_version, Value}) ->
     list_to_binary(Value);
