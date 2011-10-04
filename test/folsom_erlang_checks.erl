@@ -37,6 +37,8 @@
 
 -define(DATA, [1, 5, 10, 100, 200, 500, 750, 1000, 2000, 5000]).
 
+-define(DATA1, [5, 10, 15, 20, 25, 30, 35, 40, 45, 50]).
+
 create_metrics() ->
     ok = folsom_metrics:new_counter(counter),
     ok = folsom_metrics:new_gauge(gauge),
@@ -45,10 +47,12 @@ create_metrics() ->
     ok = folsom_metrics:new_histogram(exdec, exdec, 5000, 1),
     ok = folsom_metrics:new_histogram(none, none, 5000, 1),
 
+    ok = folsom_metrics:new_histogram(nonea, none, 5000, 1),
+
     ok = folsom_metrics:new_history(history),
     ok = folsom_metrics:new_meter(meter),
 
-    7 = length(folsom_metrics:get_metrics()).
+    8 = length(folsom_metrics:get_metrics()).
 
 populate_metrics() ->
     ok = folsom_metrics:notify({counter, {inc, 1}}),
@@ -60,6 +64,8 @@ populate_metrics() ->
     [ok = folsom_metrics:notify({exdec, Value}) || Value <- ?DATA],
     [ok = folsom_metrics:notify({none, Value}) || Value <- ?DATA],
 
+    [ok = folsom_metrics:notify({nonea, Value}) || Value <- ?DATA1],
+
     ok = folsom_metrics:notify({history, "4"}),
     ok = folsom_metrics:notify({meter, 5}).
 
@@ -68,12 +74,15 @@ check_metrics() ->
 
     2 = folsom_metrics:get_metric_value(gauge),
 
-    Histogram1 = folsom_metrics:get_metric_value(uniform),
+    Histogram1 = folsom_metrics:get_histogram_statistics(uniform),
     histogram_checks(Histogram1),
-    Histogram2 = folsom_metrics:get_metric_value(exdec),
+    Histogram2 = folsom_metrics:get_histogram_statistics(exdec),
     histogram_checks(Histogram2),
-    Histogram3 = folsom_metrics:get_metric_value(none),
+    Histogram3 = folsom_metrics:get_histogram_statistics(none),
     histogram_checks(Histogram3),
+
+    CoValues = folsom_metrics:get_histogram_statistics(none, nonea),
+    histogram_co_checks(CoValues),
 
     1 = length(folsom_metrics:get_metric_value(history)),
 
@@ -115,18 +124,30 @@ counter_metric(Count, Counter) ->
 %% internal function
 
 histogram_checks(List) ->
+    ?debugFmt("checking histogram statistics", []),
+    %?debugFmt("~p~n", [List]),
     1 = proplists:get_value(min, List),
     5000 = proplists:get_value(max, List),
-    956.6 = proplists:get_value(mean, List),
+    956.6 = proplists:get_value(arithmetic_mean, List),
     200 = proplists:get_value(median, List),
     2412421.1555555556 = proplists:get_value(variance, List),
     1553.1970755688267 = proplists:get_value(standard_deviation, List),
-    2.3535226547841104 = proplists:get_value(skewness, List),
-    2.190080666007587 = proplists:get_value(kurtosis, List),
+    1.6945363114445593 = proplists:get_value(skewness, List),
+    1.6710725994068278 = proplists:get_value(kurtosis, List),
     List1 = proplists:get_value(percentile, List),
     percentile_check(List1),
     List2 = proplists:get_value(histogram, List),
     histogram_check(List2).
+
+histogram_co_checks(List) ->
+    ?debugFmt("checking histogram covariance and etc statistics", []),
+    %?debugFmt("~p~n", [List]),
+    [
+     {covariance,16539.0},
+     {tau,1.0},
+     {rho,0.7815638250437413},
+     {r,1.0}
+    ] = List.
 
 percentile_check(List) ->
     1000 = proplists:get_value(75, List),

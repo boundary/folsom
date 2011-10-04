@@ -41,7 +41,8 @@
          get_metrics_info/0,
          get_metric_info/1,
          get_metric_value/1,
-         get_histogram_sample/1,
+         get_histogram_statistics/1,
+         get_histogram_statistics/2,
          get_history_values/2,
          histogram_timed_update/2,
          histogram_timed_update/3,
@@ -100,8 +101,14 @@ get_metric_info(Name) ->
 get_metric_value(Name) ->
     folsom_event:get_values(Name).
 
-get_histogram_sample(Name) ->
-    folsom_event:get_histogram_sample(Name).
+get_histogram_statistics(Name) ->
+    Values = folsom_event:get_values(Name),
+    folsom_statistics:get_statistics(Values).
+
+get_histogram_statistics(Name1, Name2) ->
+    Values1 = get_metric_value(Name1),
+    Values2 = get_metric_value(Name2),
+    folsom_statistics:get_statistics(Values1, Values2).
 
 get_history_values(Name, Count) ->
     folsom_event:get_history_values(Name, Count).

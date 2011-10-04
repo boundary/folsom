@@ -35,10 +35,10 @@
          get_covariance/2,
          get_kurtosis/1,
          get_skewness/1,
-         get_mean/1,
          get_median/1,
          get_percentile/2,
-         get_statistics/1]).
+         get_statistics/1,
+         get_statistics/2]).
 
 -define(HIST, [1, 5, 10, 20, 30, 40, 50, 100, 150,
                200, 250, 300, 350, 400, 450, 500,
@@ -50,13 +50,13 @@
 
 
 get_max([]) ->
-    0;
+    0.0;
 get_max(Values) ->
     [Head | _] = lists:reverse(lists:sort(Values)),
     Head.
 
 get_min([]) ->
-    0;
+    0.0;
 get_min(Values) ->
     [Head | _] = lists:sort(Values),
     Head.
@@ -75,60 +75,98 @@ get_histogram(Values) ->
     build_hist(Values, Bins).
 
 % two pass variance
+% results match those given by the 'var' function in R
 get_variance(Values) when length(Values) < ?STATS_MIN ->
-    0;
+    0.0;
 get_variance(Values) ->
-    Mean = get_mean(Values),
+    Mean = folsom_statistics_scutil:arithmetic_mean(Values),
     List = [(Value - Mean) * (Value - Mean) || Value <- Values],
     Sum = lists:sum(List),
     Sum / (length(Values) - 1).
 
+% results match those given by the 'sd' function in R
 get_standard_deviation(Values) when length(Values) < ?STATS_MIN ->
-    0;
+    0.0;
 get_standard_deviation(Values) ->
     math:sqrt(get_variance(Values)).
 
-% two pass covariance
+% two pass covariance (http://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Covariance)
+% matches results given by excel's 'covar' function
 get_covariance(Values, _) when length(Values) < ?STATS_MIN ->
-    0;
+    0.0;
 get_covariance(_, Values) when length(Values) < ?STATS_MIN ->
-    0;
+    0.0;
 get_covariance(Values1, Values2) ->
-    Mean1 = get_mean(Values1),
-    Mean2 = get_mean(Values2),
+    Mean1 = folsom_statistics_scutil:arithmetic_mean(Values1),
+    Mean2 = folsom_statistics_scutil:arithmetic_mean(Values2),
     Zip = lists:zip(Values1, Values2),
     List = [((X1 - Mean1) * (X2 - Mean2))  / length(Values1) || {X1, X2} <- Zip],
     lists:sum(List).
 
+get_kendall_correlation(Values, _) when length(Values) < ?STATS_MIN ->
+    0.0;
+get_kendall_correlation(_, Values) when length(Values) < ?STATS_MIN ->
+    0.0;
+get_kendall_correlation(Values1, Values2) when length(Values1) /= length(Values2) ->
+    0.0;
+get_kendall_correlation(Values1, Values2) ->
+    folsom_statistics_scutil:kendall_correlation(Values1, Values2).
+
+get_spearman_correlation(Values, _) when length(Values) < ?STATS_MIN ->
+    0.0;
+get_spearman_correlation(_, Values) when length(Values) < ?STATS_MIN ->
+    0.0;
+get_spearman_correlation(Values1, Values2) when length(Values1) /= length(Values2) ->
+    0.0;
+get_spearman_correlation(Values1, Values2) ->
+    folsom_statistics_scutil:spearman_correlation(Values1, Values2).
+
+get_pearson_correlation(Values, _) when length(Values) < ?STATS_MIN ->
+    0.0;
+get_pearson_correlation(_, Values) when length(Values) < ?STATS_MIN ->
+    0.0;
+get_pearson_correlation(Values1, Values2) when length(Values1) /= length(Values2) ->
+    0.0;
+get_pearson_correlation(Values1, Values2) ->
+    folsom_statistics_scutil:pearson_correlation(Values1, Values2).
+
+% http://en.wikipedia.org/wiki/Kurtosis
+%
+% results should match this R function:
+% kurtosis <- function(x) {
+%     m4 <- mean((x - mean(x))^4)
+%     kurt <- m4 / (sd(x)^4) - 3
+%     kurt
+% }
 get_kurtosis(Values) when length(Values) < ?STATS_MIN ->
     0;
 get_kurtosis(Values) ->
-    Mean = get_mean(Values),
-    StdDev = get_standard_deviation(Values),
-    Count = length(Values),
-    get_kurtosis(Values, Mean, StdDev, Count).
+    Mean = folsom_statistics_scutil:arithmetic_mean(Values),
+    M4 = folsom_statistics_scutil:arithmetic_mean([math:pow(X - Mean, 4) || X <- Values]),
+    M4 / (math:pow(get_standard_deviation(Values), 4)) - 3.
 
+% http://en.wikipedia.org/wiki/Skewness
+%
+% skewness results should match this R function:
+% skewness <- function(x) {
+%    m3 <- mean((x - mean(x))^3)
+%    skew <- m3 / (sd(x)^3)
+%    skew
+% }
 get_skewness(Values) when length(Values) < ?STATS_MIN ->
     0;
 get_skewness(Values) ->
-    Mean = get_mean(Values),
-    StdDev = get_standard_deviation(Values),
-    Count = length(Values),
-    get_skewness(Values, Mean, StdDev, Count).
-
-get_mean(Values) when length(Values) < ?STATS_MIN ->
-    0;
-get_mean(Values) ->
-    Sum = lists:sum(Values),
-    Sum / length(Values).
+    Mean = folsom_statistics_scutil:arithmetic_mean(Values),
+    M3 = folsom_statistics_scutil:arithmetic_mean([math:pow(X - Mean, 3) || X <- Values]),
+    M3 / (math:pow(get_standard_deviation(Values), 3)).
 
 get_median(Values) when length(Values) < ?STATS_MIN ->
-    0;
+    0.0;
 get_median(Values) when is_list(Values) ->
     get_percentile(Values, 0.5).
 
 get_percentile(Values, _) when length(Values) < ?STATS_MIN ->
-    0;
+    0.0;
 get_percentile(Values, Percentile) when is_list(Values) ->
     SortedValues = lists:sort(Values),
     Element = round(Percentile * length(SortedValues)),
@@ -139,7 +177,9 @@ get_statistics(Values) ->
     [
      {min, get_min(Values)},
      {max, get_max(Values)},
-     {mean, get_mean(Values)},
+     {arithmetic_mean, folsom_statistics_scutil:arithmetic_mean(Values)},
+     {geometric_mean, folsom_statistics_scutil:geometric_mean(Values)},
+     {harmonic_mean, folsom_statistics_scutil:harmonic_mean(Values)},
      {median, get_median(Values)},
      {variance, get_variance(Values)},
      {standard_deviation, get_standard_deviation(Values)},
@@ -155,6 +195,14 @@ get_statistics(Values) ->
      },
      {histogram, get_histogram(Values)}
      ].
+
+get_statistics(Values1, Values2) ->
+    [
+     {covariance, get_covariance(Values1, Values2)},
+     {tau, get_kendall_correlation(Values1, Values2)},
+     {rho, get_pearson_correlation(Values1, Values2)},
+     {r, get_spearman_correlation(Values1, Values2)}
+    ].
 
 %%%===================================================================
 %%% Internal functions
@@ -175,18 +223,3 @@ which_bin(Value, [_ | Tail], Acc) ->
     which_bin(Value, Tail, Acc);
 which_bin(_, [], [{Bin, _} | _]) ->
     Bin.
-
-% my best estimation of excess kurtosis thus far
-% http://www.itl.nist.gov/div898/handbook/eda/section3/eda35b.htm
-get_kurtosis([], _, _, _) ->
-    0;
-get_kurtosis(Values, Mean, StdDev, Count) ->
-    List1 = [math:pow(Value - Mean, 4) || Value <- Values],
-    (lists:sum(List1) / ((Count - 1) * math:pow(StdDev, 4)) ) - 3.
-
-% results match excel calculation in my testing
-get_skewness([], _, _, _) ->
-    0;
-get_skewness(Values, Mean, StdDev, Count) ->
-    List = [math:pow((Value - Mean) / StdDev, 3) * Count || Value <- Values],
-    lists:sum(List) / ( (Count - 1) * (Count - 2) ).

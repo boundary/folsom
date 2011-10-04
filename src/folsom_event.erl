@@ -222,10 +222,6 @@ handle_call({gauge, Name}, State) ->
 %% Histogram
 handle_call({histogram, Name}, State) ->
     Values = folsom_metrics_histogram:get_values(Name),
-    Stats = folsom_statistics:get_statistics(Values),
-    {ok, Stats, State};
-handle_call({histogram_sample, Name}, State) ->
-    Values = folsom_metrics_histogram:get_values(Name),
     {ok, Values, State};
 %% History
 handle_call({history, {Name, Count}}, State) ->
