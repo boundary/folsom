@@ -273,6 +273,10 @@ terminate(_, #metric{name = Name, type = gauge}) ->
 terminate(_, #metric{name = Name, type = histogram}) ->
     ets:delete(?HISTOGRAM_TABLE, Name),
     ok;
+terminate(_, #metric{name = Name, type = history}) when is_binary(Name) ->
+    ets:delete(folsom_utils:to_atom(Name)),
+    ets:delete(?HISTORY_TABLE, folsom_utils:to_atom(Name)),
+    ok;
 terminate(_, #metric{name = Name, type = history}) ->
     ets:delete(Name),
     ets:delete(?HISTORY_TABLE, Name),

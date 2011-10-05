@@ -38,16 +38,24 @@
                   public
                  ]).
 
+new(Name) when is_binary(Name) ->
+    new(folsom_utils:to_atom(Name));
 new(Name) ->
     ets:new(Name, ?ETSOPTS).
 
+update(Name, Size, Value) when is_binary(Name) ->
+    update(folsom_utils:to_atom(Name), Size, Value);
 update(Name, Size, Value) ->
     Key = folsom_utils:now_epoch_micro(),
     insert(Name, Key, Size, Value, ets:info(Name, size)).
 
+get_events(Name) when is_binary(Name) ->
+    get_events(folsom_utils:to_atom(Name));
 get_events(Name) ->
     get_events(Name, ?DEFAULT_LIMIT).
 
+get_events(Name, Count) when is_binary(Name) ->
+    get_events(folsom_utils:to_atom(Name, Count));
 get_events(Name, Count) ->
     get_last_events(Name, Count).
 

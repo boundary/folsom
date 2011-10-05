@@ -41,40 +41,44 @@
 
 create_metrics() ->
     ok = folsom_metrics:new_counter(counter),
-    ok = folsom_metrics:new_gauge(gauge),
+    ok = folsom_metrics:new_gauge(<<"gauge">>),
 
-    ok = folsom_metrics:new_histogram(uniform, uniform, 5000, 1),
+    ok = folsom_metrics:new_histogram(<<"uniform">>, uniform, 5000, 1),
     ok = folsom_metrics:new_histogram(exdec, exdec, 5000, 1),
     ok = folsom_metrics:new_histogram(none, none, 5000, 1),
 
     ok = folsom_metrics:new_histogram(nonea, none, 5000, 1),
 
-    ok = folsom_metrics:new_history(history),
+    ok = folsom_metrics:new_history(<<"history">>),
+    ok = folsom_metrics:new_history(historya),
     ok = folsom_metrics:new_meter(meter),
 
-    8 = length(folsom_metrics:get_metrics()).
+    9 = length(folsom_metrics:get_metrics()),
+
+    ?debugFmt("~n~nmetrics: ~p~n", [folsom_metrics:get_metrics()]).
 
 populate_metrics() ->
     ok = folsom_metrics:notify({counter, {inc, 1}}),
     ok = folsom_metrics:notify({counter, {dec, 1}}),
 
-    ok = folsom_metrics:notify({gauge, 2}),
+    ok = folsom_metrics:notify({<<"gauge">>, 2}),
 
-    [ok = folsom_metrics:notify({uniform, Value}) || Value <- ?DATA],
+    [ok = folsom_metrics:notify({<<"uniform">>, Value}) || Value <- ?DATA],
     [ok = folsom_metrics:notify({exdec, Value}) || Value <- ?DATA],
     [ok = folsom_metrics:notify({none, Value}) || Value <- ?DATA],
 
     [ok = folsom_metrics:notify({nonea, Value}) || Value <- ?DATA1],
 
-    ok = folsom_metrics:notify({history, "4"}),
+    ok = folsom_metrics:notify({<<"history">>, "4"}),
+    ok = folsom_metrics:notify({historya, "5"}),
     ok = folsom_metrics:notify({meter, 5}).
 
 check_metrics() ->
     0 = folsom_metrics:get_metric_value(counter),
 
-    2 = folsom_metrics:get_metric_value(gauge),
+    2 = folsom_metrics:get_metric_value(<<"gauge">>),
 
-    Histogram1 = folsom_metrics:get_histogram_statistics(uniform),
+    Histogram1 = folsom_metrics:get_histogram_statistics(<<"uniform">>),
     histogram_checks(Histogram1),
     Histogram2 = folsom_metrics:get_histogram_statistics(exdec),
     histogram_checks(Histogram2),
@@ -84,20 +88,22 @@ check_metrics() ->
     CoValues = folsom_metrics:get_histogram_statistics(none, nonea),
     histogram_co_checks(CoValues),
 
-    1 = length(folsom_metrics:get_metric_value(history)),
+    1 = length(folsom_metrics:get_metric_value(<<"history">>)),
+    1 = length(folsom_metrics:get_metric_value(historya)),
 
     Meter = folsom_metrics:get_metric_value(meter),
     0 > proplists:get_value(one, Meter).
 
 delete_metrics() ->
     ok = folsom_metrics:delete_metric(counter),
-    ok = folsom_metrics:delete_metric(gauge),
+    ok = folsom_metrics:delete_metric(<<"gauge">>),
 
-    ok = folsom_metrics:delete_metric(uniform),
+    ok = folsom_metrics:delete_metric(<<"uniform">>),
     ok = folsom_metrics:delete_metric(exdec),
     ok = folsom_metrics:delete_metric(none),
 
-    ok = folsom_metrics:delete_metric(history),
+    ok = folsom_metrics:delete_metric(<<"history">>),
+    ok = folsom_metrics:delete_metric(historya),
     ok = folsom_metrics:delete_metric(meter).
 
 vm_metrics() ->
