@@ -4,6 +4,8 @@ Folsom is an Erlang based metrics system inspired by Coda Hale's metrics (https:
 
 #### Building and running
 
+First, regarding using folsom and folsom_webmachine together. To make sure you have compatible versions of each, make sure you use code from the same version tags, ie 0.5 of folsom is known to work with 0.5 folsom_webmachine. HEAD on each repo may have broken API compatibility.
+
 You need a (preferably recent) version of Erlang installed but that should be it.
 
        ./rebar get-deps
@@ -28,6 +30,8 @@ Retreive a list of current installed metrics:
 Query a specific metric:
 
       > folsom_metrics:get_metric_value(Name).
+
+Generally names of metrics are atoms or binaries.
 
 ##### Counters
 
