@@ -48,6 +48,8 @@
 
 -define(STATS_MIN, 5).
 
+-compile([native]).
+
 
 get_max([]) ->
     0.0;

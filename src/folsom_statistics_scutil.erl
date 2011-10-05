@@ -13,6 +13,8 @@
          pearson_correlation/2
         ]).
 
+-compile([native]).
+
 % http://en.wikipedia.org/wiki/Arithmetic_mean
 arithmetic_mean([]) ->
     0.0;
