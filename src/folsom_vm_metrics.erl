@@ -47,10 +47,10 @@ get_system_info() ->
     [{Key, convert_system_info({Key, erlang:system_info(Key)})} || Key <- ?SYSTEM_INFO].
 
 get_process_info() ->
-    [{binary_to_list(term_to_binary(Pid)), get_process_info(Pid)} || Pid <- processes()].
+    [{Pid, get_process_info(Pid)} || Pid <- processes()].
 
 get_socket_info() ->
-    [{term_to_binary(Socket), get_socket_info(Socket)} || Socket <- erlang:ports()].
+    [{Socket, get_socket_info(Socket)} || Socket <- erlang:ports()].
 
 
 
