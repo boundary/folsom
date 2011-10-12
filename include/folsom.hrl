@@ -96,7 +96,7 @@
                        binary,
                        catchlevel,
                        current_function,
-                       dictionary
+                       dictionary,
                        error_handler,
                        garbage_collection,
                        group_leader,
