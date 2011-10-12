@@ -190,7 +190,7 @@ get_socket_opts(Socket, Key) ->
 get_socket_protocol(Socket) ->
     case erlang:port_info(Socket, name) of
         {name, "tcp_inet"} ->
-            [{procotol, tcp}];
+            [{protocol, tcp}];
         {name, "udp_inet"} ->
             [{protocol, udp}];
         {name,"sctp_inet"} ->
