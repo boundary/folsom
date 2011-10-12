@@ -74,10 +74,10 @@ convert_statistics({reductions, {TotalReductions, ReductionsSinceLastCall}}) ->
 convert_statistics({runtime, {TotalRunTime, TimeSinceLastCall}}) ->
     [{"total_run_time", TotalRunTime}, {"time_since_last_call", TimeSinceLastCall}];
 convert_statistics({wall_clock, {TotalWallclockTime, WallclockTimeSinceLastCall}}) ->
-     [{"Total_Wall_Clock_time", TotalWallclockTime},
-      {"wall_clock_time_since_last_call", WallclockTimeSinceLastCall}];
+    [{"Total_Wall_Clock_time", TotalWallclockTime},
+     {"wall_clock_time_since_last_call", WallclockTimeSinceLastCall}];
 convert_statistics({_, Value}) ->
-     Value.
+    Value.
 
 %% conversion functions for erlang:system_info(Key)
 
