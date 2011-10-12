@@ -139,7 +139,18 @@ get_port_info(Port) ->
     Opts = get_socket_opts(Port),
     Info = erlang:port_info(Port),
     Protocol = get_socket_protocol(Port),
-    lists:flatten(lists:append([Stat, SockName, Opts, Info, Protocol])).
+    Status = get_socket_status(Port),
+    Type = get_socket_type(Port),
+
+    lists:flatten(lists:append([
+                                Stat,
+                                SockName,
+                                Opts,
+                                Info,
+                                Protocol,
+                                Status,
+                                Type
+                               ])).
 
 get_socket_getstat(Socket) ->
     case catch inet:getstat(Socket) of
@@ -147,6 +158,22 @@ get_socket_getstat(Socket) ->
             Info;
         _ ->
             []
+    end.
+
+get_socket_status(Socket) ->
+    case catch prim_inet:getstatus(Socket) of
+        {ok, Status} ->
+            [{status, Status}];
+        _ ->
+         []
+    end.
+
+get_socket_type(Socket) ->
+    case catch prim_inet:gettype(Socket) of
+        {ok, Type} ->
+            [{type, Type}];
+        _ ->
+         []
     end.
 
 get_socket_opts(Socket) ->
