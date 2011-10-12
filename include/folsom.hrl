@@ -123,3 +123,24 @@
                        trace,
                        trap_exit
                       ]).
+
+-define(SOCKET_OPTS, [
+                      active,
+                      broadcast,
+                      delay_send,
+                      dontroute,
+                      exit_on_close,
+                      header,
+                      keepalive,
+                      nodelay,
+                      packet,
+                      packet_size,
+                      read_packets,
+                      recbuf,
+                      reuseaddr,
+                      send_timeout,
+                      send_timeout_close,
+                      sndbuf,
+                      priority,
+                      tos
+                     ]).

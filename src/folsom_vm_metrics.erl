@@ -29,7 +29,7 @@
          get_statistics/0,
          get_memory/0,
          get_process_info/0,
-         get_socket_info/0
+         get_port_info/0
         ]).
 
 -include("folsom.hrl").
@@ -47,10 +47,10 @@ get_system_info() ->
     [{Key, convert_system_info({Key, erlang:system_info(Key)})} || Key <- ?SYSTEM_INFO].
 
 get_process_info() ->
-    [{Pid, get_process_info(Pid)} || Pid <- processes()].
+    [{pid_to_list(Pid), get_process_info(Pid)} || Pid <- processes()].
 
-get_socket_info() ->
-    [{Socket, get_socket_info(Socket)} || Socket <- erlang:ports()].
+get_port_info() ->
+    [{erlang:port_to_list(Port), get_port_info(Port)} || Port <- erlang:ports()].
 
 
 
@@ -133,10 +133,52 @@ convert_cpu_topology([], Acc) ->
 get_process_info(Pid) ->
     [process_info(Pid, Key) || Key <- ?PROCESS_INFO].
 
-get_socket_info(Socket) ->
+get_port_info(Port) ->
+    Stat = get_socket_getstat(Port),
+    SockName = get_socket_sockname(Port),
+    Opts = get_socket_opts(Port),
+    Info = erlang:port_info(Port),
+    Protocol = get_socket_protocol(Port),
+    lists:flatten(lists:append([Stat, SockName, Opts, Info, Protocol])).
+
+get_socket_getstat(Socket) ->
     case catch inet:getstat(Socket) of
         {ok, Info} ->
             Info;
         _ ->
             []
     end.
+
+get_socket_opts(Socket) ->
+    [get_socket_opts(Socket, Key) || Key <- ?SOCKET_OPTS].
+
+get_socket_opts(Socket, Key) ->
+    case catch inet:getopts(Socket, [Key]) of
+        {ok, Opt} ->
+            Opt;
+        _ ->
+            []
+    end.
+
+get_socket_protocol(Socket) ->
+    case erlang:port_info(Socket, name) of
+        {name, "tcp_inet"} ->
+            [{procotol, tcp}];
+        {name, "udp_inet"} ->
+            [{protocol, udp}];
+        {name,"sctp_inet"} ->
+            [{protocol, sctp}];
+        _ ->
+            []
+    end.
+
+get_socket_sockname(Socket) ->
+    case catch inet:sockname(Socket) of
+        {ok, {Ip, Port}} ->
+            [{ip, ip_to_list(Ip)}, {port, Port}];
+        _ ->
+            []
+    end.
+
+ip_to_list({A, B, C, D}) ->
+    [A, B, C, D].
