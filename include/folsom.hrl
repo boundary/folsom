@@ -90,3 +90,36 @@
                      runtime,
                      wall_clock
                     ]).
+
+-define(PROCESS_INFO, [
+                       backtrace,
+                       %binary,
+                       catchlevel,
+                       %current_function,
+                       %dictionary
+                       error_handler,
+                       garbage_collection,
+                       %group_leader,
+                       heap_size,
+                       %initial_call,
+                       %links,
+                       last_calls,
+                       memory,
+                       %message_binary,
+                       message_queue_len,
+                       messages,
+                       min_heap_size,
+                       min_bin_vheap_size,
+                       %monitored_by,
+                       monitors,
+                       priority,
+                       reductions,
+                       %registered_name,
+                       sequential_trace_token,
+                       stack_size,
+                       status,
+                       suspending,
+                       total_heap_size,
+                       trace,
+                       trap_exit
+                      ]).

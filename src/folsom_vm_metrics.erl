@@ -25,7 +25,12 @@
 
 -module(folsom_vm_metrics).
 
--export([get_system_info/0, get_statistics/0, get_memory/0]).
+-export([get_system_info/0,
+         get_statistics/0,
+         get_memory/0,
+         get_process_info/0,
+         get_socket_info/0
+        ]).
 
 -include("folsom.hrl").
 
@@ -40,6 +45,13 @@ get_statistics() ->
 
 get_system_info() ->
     [{Key, convert_system_info({Key, erlang:system_info(Key)})} || Key <- ?SYSTEM_INFO].
+
+get_process_info() ->
+    [{binary_to_list(term_to_binary(Pid)), get_process_info(Pid)} || Pid <- processes()].
+
+get_socket_info() ->
+    [{term_to_binary(Socket), get_socket_info(Socket)} || Socket <- erlang:ports()].
+
 
 
 % internal functions
@@ -62,10 +74,10 @@ convert_statistics({reductions, {TotalReductions, ReductionsSinceLastCall}}) ->
 convert_statistics({runtime, {TotalRunTime, TimeSinceLastCall}}) ->
     [{"total_run_time", TotalRunTime}, {"time_since_last_call", TimeSinceLastCall}];
 convert_statistics({wall_clock, {TotalWallclockTime, WallclockTimeSinceLastCall}}) ->
-    [{"total_wall_clock_time", TotalWallclockTime},
-     {"wall_clock_time_since_last_call", WallclockTimeSinceLastCall}];
+     [{"Total_Wall_Clock_time", TotalWallclockTime},
+      {"wall_clock_time_since_last_call", WallclockTimeSinceLastCall}];
 convert_statistics({_, Value}) ->
-    Value.
+     Value.
 
 %% conversion functions for erlang:system_info(Key)
 
@@ -117,3 +129,14 @@ convert_cpu_topology([{thread, Value}| Tail], Acc) ->
   convert_cpu_topology(Tail, lists:append(Acc, [{thread, tuple_to_list(Value)}]));
 convert_cpu_topology([], Acc) ->
   Acc.
+
+get_process_info(Pid) ->
+    [process_info(Pid, Key) || Key <- ?PROCESS_INFO].
+
+get_socket_info(Socket) ->
+    case catch inet:getstat(Socket) of
+        {ok, Info} ->
+            Info;
+        _ ->
+            []
+    end.
