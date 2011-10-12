@@ -105,7 +105,7 @@
                        links,
                        last_calls,
                        memory,
-                       message_binary,
+                       %message_binary,
                        message_queue_len,
                        messages,
                        min_heap_size,
