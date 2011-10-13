@@ -137,7 +137,7 @@ get_port_info(Port) ->
     Stat = get_socket_getstat(Port),
     SockName = get_socket_sockname(Port),
     Opts = get_socket_opts(Port),
-    Info = erlang:port_info(Port),
+    Info = get_erlang_port_info(Port),
     Protocol = get_socket_protocol(Port),
     Status = get_socket_status(Port),
     Type = get_socket_type(Port),
@@ -168,10 +168,14 @@ get_socket_status(Socket) ->
          []
     end.
 
+get_erlang_port_info(Port) ->
+    Info = erlang:port_info(Port),
+    [convert_port_info(Item) || Item <- Info].
+
 get_socket_type(Socket) ->
     case catch prim_inet:gettype(Socket) of
         {ok, Type} ->
-            [{type, Type}];
+            [{type, tuple_to_list(Type)}];
         _ ->
          []
     end.
@@ -209,3 +213,10 @@ get_socket_sockname(Socket) ->
 
 ip_to_list({A, B, C, D}) ->
     [A, B, C, D].
+
+convert_port_info({links, List}) ->
+    {links, [pid_to_list(Item) || Item <- List]};
+convert_port_info({connected, Pid}) ->
+    {connected, pid_to_list(Pid)};
+convert_port_info(Item) ->
+    Item.
