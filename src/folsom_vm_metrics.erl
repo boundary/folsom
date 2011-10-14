@@ -224,8 +224,6 @@ convert_port_info(Item) ->
 
 convert_pid_info({current_function, MFA}) ->
     {current_function, tuple_to_list(MFA)};
-convert_pid_info({dictionary, List}) ->
-    {dictionary, convert_dictionary(List, [])};
 convert_pid_info({Key, Pid}) when is_pid(Pid) ->
     {Key, convert_pid_port_fun(Pid)};
 convert_pid_info({links, List}) ->
@@ -251,26 +249,3 @@ convert_pid_port_fun(Term) when is_function(Term) ->
     erlang:fun_to_list(Term);
 convert_pid_port_fun(Term) ->
     Term.
-
-convert_dictionary([], Acc) ->
-    Acc;
-convert_dictionary([{Key, Value} | Tail], Acc) when is_pid(Value) or is_port(Value) or is_function(Value) ->
-     convert_dictionary(Tail, [{Key, convert_pid_port_fun(Value)} | Acc]);
-convert_dictionary([{'$ancestors', List} | Tail], Acc) ->
-    AncList = {'$ancestors', [convert_pid_port_fun(Item) || Item <- List]},
-    convert_dictionary(Tail, [AncList | Acc]);
-convert_dictionary([{longnames, Value} | Tail], Acc) ->
-     convert_dictionary(Tail, [{longnames, Value} | Acc]);
-convert_dictionary([{shortnames, Value} | Tail], Acc) ->
-     convert_dictionary(Tail, [{shortnames, Value} | Acc]);
-convert_dictionary([{echo, Value} | Tail], Acc) ->
-     convert_dictionary(Tail, [{echo, Value} | Acc]);
-convert_dictionary([{read_mode, Value} | Tail], Acc) ->
-     convert_dictionary(Tail, [{read_mode, Value} | Acc]);
-convert_dictionary([{Key, Value} | Tail], Acc) when is_list(Value) ->
-    convert_dictionary(Tail, [{Key, Value} | Acc]);
-convert_dictionary([{Key, Value} | Tail], Acc) when is_tuple(Value) ->
-    convert_dictionary(Tail, [{Key, tuple_to_list(Value)} | Acc]);
-convert_dictionary([Head | Tail], Acc) when is_tuple(Head) ->
-    convert_dictionary(Tail, [tuple_to_list(Head), Acc]).
-
