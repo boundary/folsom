@@ -47,10 +47,10 @@ get_system_info() ->
     [{Key, convert_system_info({Key, erlang:system_info(Key)})} || Key <- ?SYSTEM_INFO].
 
 get_process_info() ->
-    [{pid_to_list(Pid), get_process_info(Pid)} || Pid <- processes()].
+    [{convert_pid_port_fun(Pid), get_process_info(Pid)} || Pid <- processes()].
 
 get_port_info() ->
-    [{erlang:port_to_list(Port), get_port_info(Port)} || Port <- erlang:ports()].
+    [{convert_pid_port_fun(Port), get_port_info(Port)} || Port <- erlang:ports()].
 
 
 
@@ -131,7 +131,8 @@ convert_cpu_topology([], Acc) ->
   Acc.
 
 get_process_info(Pid) ->
-    [process_info(Pid, Key) || Key <- ?PROCESS_INFO].
+    Info = [process_info(Pid, Key) || Key <- ?PROCESS_INFO],
+    lists:flatten([convert_pid_info(Item) || Item <- Info]).
 
 get_port_info(Port) ->
     Stat = get_socket_getstat(Port),
@@ -215,8 +216,61 @@ ip_to_list({A, B, C, D}) ->
     [A, B, C, D].
 
 convert_port_info({links, List}) ->
-    {links, [pid_to_list(Item) || Item <- List]};
+    {links, [convert_pid_port_fun(Item) || Item <- List]};
 convert_port_info({connected, Pid}) ->
-    {connected, pid_to_list(Pid)};
+    {connected, convert_pid_port_fun(Pid)};
 convert_port_info(Item) ->
     Item.
+
+convert_pid_info({current_function, MFA}) ->
+    {current_function, tuple_to_list(MFA)};
+convert_pid_info({dictionary, List}) ->
+    {dictionary, convert_dictionary(List, [])};
+convert_pid_info({Key, Pid}) when is_pid(Pid) ->
+    {Key, convert_pid_port_fun(Pid)};
+convert_pid_info({links, List}) ->
+    {links, [convert_pid_port_fun(Item) || Item <- List]};
+convert_pid_info({suspending, List}) ->
+    {suspending, [convert_pid_port_fun(Item) || Item <- List]};
+convert_pid_info({monitors, List}) ->
+    {monitors, [convert_pid_port_fun(Item) || Item <- List]};
+convert_pid_info({monitored_by, List}) ->
+    {monitored_by, [convert_pid_port_fun(Item) || Item <- List]};
+convert_pid_info({binary, List}) ->
+    {binary, [tuple_to_list(Item) || Item <- List]};
+convert_pid_info({initial_call, MFA}) ->
+    {inital_call, tuple_to_list(MFA)};
+convert_pid_info(Item) ->
+    Item.
+
+convert_pid_port_fun(Term) when is_pid(Term) ->
+    pid_to_list(Term);
+convert_pid_port_fun(Term) when is_port(Term) ->
+    erlang:port_to_list(Term);
+convert_pid_port_fun(Term) when is_function(Term) ->
+    erlang:fun_to_list(Term);
+convert_pid_port_fun(Term) ->
+    Term.
+
+convert_dictionary([], Acc) ->
+    Acc;
+convert_dictionary([{Key, Value} | Tail], Acc) when is_pid(Value) or is_port(Value) or is_function(Value) ->
+     convert_dictionary(Tail, [{Key, convert_pid_port_fun(Value)} | Acc]);
+convert_dictionary([{'$ancestors', List} | Tail], Acc) ->
+    AncList = {'$ancestors', [convert_pid_port_fun(Item) || Item <- List]},
+    convert_dictionary(Tail, [AncList | Acc]);
+convert_dictionary([{longnames, Value} | Tail], Acc) ->
+     convert_dictionary(Tail, [{longnames, Value} | Acc]);
+convert_dictionary([{shortnames, Value} | Tail], Acc) ->
+     convert_dictionary(Tail, [{shortnames, Value} | Acc]);
+convert_dictionary([{echo, Value} | Tail], Acc) ->
+     convert_dictionary(Tail, [{echo, Value} | Acc]);
+convert_dictionary([{read_mode, Value} | Tail], Acc) ->
+     convert_dictionary(Tail, [{read_mode, Value} | Acc]);
+convert_dictionary([{Key, Value} | Tail], Acc) when is_list(Value) ->
+    convert_dictionary(Tail, [{Key, Value} | Acc]);
+convert_dictionary([{Key, Value} | Tail], Acc) when is_tuple(Value) ->
+    convert_dictionary(Tail, [{Key, tuple_to_list(Value)} | Acc]);
+convert_dictionary([Head | Tail], Acc) when is_tuple(Head) ->
+    convert_dictionary(Tail, [tuple_to_list(Head), Acc]).
+
