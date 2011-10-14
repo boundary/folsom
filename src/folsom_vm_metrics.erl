@@ -231,7 +231,7 @@ convert_pid_info({links, List}) ->
 convert_pid_info({suspending, List}) ->
     {suspending, [pid_port_fun_to_list(Item) || Item <- List]};
 convert_pid_info({monitors, List}) ->
-    {monitors, [pid_port_fun_to_list(Item) || Item <- List]};
+    {monitors, [{Key, pid_port_fun_to_list(Value)} || {Key, Value} <- List]};
 convert_pid_info({monitored_by, List}) ->
     {monitored_by, [pid_port_fun_to_list(Item) || Item <- List]};
 convert_pid_info({binary, List}) ->
