@@ -47,10 +47,10 @@ get_system_info() ->
     [{Key, convert_system_info({Key, erlang:system_info(Key)})} || Key <- ?SYSTEM_INFO].
 
 get_process_info() ->
-    [{convert_pid_port_fun(Pid), get_process_info(Pid)} || Pid <- processes()].
+    [{pid_port_fun_to_list(Pid), get_process_info(Pid)} || Pid <- processes()].
 
 get_port_info() ->
-    [{convert_pid_port_fun(Port), get_port_info(Port)} || Port <- erlang:ports()].
+    [{pid_port_fun_to_list(Port), get_port_info(Port)} || Port <- erlang:ports()].
 
 
 
@@ -216,24 +216,24 @@ ip_to_list({A, B, C, D}) ->
     [A, B, C, D].
 
 convert_port_info({links, List}) ->
-    {links, [convert_pid_port_fun(Item) || Item <- List]};
+    {links, [pid_port_fun_to_list(Item) || Item <- List]};
 convert_port_info({connected, Pid}) ->
-    {connected, convert_pid_port_fun(Pid)};
+    {connected, pid_port_fun_to_list(Pid)};
 convert_port_info(Item) ->
     Item.
 
 convert_pid_info({current_function, MFA}) ->
     {current_function, tuple_to_list(MFA)};
 convert_pid_info({Key, Pid}) when is_pid(Pid) ->
-    {Key, convert_pid_port_fun(Pid)};
+    {Key, pid_port_fun_to_list(Pid)};
 convert_pid_info({links, List}) ->
-    {links, [convert_pid_port_fun(Item) || Item <- List]};
+    {links, [pid_port_fun_to_list(Item) || Item <- List]};
 convert_pid_info({suspending, List}) ->
-    {suspending, [convert_pid_port_fun(Item) || Item <- List]};
+    {suspending, [pid_port_fun_to_list(Item) || Item <- List]};
 convert_pid_info({monitors, List}) ->
-    {monitors, [convert_pid_port_fun(Item) || Item <- List]};
+    {monitors, [pid_port_fun_to_list(Item) || Item <- List]};
 convert_pid_info({monitored_by, List}) ->
-    {monitored_by, [convert_pid_port_fun(Item) || Item <- List]};
+    {monitored_by, [pid_port_fun_to_list(Item) || Item <- List]};
 convert_pid_info({binary, List}) ->
     {binary, [tuple_to_list(Item) || Item <- List]};
 convert_pid_info({initial_call, MFA}) ->
@@ -241,11 +241,11 @@ convert_pid_info({initial_call, MFA}) ->
 convert_pid_info(Item) ->
     Item.
 
-convert_pid_port_fun(Term) when is_pid(Term) ->
+pid_port_fun_to_list(Term) when is_pid(Term) ->
     pid_to_list(Term);
-convert_pid_port_fun(Term) when is_port(Term) ->
+pid_port_fun_to_list(Term) when is_port(Term) ->
     erlang:port_to_list(Term);
-convert_pid_port_fun(Term) when is_function(Term) ->
+pid_port_fun_to_list(Term) when is_function(Term) ->
     erlang:fun_to_list(Term);
-convert_pid_port_fun(Term) ->
+pid_port_fun_to_list(Term) ->
     Term.
