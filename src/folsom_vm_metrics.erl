@@ -87,6 +87,8 @@ convert_system_info({allocator, {_,_,_,List}}) ->
     List;
 convert_system_info({c_compiler_used, {Compiler, Version}}) ->
     [{compiler, Compiler}, {version, convert_c_compiler_version(Version)}];
+convert_system_info({cpu_topology, undefined}) ->
+    undefined;
 convert_system_info({cpu_topology, List}) ->
     [{Type, convert_cpu_topology(Item, [])} || {Type, Item} <- List];
 convert_system_info({dist_ctrl, List}) ->
