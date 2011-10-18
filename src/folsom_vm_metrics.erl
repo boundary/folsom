@@ -87,8 +87,8 @@ convert_system_info({allocator, {_,_,_,List}}) ->
     List;
 convert_system_info({c_compiler_used, {Compiler, Version}}) ->
     [{compiler, Compiler}, {version, convert_c_compiler_version(Version)}];
-convert_system_info({cpu_topology, [{processor, List}]}) ->
-    [{processor, convert_cpu_topology(List, [])}];
+convert_system_info({cpu_topology, List}) ->
+    [{Type, convert_cpu_topology(Item, [])} || {Type, Item} <- List];
 convert_system_info({dist_ctrl, List}) ->
     lists:map(fun({Node, Socket}) ->
                       {ok, Stats} = inet:getstat(Socket),
@@ -127,6 +127,8 @@ convert_cpu_topology([{core, Value}| Tail], Acc) when is_list(Value) ->
   convert_cpu_topology(Tail, lists:append(Acc, [{core, convert_cpu_topology(Value, [])}]));
 convert_cpu_topology([{thread, Value}| Tail], Acc) ->
   convert_cpu_topology(Tail, lists:append(Acc, [{thread, tuple_to_list(Value)}]));
+convert_cpu_topology({logical, Value}, Acc) ->
+  convert_cpu_topology([], lists:append(Acc, [logical, Value]));
 convert_cpu_topology([], Acc) ->
   Acc.
 
