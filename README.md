@@ -88,3 +88,11 @@ The result of `erlang:system_info/1`:
 The result of `erlang:statistics/1`:
 
        > folsom_vm_metrics:get_statistics().
+
+The result of `erlang:process_info/1`:
+
+       > folsom_vm_metrics:get_process_info(). %% use with caution
+
+The result of `inet:getstat/1`, `prim_inet:getstatus/1`, `erlang:port_info/1`, `prim_inet:gettype/1`, `inet:getopts/1`, `inet:sockname/1`:
+
+       > folsom_vm_metrics:get_port_info(). %% use with caution
