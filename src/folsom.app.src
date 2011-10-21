@@ -7,6 +7,5 @@
                   kernel,
                   stdlib
                  ]},
-  {mod, { folsom_app, []}},
   {env, []}
  ]}.

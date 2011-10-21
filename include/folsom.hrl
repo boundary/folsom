@@ -1,3 +1,4 @@
+-define(FOLSOM_TABLE, folsom).
 -define(COUNTER_TABLE, counters).
 -define(GAUGE_TABLE, gauges).
 -define(HISTOGRAM_TABLE, histograms).

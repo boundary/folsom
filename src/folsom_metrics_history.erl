@@ -35,13 +35,15 @@
 -define(ETSOPTS, [
                   named_table,
                   ordered_set,
-                  public
+                  public,
+                  {write_concurrency, true}
                  ]).
 
 new(Name) when is_binary(Name) ->
     new(folsom_utils:to_atom(Name));
 new(Name) ->
-    ets:new(Name, ?ETSOPTS).
+    Name = ets:new(Name, ?ETSOPTS),
+    ok.
 
 update(Name, Size, Value) when is_binary(Name) ->
     update(folsom_utils:to_atom(Name), Size, Value);

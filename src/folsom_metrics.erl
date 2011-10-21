@@ -54,10 +54,10 @@
 %% Metrics API
 
 new_counter(Name) ->
-    folsom_event:add_handler(counter, Name).
+    folsom_ets:add_handler(counter, Name).
 
 new_gauge(Name) ->
-    folsom_event:add_handler(gauge, Name).
+    folsom_ets:add_handler(gauge, Name).
 
 new_histogram(Name) ->
     folsom_metrics:new_histogram(Name, ?DEFAULT_SAMPLE_TYPE, ?DEFAULT_SIZE, ?DEFAULT_ALPHA).
@@ -69,40 +69,40 @@ new_histogram(Name, SampleType, SampleSize) ->
     folsom_metrics:new_histogram(Name, SampleType, SampleSize, ?DEFAULT_ALPHA).
 
 new_histogram(Name, SampleType, SampleSize, Alpha) ->
-    folsom_event:add_handler(histogram, Name, SampleType, SampleSize, Alpha).
+    folsom_ets:add_handler(histogram, Name, SampleType, SampleSize, Alpha).
 
 new_history(Name) ->
     folsom_metrics:new_history(Name, ?DEFAULT_SIZE).
 
 new_history(Name, SampleSize) ->
-    folsom_event:add_handler(history, Name, SampleSize).
+    folsom_ets:add_handler(history, Name, SampleSize).
 
 new_meter(Name) ->
-    folsom_event:add_handler(meter, Name).
+    folsom_ets:add_handler(meter, Name).
 
 delete_metric(Name) ->
-    folsom_event:delete_handler(Name).
+    folsom_ets:delete_handler(Name).
 
 notify(Event) ->
-    folsom_event:notify(Event).
+    folsom_ets:notify(Event).
 
 get_metrics() ->
-    folsom_event:get_handlers().
+    folsom_ets:get_handlers().
 
 metric_exists(Name) ->
-    folsom_event:handler_exists(Name).
+    folsom_ets:handler_exists(Name).
 
 get_metrics_info() ->
-    folsom_event:get_handlers_info().
+    folsom_ets:get_handlers_info().
 
 get_metric_info(Name) ->
-    [folsom_event:get_info(Name)].
+    [folsom_ets:get_info(Name)].
 
 get_metric_value(Name) ->
-    folsom_event:get_values(Name).
+    folsom_ets:get_values(Name).
 
 get_histogram_statistics(Name) ->
-    Values = folsom_event:get_values(Name),
+    Values = folsom_ets:get_values(Name),
     folsom_statistics:get_statistics(Values).
 
 get_histogram_statistics(Name1, Name2) ->
@@ -111,7 +111,7 @@ get_histogram_statistics(Name1, Name2) ->
     folsom_statistics:get_statistics(Values1, Values2).
 
 get_history_values(Name, Count) ->
-    folsom_event:get_history_values(Name, Count).
+    folsom_ets:get_history_values(Name, Count).
 
 histogram_timed_update(Name, Fun) ->
     Start = folsom_utils:now_epoch_micro(),
