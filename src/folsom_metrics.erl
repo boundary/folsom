@@ -36,6 +36,9 @@
          new_meter/1,
          delete_metric/1,
          notify/1,
+         notify/2,
+         notify/3,
+         notify_existing_metric/3,
          get_metrics/0,
          metric_exists/1,
          get_metrics_info/0,
@@ -85,6 +88,15 @@ delete_metric(Name) ->
 
 notify(Event) ->
     folsom_ets:notify(Event).
+
+notify(Name, Event) ->
+    folsom_ets:notify(Name, Event).
+
+notify(Name, Event, Type) ->
+    folsom_ets:notify(Name, Event, Type).
+
+notify_existing_metric(Name, Event, Type) ->
+    folsom_ets:notify_existing_metric(Name, Event, Type).
 
 get_metrics() ->
     folsom_ets:get_handlers().

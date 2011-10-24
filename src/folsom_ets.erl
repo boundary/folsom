@@ -32,6 +32,9 @@
          delete_handler/1,
          handler_exists/1,
          notify/1,
+         notify/2,
+         notify/3,
+         notify_existing_metric/3,
          get_handlers/0,
          get_handlers_info/0,
          get_info/1,
@@ -76,40 +79,34 @@ delete_handler(Name) ->
 handler_exists(Name) ->
     ets:member(?FOLSOM_TABLE, Name).
 
+%% old tuple style notifications
 notify({Name, Event}) ->
     notify(Name, Event).
 
+%% notify/2, checks metric type and makes sure metric exists
+%% before notifying, returning error if not
 notify(Name, Event) ->
     case handler_exists(Name) of
         true ->
             {_, Info} = get_info(Name),
             Type = proplists:get_value(type, Info),
-            notify(Name, Event, Type);
+            notify(Name, Event, Type, true);
         false ->
             {error, Name, nonexistant_metric}
     end.
 
-notify(Name, {inc, Value}, counter) ->
-    folsom_metrics_counter:inc(Name, Value),
-    ok;
-notify(Name, {dec, Value}, counter) ->
-    folsom_metrics_counter:dec(Name, Value),
-    ok;
-notify(Name, Value, gauge) ->
-    folsom_metrics_gauge:update(Name, Value),
-    ok;
-notify(Name, Value, histogram) ->
-    folsom_metrics_histogram:update(Name, Value),
-    ok;
-notify(Name, Value, history) ->
-    [{_, #metric{history_size = HistorySize}}] = ets:lookup(?FOLSOM_TABLE, Name),
-    folsom_metrics_history:update(Name, HistorySize, Value),
-    ok;
-notify(Name, Value, meter) ->
-    folsom_metrics_meter:mark(Name, Value),
-    ok;
-notify(_, _, Type) ->
-    {error, Type, unsupported_metric_type}.
+%% notify/3, makes sure metric exist, if not creates metric
+notify(Name, Event, Type) ->
+    case handler_exists(Name) of
+        true ->
+            notify(Name, Event, Type, true);
+        false ->
+            notify(Name, Event, Type, false)
+    end.
+
+%% assumes metric already exists, bypasses above checks
+notify_existing_metric(Name, Event, Type) ->
+    notify(Name, Event, Type, true).
 
 get_handlers() ->
     proplists:get_keys(ets:tab2list(?FOLSOM_TABLE)).
@@ -213,3 +210,51 @@ delete_history(Name) when is_atom(Name) ->
     ok;
 delete_history(Name) ->
     {error, Name, invalid_history_name}.
+
+notify(Name, {inc, Value}, counter, true) ->
+    folsom_metrics_counter:inc(Name, Value),
+    ok;
+notify(Name, {inc, Value}, counter, false) ->
+    add_handler(counter, Name),
+    folsom_metrics_counter:inc(Name, Value),
+    ok;
+notify(Name, {dec, Value}, counter, true) ->
+    folsom_metrics_counter:dec(Name, Value),
+    ok;
+notify(Name, {dec, Value}, counter, false) ->
+    add_handler(counter, Name),
+    folsom_metrics_counter:dec(Name, Value),
+    ok;
+notify(Name, Value, gauge, true) ->
+    folsom_metrics_gauge:update(Name, Value),
+    ok;
+notify(Name, Value, gauge, false) ->
+    add_handler(gauge, Name),
+    folsom_metrics_gauge:update(Name, Value),
+    ok;
+notify(Name, Value, histogram, true) ->
+    folsom_metrics_histogram:update(Name, Value),
+    ok;
+notify(Name, Value, histogram, false) ->
+    add_handler(histogram, Name),
+    folsom_metrics_histogram:update(Name, Value),
+    ok;
+notify(Name, Value, history, true) ->
+    [{_, #metric{history_size = HistorySize}}] = ets:lookup(?FOLSOM_TABLE, Name),
+    folsom_metrics_history:update(Name, HistorySize, Value),
+    ok;
+notify(Name, Value, history, false) ->
+    add_handler(history, Name),
+    [{_, #metric{history_size = HistorySize}}] = ets:lookup(?FOLSOM_TABLE, Name),
+    folsom_metrics_history:update(Name, HistorySize, Value),
+    ok;
+notify(Name, Value, meter, true) ->
+    folsom_metrics_meter:mark(Name, Value),
+    ok;
+notify(Name, Value, meter, false) ->
+    add_handler(meter, Name),
+    folsom_metrics_meter:mark(Name, Value),
+    ok;
+notify(_, _, Type, _) ->
+    {error, Type, unsupported_metric_type}.
+

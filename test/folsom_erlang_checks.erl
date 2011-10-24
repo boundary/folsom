@@ -50,10 +50,9 @@ create_metrics() ->
     ok = folsom_metrics:new_histogram(nonea, none, 5000, 1),
 
     ok = folsom_metrics:new_history(<<"history">>),
-    ok = folsom_metrics:new_history(historya),
     ok = folsom_metrics:new_meter(meter),
 
-    9 = length(folsom_metrics:get_metrics()),
+    8 = length(folsom_metrics:get_metrics()),
 
     ?debugFmt("~n~nmetrics: ~p~n", [folsom_metrics:get_metrics()]).
 
@@ -70,7 +69,10 @@ populate_metrics() ->
     [ok = folsom_metrics:notify({nonea, Value}) || Value <- ?DATA1],
 
     ok = folsom_metrics:notify({<<"history">>, "4"}),
-    ok = folsom_metrics:notify({historya, "5"}),
+
+    {error, _, nonexistant_metric} = folsom_metrics:notify({historya, "5"}),
+    ok = folsom_metrics:notify(historya, "5", history),
+
     ok = folsom_metrics:notify({meter, 5}).
 
 check_metrics() ->
