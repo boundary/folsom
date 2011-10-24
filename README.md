@@ -8,16 +8,13 @@ First, regarding using folsom and folsom_webmachine together. To make sure you h
 
 You need a (preferably recent) version of Erlang installed but that should be it.
 
-       ./rebar get-deps
        ./rebar compile
-
-* Note that ibrowse is only a dep for the test suite.
 
 folsom can be run standalone or embedded in an Erlang application.
 
-       $ erl -pa ebin deps/*/ebin
+       $ erl -pa ebin
 
-       > folsom:start(). % or start_link ...
+       > folsom:start(). % this creates the needed ETS tables
 
 #### Metrics API
 
