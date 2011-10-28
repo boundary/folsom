@@ -48,7 +48,7 @@
 
 -define(STATS_MIN, 5).
 
--compile([native,export_all]).
+-compile([native]).
 
 
 get_max([]) ->
