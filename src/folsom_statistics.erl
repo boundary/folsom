@@ -54,14 +54,12 @@
 get_max([]) ->
     0.0;
 get_max(Values) ->
-    [Head | _] = lists:reverse(lists:sort(Values)),
-    Head.
+    lists:max(Values).
 
 get_min([]) ->
     0.0;
 get_min(Values) ->
-    [Head | _] = lists:sort(Values),
-    Head.
+    lists:min(Values).
 
 get_rate(Value1, Value2, Interval) ->
     Delta = Value1 - Value2,
@@ -73,8 +71,12 @@ get_rate(Value1, Value2, Time1, Time2) ->
     get_rate(Value1, Value2, Interval).
 
 get_histogram(Values) ->
-    Bins = [{Bin, 0} || Bin <- ?HIST],
-    build_hist(Values, Bins).
+    Dict = lists:foldl(fun (Value, Dict) ->
+            update_bin(Value, ?HIST, Dict)
+          end,
+          dict:from_list([{Bin, 0} || Bin <- ?HIST]),
+          Values),
+    lists:sort(dict:to_list(Dict)).
 
 % two pass variance
 % results match those given by the 'var' function in R
@@ -102,8 +104,11 @@ get_covariance(Values1, Values2) ->
     Mean1 = folsom_statistics_scutil:arithmetic_mean(Values1),
     Mean2 = folsom_statistics_scutil:arithmetic_mean(Values2),
     Zip = lists:zip(Values1, Values2),
-    List = [((X1 - Mean1) * (X2 - Mean2))  / length(Values1) || {X1, X2} <- Zip],
-    lists:sum(List).
+    Samples = length(Values1),
+    lists:foldl(fun ({X1,X2}, Sum) ->
+         Sum + ((X1 - Mean1) * (X2 - Mean2))  / Samples
+       end,
+       0, Zip).
 
 get_kendall_correlation(Values, _) when length(Values) < ?STATS_MIN ->
     0.0;
@@ -210,18 +215,7 @@ get_statistics(Values1, Values2) ->
 %%% Internal functions
 %%%===================================================================
 
-% these histogram functions are too complicated, find better solution
-build_hist([Head | Tail], Hist) ->
-    {Bin, Count} = proplists:lookup(which_bin(Head, Hist, []), Hist),
-    List = proplists:delete(Bin, Hist),
-    NewHist = lists:append(List, [{Bin, Count + 1}]),
-    build_hist(Tail, NewHist);
-build_hist([], Hist) ->
-    lists:sort(Hist).
-
-which_bin(Value, [{Bin, _} = B | Tail], Acc) when Value =< Bin ->
-    which_bin(Value, Tail, lists:sort(lists:append(Acc, [B])));
-which_bin(Value, [_ | Tail], Acc) ->
-    which_bin(Value, Tail, Acc);
-which_bin(_, [], [{Bin, _} | _]) ->
-    Bin.
+update_bin(Value, [Bin|_Bins], Dict) when Value =< Bin ->
+    dict:update_counter(Bin, 1, Dict);
+update_bin(Values, [_Bin|Bins], Dict) ->
+    update_bin(Values, Bins, Dict).
