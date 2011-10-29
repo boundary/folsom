@@ -68,10 +68,10 @@ populate_metrics() ->
 
     [ok = folsom_metrics:notify({nonea, Value}) || Value <- ?DATA1],
 
-    ok = folsom_metrics:notify({<<"history">>, "4"}),
+    ok = folsom_metrics:notify({<<"history">>, "string"}),
 
     {error, _, nonexistant_metric} = folsom_metrics:notify({historya, "5"}),
-    ok = folsom_metrics:notify(historya, "5", history),
+    ok = folsom_metrics:notify(historya, <<"binary">>, history),
 
     ok = folsom_metrics:notify({meter, 5}).
 
