@@ -11,9 +11,10 @@
 -define(DEFAULT_SAMPLE_TYPE, uniform).
 
 -record(uniform, {
-    size = 5000,
-    reservoir = []
-   }).
+	  size = 5000,
+	  n = 1,
+	  reservoir = dict:new()
+	 }).
 
 -record(exdec, {
           start = 0,

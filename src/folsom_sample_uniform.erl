@@ -24,7 +24,7 @@
 %%%
 %%% https://github.com/codahale/metrics/blob/development/src/main/java/com/yammer/metrics/core/UniformSample.java
 %%%
-%%% that implementation is based on:
+%%% that implementation is based on algorithm R in:
 %%%
 %%% http://www.cs.umd.edu/~samir/498/vitter.pdf
 %%% @end
@@ -45,30 +45,22 @@
 new(Size) ->
     #uniform{size = Size}.
 
-update(#uniform{reservoir = []} = Sample, Value) ->
-    Sample#uniform{reservoir = [Value]};
-update(#uniform{size = Size, reservoir = Reservoir} = Sample, Value) when length(Reservoir) < Size ->
-    Sample#uniform{reservoir = lists:append(Reservoir, [Value])};
-update(#uniform{reservoir = Reservoir} = Sample, Value) ->
-    NewReservoir = update(Reservoir, Value, rand(length(Reservoir))),
-    Sample#uniform{reservoir = NewReservoir}.
+%% update1(#uniform1{reservoir = dict} = Sample, Value) ->
+%%     Sample#uniform1{reservoir = [Value]};
+update(#uniform{size = Size, reservoir = Reservoir, n=N} = Sample, Value) when N =< Size ->
+    Sample#uniform{reservoir = dict:store(N, Value, Reservoir), n = N+1};
+
+update(#uniform{reservoir = Reservoir, size = Size, n = N} = Sample, Value) ->
+    NewReservoir = maybe_update(rand(N), Size, Value, Reservoir),
+    Sample#uniform{reservoir = NewReservoir, n=N+1}.
 
 get_values(#uniform{reservoir = Reservoir}) ->
+    [Val || {_,Val} <- dict:to_list(Reservoir)].
+
+maybe_update(Rnd, Size, Value, Reservoir) when Rnd < Size ->
+    dict:store(Rnd, Value, Reservoir);
+maybe_update(_Rnd, _Size, _Value, Reservoir) ->
     Reservoir.
 
-% internal api
-
-update([_ | Tail], Value, Rand) when Rand == 0 ->
-    [Value | Tail];
-update(List, Value, Rand) when Rand < length(List) ->
-    {List1, List2} = lists:split(Rand, List),
-    List3 = lists:append(drop_last(List1), [Value]),
-    lists:append(List3, List2).
-
-drop_last([_]) ->
-    [];
-drop_last([H|T]) ->
-    [H | drop_last(T)].
-
 rand(Count) ->
-    erlang:abs(random:uniform(?RAND)) rem Count.
+    random:uniform(Count).
