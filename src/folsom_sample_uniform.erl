@@ -45,30 +45,17 @@
 new(Size) ->
     #uniform{size = Size}.
 
-update(#uniform{reservoir = []} = Sample, Value) ->
-    Sample#uniform{reservoir = [Value]};
-update(#uniform{size = Size, reservoir = Reservoir} = Sample, Value) when length(Reservoir) < Size ->
-    Sample#uniform{reservoir = lists:append(Reservoir, [Value])};
-update(#uniform{reservoir = Reservoir} = Sample, Value) ->
-    NewReservoir = update(Reservoir, Value, rand(length(Reservoir))),
+%% update1(#uniform1{reservoir = dict} = Sample, Value) ->
+%%     Sample#uniform1{reservoir = [Value]};
+update(#uniform{size = Size, reservoir = Reservoir, n=N} = Sample, Value) when N < Size ->
+    Sample#uniform{reservoir = dict:store(N, Value, Reservoir), n = N+1};
+
+update(#uniform{reservoir = Reservoir, n = N} = Sample, Value) ->
+    NewReservoir = dict:store(rand(N), Value, Reservoir),
     Sample#uniform{reservoir = NewReservoir}.
 
 get_values(#uniform{reservoir = Reservoir}) ->
-    Reservoir.
-
-% internal api
-
-update([_ | Tail], Value, Rand) when Rand == 0 ->
-    [Value | Tail];
-update(List, Value, Rand) when Rand < length(List) ->
-    {List1, List2} = lists:split(Rand, List),
-    List3 = lists:append(drop_last(List1), [Value]),
-    lists:append(List3, List2).
-
-drop_last([_]) ->
-    [];
-drop_last([H|T]) ->
-    [H | drop_last(T)].
+    [Val || {_,Val} <- dict:to_list(Reservoir)].
 
 rand(Count) ->
     erlang:abs(random:uniform(?RAND)) rem Count.
