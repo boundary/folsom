@@ -12,7 +12,7 @@
 
 -record(uniform, {
 	  size = 5000,
-	  n = 0,
+	  n = 1,
 	  reservoir = dict:new()
 	 }).
 
