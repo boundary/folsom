@@ -28,11 +28,18 @@
 -include("folsom.hrl").
 
 start() ->
-    ets:new(?FOLSOM_TABLE, [set, named_table, public, {read_concurrency, true}]),
-    ets:new(?COUNTER_TABLE, [set, named_table, public, {write_concurrency, true}]),
-    ets:new(?GAUGE_TABLE, [set, named_table, public, {write_concurrency, true}]),
-    ets:new(?HISTOGRAM_TABLE, [set, named_table, public, {write_concurrency, true}]),
-    ets:new(?METER_TABLE, [set, named_table, public, {write_concurrency, true}]),
-    ets:new(?HISTORY_TABLE, [set, named_table, public, {write_concurrency, true}]),
+    Tables = [
+              {?FOLSOM_TABLE, [set, named_table, public, {read_concurrency, true}]},
+              {?COUNTER_TABLE, [set, named_table, public, {write_concurrency, true}]},
+              {?GAUGE_TABLE, [set, named_table, public, {write_concurrency, true}]},
+              {?HISTOGRAM_TABLE, [set, named_table, public, {write_concurrency, true}]},
+              {?METER_TABLE, [set, named_table, public, {write_concurrency, true}]},
+              {?HISTORY_TABLE, [set, named_table, public, {write_concurrency, true}]}
+             ],
+    [maybe_create_table(ets:info(Name), Name, Opts) || {Name, Opts} <- Tables],
     ok.
 
+maybe_create_table(undefined, Name, Opts) ->
+    ets:new(Name, Opts);
+maybe_create_table(_, _, _) ->
+    ok.
