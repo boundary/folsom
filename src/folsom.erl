@@ -23,20 +23,16 @@
 %%%------------------------------------------------------------------
 
 -module(folsom).
--export([start/0, start_link/0, stop/0]).
+-export([start/0]).
 
-%% @spec start_link() -> {ok,Pid::pid()}
-%% @doc Starts the app for inclusion in a supervisor tree
-start_link() ->
-    folsom_sup:start_link().
+-include("folsom.hrl").
 
-%% @spec start() -> ok
-%% @doc Start the folsom server.
 start() ->
-    application:start(folsom).
+    ets:new(?FOLSOM_TABLE, [set, named_table, public, {read_concurrency, true}]),
+    ets:new(?COUNTER_TABLE, [set, named_table, public, {write_concurrency, true}]),
+    ets:new(?GAUGE_TABLE, [set, named_table, public, {write_concurrency, true}]),
+    ets:new(?HISTOGRAM_TABLE, [set, named_table, public, {write_concurrency, true}]),
+    ets:new(?METER_TABLE, [set, named_table, public, {write_concurrency, true}]),
+    ets:new(?HISTORY_TABLE, [set, named_table, public, {write_concurrency, true}]),
+    ok.
 
-%% @spec stop() -> ok
-%% @doc Stop the folsom server.
-stop() ->
-    Res = application:stop(folsom),
-    Res.
