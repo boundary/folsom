@@ -73,7 +73,13 @@ populate_metrics() ->
     {error, _, nonexistant_metric} = folsom_metrics:notify({historya, "5"}),
     ok = folsom_metrics:notify(historya, <<"binary">>, history),
 
-    ok = folsom_metrics:notify({meter, 5}).
+    % simulate an interval tick
+    folsom_metrics_meter:tick(meter),
+
+    [ok,ok,ok,ok,ok] = [ folsom_metrics:notify({meter, Item}) || Item <- [100, 100, 100, 100, 100]],
+
+    % simulate an interval tick
+    folsom_metrics_meter:tick(meter).
 
 check_metrics() ->
     0 = folsom_metrics:get_metric_value(counter),
@@ -93,8 +99,15 @@ check_metrics() ->
     1 = length(folsom_metrics:get_metric_value(<<"history">>)),
     1 = length(folsom_metrics:get_metric_value(historya)),
 
+    ?debugFmt("checking meter~n", []),
     Meter = folsom_metrics:get_metric_value(meter),
-    0 > proplists:get_value(one, Meter).
+    ?debugFmt("~p", [Meter]),
+    ok = case proplists:get_value(one, Meter) of
+        Value when Value > 1 ->
+            ok;
+        _ ->
+            error
+    end.
 
 delete_metrics() ->
     ok = folsom_metrics:delete_metric(counter),
