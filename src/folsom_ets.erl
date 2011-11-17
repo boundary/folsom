@@ -160,7 +160,7 @@ maybe_add_handler(history, Name, false) ->
     true = ets:insert(?FOLSOM_TABLE, {Name, #metric{type = history, history_size = ?DEFAULT_SIZE}}),
     ok;
 maybe_add_handler(meter, Name, false) ->
-    {ok, _} = timer:apply_interval(?DEFAULT_INTERVAL, folsom_metrics_meter, tick, Name),
+    {ok, _} = timer:apply_interval(?DEFAULT_INTERVAL, folsom_metrics_meter, tick, [Name]),
     true = folsom_metrics_meter:new(Name),
     true = ets:insert(?FOLSOM_TABLE, {Name, #metric{type = meter}}),
     ok;
