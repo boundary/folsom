@@ -25,21 +25,5 @@
 -module(folsom).
 -export([start/0]).
 
--include("folsom.hrl").
-
 start() ->
-    Tables = [
-              {?FOLSOM_TABLE, [set, named_table, public, {read_concurrency, true}]},
-              {?COUNTER_TABLE, [set, named_table, public, {write_concurrency, true}]},
-              {?GAUGE_TABLE, [set, named_table, public, {write_concurrency, true}]},
-              {?HISTOGRAM_TABLE, [set, named_table, public, {write_concurrency, true}]},
-              {?METER_TABLE, [set, named_table, public, {write_concurrency, true}]},
-              {?HISTORY_TABLE, [set, named_table, public, {write_concurrency, true}]}
-             ],
-    [maybe_create_table(ets:info(Name), Name, Opts) || {Name, Opts} <- Tables],
-    ok.
-
-maybe_create_table(undefined, Name, Opts) ->
-    ets:new(Name, Opts);
-maybe_create_table(_, _, _) ->
-    ok.
+    folsom_sup:start_link().
