@@ -68,13 +68,7 @@ add_handler(Type, Name, SampleType, SampleSize, Alpha) ->
 
 delete_handler(Name) ->
     {_, Info} = get_info(Name),
-    case proplists:get_value(type, Info) of
-        history ->
-            ok = delete_history(Name);
-        _ ->
-            true = ets:delete(?FOLSOM_TABLE, Name)
-    end,
-    ok.
+    ok = delete_metric(Name, proplists:get_value(type, Info)).
 
 handler_exists(Name) ->
     ets:member(?FOLSOM_TABLE, Name).
@@ -200,16 +194,30 @@ maybe_add_handler(Type, _, _, _, _, false) ->
 maybe_add_handler(_, Name, _, _, _, true) ->
     {error, Name, metric_already_exists}.
 
-delete_history(Name) when is_binary(Name)->
+delete_metric(Name, history) when is_binary(Name) ->
     true = ets:delete(folsom_utils:to_atom(Name)),
     true = ets:delete(?FOLSOM_TABLE, Name),
     ok;
-delete_history(Name) when is_atom(Name) ->
+delete_metric(Name, history) ->
     true = ets:delete(Name),
     true = ets:delete(?FOLSOM_TABLE, Name),
     ok;
-delete_history(Name) ->
-    {error, Name, invalid_history_name}.
+delete_metric(Name, histogram) ->
+    true = ets:delete(?HISTOGRAM_TABLE, Name),
+    true = ets:delete(?FOLSOM_TABLE, Name),
+    ok;
+delete_metric(Name, counter) ->
+    true = ets:delete(?COUNTER_TABLE, Name),
+    true = ets:delete(?FOLSOM_TABLE, Name),
+    ok;
+delete_metric(Name, gauge) ->
+    true = ets:delete(?GAUGE_TABLE, Name),
+    true = ets:delete(?FOLSOM_TABLE, Name),
+    ok;
+delete_metric(Name, meter) ->
+    true = ets:delete(?METER_TABLE, Name),
+    true = ets:delete(?FOLSOM_TABLE, Name),
+    ok.
 
 notify(Name, {inc, Value}, counter, true) ->
     folsom_metrics_counter:inc(Name, Value),
