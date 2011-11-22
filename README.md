@@ -14,7 +14,7 @@ folsom can be run standalone or embedded in an Erlang application.
 
        $ erl -pa ebin
 
-       > folsom:start(). % this creates the needed ETS tables
+       > folsom_sup:start_link(). % this creates the needed ETS tables and starts a gen_server
 
 #### Metrics API
 
