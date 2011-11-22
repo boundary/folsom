@@ -39,6 +39,8 @@
 
 -define(DATA1, [5, 10, 15, 20, 25, 30, 35, 40, 45, 50]).
 
+-include("folsom.hrl").
+
 create_metrics() ->
     ok = folsom_metrics:new_counter(counter),
     ok = folsom_metrics:new_gauge(<<"gauge">>),
@@ -51,6 +53,9 @@ create_metrics() ->
 
     ok = folsom_metrics:new_history(<<"history">>),
     ok = folsom_metrics:new_meter(meter),
+
+    ?debugFmt("ensuring meter tick is registered with gen_server~n", []),
+    ok = ensure_meter_tick_exists(meter),
 
     8 = length(folsom_metrics:get_metrics()),
 
@@ -110,6 +115,8 @@ check_metrics() ->
     end.
 
 delete_metrics() ->
+    10 = length(ets:tab2list(?FOLSOM_TABLE)),
+
     ok = folsom_metrics:delete_metric(counter),
     ok = folsom_metrics:delete_metric(<<"gauge">>),
 
@@ -119,7 +126,15 @@ delete_metrics() ->
 
     ok = folsom_metrics:delete_metric(<<"history">>),
     ok = folsom_metrics:delete_metric(historya),
-    ok = folsom_metrics:delete_metric(meter).
+
+    ok = folsom_metrics:delete_metric(nonea),
+    ok = folsom_metrics:delete_metric(testcounter),
+
+    1 = length(ets:tab2list(?METER_TABLE)),
+    ok = folsom_metrics:delete_metric(meter),
+    0 = length(ets:tab2list(?METER_TABLE)),
+
+    0 = length(ets:tab2list(?FOLSOM_TABLE)).
 
 vm_metrics() ->
     List1 = folsom_vm_metrics:get_memory(),
@@ -141,6 +156,10 @@ counter_metric(Count, Counter) ->
     ?debugFmt("counter result: ~p~n", [Result]),
 
     0 = Result.
+
+ensure_meter_tick_exists(Name) ->
+    [{timer, Name ,{interval, _}} | _] = folsom_meter_timer_server:dump(),
+    ok.
 
 %% internal function
 
