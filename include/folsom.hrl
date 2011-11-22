@@ -1,9 +1,9 @@
 -define(FOLSOM_TABLE, folsom).
--define(COUNTER_TABLE, counters).
--define(GAUGE_TABLE, gauges).
--define(HISTOGRAM_TABLE, histograms).
--define(METER_TABLE, meters).
--define(HISTORY_TABLE, histories).
+-define(COUNTER_TABLE, folsom_counters).
+-define(GAUGE_TABLE, folsom_gauges).
+-define(HISTOGRAM_TABLE, folsom_histograms).
+-define(METER_TABLE, folsom_meters).
+-define(HISTORY_TABLE, folsom_histories).
 
 -define(DEFAULT_LIMIT, 5).
 -define(DEFAULT_SIZE, 5000).
