@@ -57,6 +57,15 @@ create_metrics() ->
     ?debugFmt("ensuring meter tick is registered with gen_server~n", []),
     ok = ensure_meter_tick_exists(meter),
 
+    ?debugFmt("ensuring multiple timer registrations dont cause issues", []),
+    ok = folsom_meter_timer_server:register(meter),
+    ok = folsom_meter_timer_server:register(meter),
+    ok = folsom_meter_timer_server:register(meter),
+
+    ?debugFmt("~p", [folsom_meter_timer_server:dump()]),
+    {state, List} = folsom_meter_timer_server:dump(),
+    1 = length(List),
+
     8 = length(folsom_metrics:get_metrics()),
 
     ?debugFmt("~n~nmetrics: ~p~n", [folsom_metrics:get_metrics()]).
@@ -158,7 +167,7 @@ counter_metric(Count, Counter) ->
     0 = Result.
 
 ensure_meter_tick_exists(Name) ->
-    [{timer, Name ,{interval, _}} | _] = folsom_meter_timer_server:dump(),
+    {state, [{Name ,{interval, _}} | _]} = folsom_meter_timer_server:dump(),
     ok.
 
 %% internal function

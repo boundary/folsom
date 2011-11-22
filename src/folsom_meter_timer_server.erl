@@ -38,11 +38,6 @@
 
 -include("folsom.hrl").
 
--record(timer, {
-          name,
-          ref
-         }).
-
 -record(state, {
           registered_timers = []
          }).
@@ -94,10 +89,15 @@ init([]) ->
 %% @end
 %%--------------------------------------------------------------------
 handle_call({register, Name}, _From, State) ->
-    {ok, Ref} = timer:apply_interval(?DEFAULT_INTERVAL, folsom_metrics_meter, tick, [Name]),
-    Timer = #timer{name = Name, ref = Ref},
-    NewState = [Timer | State#state.registered_timers],
-    {reply, {ok, Ref}, NewState};
+    NewState = case proplists:is_defined(Name, State#state.registered_timers) of
+                   true ->
+                       State;
+                   false ->
+                       {ok, Ref} = timer:apply_interval(?DEFAULT_INTERVAL, folsom_metrics_meter, tick, [Name]),
+                       NewList = [{Name, Ref} | State#state.registered_timers],
+                       #state{registered_timers = NewList}
+               end,
+    {reply, ok, NewState};
 handle_call(dump, _From, State) ->
     {reply, State, State}.
 
