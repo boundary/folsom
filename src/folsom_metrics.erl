@@ -49,7 +49,10 @@
          get_history_values/2,
          histogram_timed_update/2,
          histogram_timed_update/3,
-         histogram_timed_update/4
+         histogram_timed_update/4,
+	 histogram_timed_call/2,
+         histogram_timed_call/3,
+         histogram_timed_call/4
         ]).
 
 -include("folsom.hrl").
@@ -125,7 +128,7 @@ get_histogram_statistics(Name1, Name2) ->
 get_history_values(Name, Count) ->
     folsom_ets:get_history_values(Name, Count).
 
-histogram_timed_update(Name, Fun) ->
+histogram_timed_update(Name, Fun) when is_function(Fun) ->
     Start = folsom_utils:now_epoch_micro(),
     Fun(),
     Stop = folsom_utils:now_epoch_micro(),
@@ -142,3 +145,24 @@ histogram_timed_update(Name, Mod, Fun, Args) ->
     erlang:apply(Mod, Fun, Args),
     Stop = folsom_utils:now_epoch_micro(),
     notify({Name, Stop - Start}).
+
+histogram_timed_call(Metric,Fun) when is_function(Fun) ->
+    Start = folsom_utils:now_epoch_micro(),
+    Val = Fun(),
+    Stop = folsom_utils:now_epoch_micro(),
+    folsom_metrics:notify({Metric,Stop - Start}),
+    Val.
+    
+histogram_timed_call(Name, Fun, Args) ->
+    Start = folsom_uils:now_epoch_micro(),
+    Val = erlang:apply(Fun, Args),
+    Stop = folsom_utils:now_epoch_micro(),
+    notify({Name, Stop - Start}),
+    Val.
+
+histogram_timed_call(Name, Mod, Fun, Args) ->
+    Start = folsom_utils:now_epoch_micro(),
+    Val = erlang:apply(Mod, Fun, Args),
+    Stop = folsom_utils:now_epoch_micro(),
+    notify({Name, Stop - Start}),
+    Val.
