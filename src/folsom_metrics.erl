@@ -126,19 +126,16 @@ get_history_values(Name, Count) ->
     folsom_ets:get_history_values(Name, Count).
 
 histogram_timed_update(Name, Fun) ->
-    Start = folsom_utils:now_epoch_micro(),
-    Fun(),
-    Stop = folsom_utils:now_epoch_micro(),
-    notify({Name, Stop - Start}).
+    {Time, Value} = timer:tc(Fun),
+    ok = notify({Name, Time}),
+    Value.
 
 histogram_timed_update(Name, Fun, Args) ->
-    Start = folsom_utils:now_epoch_micro(),
-    erlang:apply(Fun, Args),
-    Stop = folsom_utils:now_epoch_micro(),
-    notify({Name, Stop - Start}).
+    {Time, Value} = timer:tc(Fun, Args),
+    ok = notify({Name, Time}),
+    Value.
 
 histogram_timed_update(Name, Mod, Fun, Args) ->
-    Start = folsom_utils:now_epoch_micro(),
-    erlang:apply(Mod, Fun, Args),
-    Stop = folsom_utils:now_epoch_micro(),
-    notify({Name, Stop - Start}).
+    {Time, Value} = timer:tc(Mod, Fun, Args),
+    ok = notify({Name, Time}),
+    Value.

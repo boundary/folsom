@@ -51,6 +51,8 @@ create_metrics() ->
 
     ok = folsom_metrics:new_histogram(nonea, none, 5000, 1),
 
+    ok = folsom_metrics:new_histogram(timed, none, 5000, 1),
+
     ok = folsom_metrics:new_history(<<"history">>),
     ok = folsom_metrics:new_meter(meter),
 
@@ -66,7 +68,7 @@ create_metrics() ->
     {state, List} = folsom_meter_timer_server:dump(),
     1 = length(List),
 
-    8 = length(folsom_metrics:get_metrics()),
+    9 = length(folsom_metrics:get_metrics()),
 
     ?debugFmt("~n~nmetrics: ~p~n", [folsom_metrics:get_metrics()]).
 
@@ -81,6 +83,8 @@ populate_metrics() ->
     [ok = folsom_metrics:notify({none, Value}) || Value <- ?DATA],
 
     [ok = folsom_metrics:notify({nonea, Value}) || Value <- ?DATA1],
+
+    3.141592653589793 = folsom_metrics:histogram_timed_update(timed, math, pi, []),
 
     ok = folsom_metrics:notify({<<"history">>, "string"}),
 
@@ -110,6 +114,9 @@ check_metrics() ->
     CoValues = folsom_metrics:get_histogram_statistics(none, nonea),
     histogram_co_checks(CoValues),
 
+    List = folsom_metrics:get_metric_value(timed),
+    ?debugFmt("timed update value: ~p", [List]),
+
     1 = length(folsom_metrics:get_metric_value(<<"history">>)),
     1 = length(folsom_metrics:get_metric_value(historya)),
 
@@ -124,7 +131,7 @@ check_metrics() ->
     end.
 
 delete_metrics() ->
-    10 = length(ets:tab2list(?FOLSOM_TABLE)),
+    11 = length(ets:tab2list(?FOLSOM_TABLE)),
 
     ok = folsom_metrics:delete_metric(counter),
     ok = folsom_metrics:delete_metric(<<"gauge">>),
@@ -137,6 +144,7 @@ delete_metrics() ->
     ok = folsom_metrics:delete_metric(historya),
 
     ok = folsom_metrics:delete_metric(nonea),
+    ok = folsom_metrics:delete_metric(timed),
     ok = folsom_metrics:delete_metric(testcounter),
 
     1 = length(ets:tab2list(?METER_TABLE)),
@@ -153,7 +161,12 @@ vm_metrics() ->
     true = lists:keymember(context_switches, 1, List2),
 
     List3 = folsom_vm_metrics:get_system_info(),
-    true = lists:keymember(allocated_areas, 1, List3).
+    true = lists:keymember(allocated_areas, 1, List3),
+
+    [{_, [{backtrace, _}| _]} | _] = folsom_vm_metrics:get_process_info(),
+
+    [{_, [{name, _}| _]} | _] = folsom_vm_metrics:get_port_info().
+
 
 counter_metric(Count, Counter) ->
     ok = folsom_metrics:new_counter(Counter),
