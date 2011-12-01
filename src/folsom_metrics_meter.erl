@@ -69,13 +69,13 @@ mark(Name, Value) ->
 get_values(Name) ->
     #meter{one = OneMin, five = FiveMin, fifteen = FifteenMin, count = Count} = Meter = get_value(Name),
     L = [
-	 {count, Count},
-	 {one, get_rate(OneMin)},
-	 {five, get_rate(FiveMin)},
-	 {fifteen, get_rate(FifteenMin)},
-	 {mean, get_mean_rate(Meter)},
-	 {acceleration, get_acceleration(Name)}
-	],
+         {count, Count},
+         {one, get_rate(OneMin)},
+         {five, get_rate(FiveMin)},
+         {fifteen, get_rate(FifteenMin)},
+         {mean, get_mean_rate(Meter)},
+         {acceleration, get_acceleration(Name)}
+        ],
     [ {K,V} || {K,V} <- L, V /= undefined ].
 
 get_acceleration(Name) ->
