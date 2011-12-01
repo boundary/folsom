@@ -202,10 +202,39 @@ histogram_checks(List) ->
          end,
 
     200 = proplists:get_value(median, List),
-    2412421.1555555556 = proplists:get_value(variance, List),
-    1553.1970755688267 = proplists:get_value(standard_deviation, List),
-    1.6945363114445593 = proplists:get_value(skewness, List),
-    1.6710725994068278 = proplists:get_value(kurtosis, List),
+
+    VarValue = proplists:get_value(variance, List),
+    ok = case VarValue - 2412421.1555555556 of
+            VarDiff when VarDiff < 0.00000001 ->
+                ok;
+            _ ->
+              error
+         end,
+
+    StdDev = proplists:get_value(standard_deviation, List),
+    ok = case StdDev - 1553.1970755688264 of
+            StdDevDiff when StdDevDiff < 0.00000001 ->
+                ok;
+            _ ->
+              error
+         end,
+
+    Skew = proplists:get_value(skewness, List),
+    ok = case Skew - 1.6945363114445602 of
+             SkewDiff when SkewDiff < 0.00000001 ->
+                 ok;
+             _ ->
+                 error
+         end,
+
+    Kurt = proplists:get_value(kurtosis, List),
+    ok = case Kurt - 1.6710725994068296 of
+           KurtDiff when KurtDiff < 0.00000001 ->
+               ok;
+           _ ->
+               error
+       end,
+
     List1 = proplists:get_value(percentile, List),
     percentile_check(List1),
     List2 = proplists:get_value(histogram, List),

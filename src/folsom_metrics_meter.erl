@@ -103,4 +103,8 @@ calc_mean_rate(Start, Count) ->
     Count / Elapsed.
 
 calc_acceleration(Rate1, Rate2, Interval) ->
-    folsom_statistics:get_rate(Rate1, Rate2, Interval). % most current velocity minus previous velocity
+    get_rate(Rate1, Rate2, Interval). % most current velocity minus previous velocity
+
+get_rate(Value1, Value2, Interval) ->
+    Delta = Value1 - Value2,
+    Delta / Interval.

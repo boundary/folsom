@@ -25,20 +25,12 @@
 
 -module(folsom_statistics).
 
--export([get_max/1,
-         get_min/1,
-         get_rate/3,
-         get_rate/4,
-         get_histogram/1,
-         get_variance/1,
-         get_standard_deviation/1,
-         get_covariance/2,
-         get_kurtosis/1,
-         get_skewness/1,
-         get_median/1,
-         get_percentile/2,
+-compile([export_all]).
+
+-export([
          get_statistics/1,
-         get_statistics/2]).
+         get_statistics/2
+        ]).
 
 -define(HIST, [1, 5, 10, 20, 30, 40, 50, 100, 150,
                200, 250, 300, 350, 400, 450, 500,
@@ -48,156 +40,33 @@
 
 -define(STATS_MIN, 5).
 
+-record(scan_result, {n=0, sumX=0, sumXX=0, sumInv=0, sumLog, max, min}).
+-record(scan_result2, {x2=0, x3=0, x4=0}).
+
 -compile([native]).
 
-
-get_max([]) ->
-    0.0;
-get_max(Values) ->
-    lists:max(Values).
-
-get_min([]) ->
-    0.0;
-get_min(Values) ->
-    lists:min(Values).
-
-get_rate(Value1, Value2, Interval) ->
-    Delta = Value1 - Value2,
-    Delta / Interval.
-
-% time values here are based on epoch i.e. an integer
-get_rate(Value1, Value2, Time1, Time2) ->
-    Interval = Time2 - Time1,
-    get_rate(Value1, Value2, Interval).
-
-get_histogram(Values) ->
-    Dict = lists:foldl(fun (Value, Dict) ->
-            update_bin(Value, ?HIST, Dict)
-          end,
-          dict:from_list([{Bin, 0} || Bin <- ?HIST]),
-          Values),
-    lists:sort(dict:to_list(Dict)).
-
-% two pass variance
-% results match those given by the 'var' function in R
-get_variance(Values) when length(Values) < ?STATS_MIN ->
-    0.0;
-get_variance(Values) ->
-    Mean = folsom_statistics_scutil:arithmetic_mean(Values),
-    List = [(Value - Mean) * (Value - Mean) || Value <- Values],
-    Sum = lists:sum(List),
-    Sum / (length(Values) - 1).
-
-% results match those given by the 'sd' function in R
-get_standard_deviation(Values) when length(Values) < ?STATS_MIN ->
-    0.0;
-get_standard_deviation(Values) ->
-    math:sqrt(get_variance(Values)).
-
-% two pass covariance (http://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Covariance)
-% matches results given by excel's 'covar' function
-get_covariance(Values, _) when length(Values) < ?STATS_MIN ->
-    0.0;
-get_covariance(_, Values) when length(Values) < ?STATS_MIN ->
-    0.0;
-get_covariance(Values1, Values2) ->
-    Mean1 = folsom_statistics_scutil:arithmetic_mean(Values1),
-    Mean2 = folsom_statistics_scutil:arithmetic_mean(Values2),
-    Zip = lists:zip(Values1, Values2),
-    Samples = length(Values1),
-    lists:foldl(fun ({X1,X2}, Sum) ->
-         Sum + ((X1 - Mean1) * (X2 - Mean2))  / Samples
-       end,
-       0, Zip).
-
-get_kendall_correlation(Values, _) when length(Values) < ?STATS_MIN ->
-    0.0;
-get_kendall_correlation(_, Values) when length(Values) < ?STATS_MIN ->
-    0.0;
-get_kendall_correlation(Values1, Values2) when length(Values1) /= length(Values2) ->
-    0.0;
-get_kendall_correlation(Values1, Values2) ->
-    folsom_statistics_scutil:kendall_correlation(Values1, Values2).
-
-get_spearman_correlation(Values, _) when length(Values) < ?STATS_MIN ->
-    0.0;
-get_spearman_correlation(_, Values) when length(Values) < ?STATS_MIN ->
-    0.0;
-get_spearman_correlation(Values1, Values2) when length(Values1) /= length(Values2) ->
-    0.0;
-get_spearman_correlation(Values1, Values2) ->
-    folsom_statistics_scutil:spearman_correlation(Values1, Values2).
-
-get_pearson_correlation(Values, _) when length(Values) < ?STATS_MIN ->
-    0.0;
-get_pearson_correlation(_, Values) when length(Values) < ?STATS_MIN ->
-    0.0;
-get_pearson_correlation(Values1, Values2) when length(Values1) /= length(Values2) ->
-    0.0;
-get_pearson_correlation(Values1, Values2) ->
-    folsom_statistics_scutil:pearson_correlation(Values1, Values2).
-
-% http://en.wikipedia.org/wiki/Kurtosis
-%
-% results should match this R function:
-% kurtosis <- function(x) {
-%     m4 <- mean((x - mean(x))^4)
-%     kurt <- m4 / (sd(x)^4) - 3
-%     kurt
-% }
-get_kurtosis(Values) when length(Values) < ?STATS_MIN ->
-    0;
-get_kurtosis(Values) ->
-    Mean = folsom_statistics_scutil:arithmetic_mean(Values),
-    M4 = folsom_statistics_scutil:arithmetic_mean([math:pow(X - Mean, 4) || X <- Values]),
-    M4 / (math:pow(get_standard_deviation(Values), 4)) - 3.
-
-% http://en.wikipedia.org/wiki/Skewness
-%
-% skewness results should match this R function:
-% skewness <- function(x) {
-%    m3 <- mean((x - mean(x))^3)
-%    skew <- m3 / (sd(x)^3)
-%    skew
-% }
-get_skewness(Values) when length(Values) < ?STATS_MIN ->
-    0;
-get_skewness(Values) ->
-    Mean = folsom_statistics_scutil:arithmetic_mean(Values),
-    M3 = folsom_statistics_scutil:arithmetic_mean([math:pow(X - Mean, 3) || X <- Values]),
-    M3 / (math:pow(get_standard_deviation(Values), 3)).
-
-get_median(Values) when length(Values) < ?STATS_MIN ->
-    0.0;
-get_median(Values) when is_list(Values) ->
-    get_percentile(Values, 0.5).
-
-get_percentile(Values, _) when length(Values) < ?STATS_MIN ->
-    0.0;
-get_percentile(Values, Percentile) when is_list(Values) ->
-    SortedValues = lists:sort(Values),
-    Element = round(Percentile * length(SortedValues)),
-    lists:nth(Element, SortedValues).
-
-% calculates stats on a sample
 get_statistics(Values) ->
+    Scan_res = scan_values(Values),
+    Scan_res2 = scan_values2(Values, Scan_res),
+    Variance = variance(Scan_res, Scan_res2),
+    SortedValues = lists:sort(Values),
     [
-     {min, get_min(Values)},
-     {max, get_max(Values)},
-     {arithmetic_mean, folsom_statistics_scutil:arithmetic_mean(Values)},
-     {geometric_mean, folsom_statistics_scutil:geometric_mean(Values)},
-     {harmonic_mean, folsom_statistics_scutil:harmonic_mean(Values)},
-     {median, get_median(Values)},
-     {variance, get_variance(Values)},
-     {standard_deviation, get_standard_deviation(Values)},
-     {skewness, get_skewness(Values)},
-     {kurtosis, get_kurtosis(Values)},
+     {min, Scan_res#scan_result.min},
+     {max, Scan_res#scan_result.max},
+     {arithmetic_mean, arithmetic_mean(Scan_res)},
+     {geometric_mean, geometric_mean(Scan_res)},
+     {harmonic_mean, harmonic_mean(Scan_res)},
+     {median, percentile(SortedValues, Scan_res, 0.5)},
+     {variance, Variance},
+     {standard_deviation, std_deviation(Scan_res, Scan_res2)},
+     {skewness, skewness(Scan_res, Scan_res2)},
+     {kurtosis, kurtosis(Scan_res, Scan_res2)},
      {percentile,
       [
-       {75, get_percentile(Values, 0.75)},
-       {95, get_percentile(Values, 0.95)},
-       {99, get_percentile(Values, 0.99)},
-       {999, get_percentile(Values, 0.999)}
+       {75, percentile(SortedValues, Scan_res, 0.75)},
+       {95, percentile(SortedValues, Scan_res, 0.95)},
+       {99, percentile(SortedValues, Scan_res, 0.99)},
+       {999, percentile(SortedValues, Scan_res, 0.999)}
       ]
      },
      {histogram, get_histogram(Values)}
@@ -215,7 +84,178 @@ get_statistics(Values1, Values2) ->
 %%% Internal functions
 %%%===================================================================
 
+scan_values([X|Values]) ->
+    scan_values(Values, #scan_result{n=1, sumX=X, sumXX=X*X,
+				     sumLog=math:log(X),
+				     max=X, min=X, sumInv=1/X}).
+
+scan_values([X|Values],
+	    #scan_result{n=N, sumX=SumX, sumXX=SumXX, sumLog=SumLog,
+			 max=Max, min=Min, sumInv=SumInv}=Acc) ->
+    scan_values(Values,
+		Acc#scan_result{n=N+1, sumX=SumX+X, sumXX=SumXX+X*X,
+				sumLog=SumLog+math:log(X),
+				max=max(X,Max), min=min(X,Min),
+				sumInv=SumInv+1/X});
+scan_values([], Acc) ->
+    Acc.
+
+scan_values2(Values, #scan_result{n=N, sumX=SumX}) ->
+    scan_values2(Values, SumX/N, #scan_result2{}).
+
+scan_values2([X|Values], Mean, #scan_result2{x2=X2, x3=X3, x4=X4}=Acc) ->
+    Diff = X-Mean,
+    Diff2 = Diff*Diff,
+    Diff3 = Diff2*Diff,
+    Diff4 = Diff2*Diff2,
+    scan_values2(Values, Mean, Acc#scan_result2{x2=X2+Diff2, x3=X3+Diff3,
+						x4=X4+Diff4});
+scan_values2([], _, Acc) ->
+    Acc.
+
+
+arithmetic_mean(#scan_result{n=N, sumX=Sum}) ->
+    Sum/N.
+
+geometric_mean(#scan_result{n=N, sumLog=SumLog}) ->
+    math:exp(SumLog/N).
+
+harmonic_mean(#scan_result{n=N, sumInv=Sum}) ->
+    N/Sum.
+
+percentile(SortedValues, #scan_result{n=N}, Percentile)
+  when is_list(SortedValues) ->
+    Element = round(Percentile * N),
+    lists:nth(Element, SortedValues).
+
+%% Two pass variance
+%% Results match those given by the 'var' function in R
+variance(#scan_result{n=N}, #scan_result2{x2=X2}) ->
+    X2/(N-1).
+
+std_deviation(Scan_res, Scan_res2) ->
+    math:sqrt(variance(Scan_res, Scan_res2)).
+
+%% http://en.wikipedia.org/wiki/Skewness
+%%
+%% skewness results should match this R function:
+%% skewness <- function(x) {
+%%    m3 <- mean((x - mean(x))^3)
+%%    skew <- m3 / (sd(x)^3)
+%%    skew
+%% }
+skewness(#scan_result{n=N}=Scan_res, #scan_result2{x3=X3}=Scan_res2) ->
+    (X3/N)/(math:pow(std_deviation(Scan_res,Scan_res2), 3)).
+
+%% http://en.wikipedia.org/wiki/Kurtosis
+%%
+%% results should match this R function:
+%% kurtosis <- function(x) {
+%%     m4 <- mean((x - mean(x))^4)
+%%     kurt <- m4 / (sd(x)^4) - 3
+%%     kurt
+%% }
+kurtosis(#scan_result{n=N}=Scan_res, #scan_result2{x4=X4}=Scan_res2) ->
+    (X4/N)/(math:pow(std_deviation(Scan_res,Scan_res2), 4)) - 3.
+
+get_histogram(Values) ->
+    Dict = lists:foldl(fun (Value, Dict) ->
+			       update_bin(Value, ?HIST, Dict)
+		       end,
+		       dict:from_list([{Bin, 0} || Bin <- ?HIST]),
+		       Values),
+    lists:sort(dict:to_list(Dict)).
+
 update_bin(Value, [Bin|_Bins], Dict) when Value =< Bin ->
     dict:update_counter(Bin, 1, Dict);
 update_bin(Values, [_Bin|Bins], Dict) ->
     update_bin(Values, Bins, Dict).
+
+%% two pass covariance
+%% (http://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Covariance)
+%% matches results given by excel's 'covar' function
+get_covariance(Values, _) when length(Values) < ?STATS_MIN ->
+    0.0;
+get_covariance(_, Values) when length(Values) < ?STATS_MIN ->
+    0.0;
+get_covariance(Values1, Values2) ->
+    {SumX, SumY, N} = foldl2(fun (X, Y, {SumX, SumY, N}) ->
+				     {SumX+X, SumY+Y, N+1}
+			     end, {0,0,0}, Values1, Values2),
+    MeanX = SumX/N,
+    MeanY = SumY/N,
+    Sum = foldl2(fun (X, Y, Sum) ->
+			 Sum + ((X - MeanX) * (Y - MeanY))
+		 end,
+		 0, Values1, Values2),
+    Sum/N.
+
+get_kendall_correlation(Values, _) when length(Values) < ?STATS_MIN ->
+    0.0;
+get_kendall_correlation(_, Values) when length(Values) < ?STATS_MIN ->
+    0.0;
+get_kendall_correlation(Values1, Values2) when length(Values1) /= length(Values2) ->
+    0.0;
+get_kendall_correlation(Values1, Values2) ->
+    folsom_statistics_scutil:kendall_correlation(Values1, Values2).
+
+get_spearman_correlation(Values, _) when length(Values) < ?STATS_MIN ->
+    0.0;
+get_spearman_correlation(_, Values) when length(Values) < ?STATS_MIN ->
+    0.0;
+get_spearman_correlation(Values1, Values2) when length(Values1) /= length(Values2) ->
+    0.0;
+get_spearman_correlation(Values1, Values2) ->
+    TR1 = ranks_of(Values1),
+    TR2 = ranks_of(Values2),
+    Numerator   = 6 * foldl2(fun (X, Y, Acc) ->
+				     Diff = X-Y,
+				     Acc + Diff*Diff
+			     end, 0, TR1,TR2),
+    N = length(Values1),
+    Denominator = math:pow(N,3)-N,
+    1-(Numerator/Denominator).
+
+ranks_of(Values) when is_list(Values) ->
+    [Fst|Rest] = revsort(Values),
+    TRs = ranks_of(Rest, [], 2, Fst, 1),
+    Dict = gb_trees:from_orddict(TRs),
+    L = lists:foldl(fun (Val, Acc) ->
+                            Rank = gb_trees:get(Val, Dict),
+                            [Rank|Acc]
+                    end, [], Values),
+    lists:reverse(L).
+
+ranks_of([E|Es],Acc, N, E, S) ->
+    ranks_of(Es, Acc, N+1, E, S);
+ranks_of([E|Es], Acc, N, P, S) ->
+    ranks_of(Es,[{P,(S+N-1)/2}|Acc], N+1, E, N);
+ranks_of([],  Acc, N, P, S) ->
+    [{P,(S+N-1)/2}|Acc].
+
+
+get_pearson_correlation(Values, _) when length(Values) < ?STATS_MIN ->
+    0.0;
+get_pearson_correlation(_, Values) when length(Values) < ?STATS_MIN ->
+    0.0;
+get_pearson_correlation(Values1, Values2) ->
+    {SumX, SumY, SumXX, SumYY, SumXY, N} =
+	foldl2(fun (X,Y,{SX, SY, SXX, SYY, SXY, N}) ->
+		      {SX+X, SY+Y, SXX+X*X, SYY+Y*Y, SXY+X*Y, N+1}
+	      end, {0,0,0,0,0,0}, Values1, Values2),
+    Numer = (N*SumXY) - (SumX * SumY),
+    case math:sqrt(((N*SumXX)-(SumX*SumX)) * ((N*SumYY)-(SumY*SumY))) of
+	0.0 ->
+	    0.0; %% Is this really the correct thing to do here?
+	Denom ->
+	    Numer/Denom
+    end.
+
+revsort(L) ->
+    lists:reverse(lists:sort(L)).
+
+%% Foldl over two lists
+foldl2(F, Acc, [I1|L1], [I2|L2]) when is_function(F,3) ->
+    foldl2(F, F(I1, I2, Acc), L1, L2);
+foldl2(_F, Acc, [], []) ->
+    Acc.
