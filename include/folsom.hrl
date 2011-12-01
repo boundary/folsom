@@ -14,7 +14,8 @@
 -record(uniform, {
 	  size = 5000,
 	  n = 1,
-	  reservoir = dict:new()
+	  reservoir = ets:new(folsom_uniform,[set]),
+	  seed = now()
 	 }).
 
 -record(exdec, {
@@ -26,9 +27,10 @@
          }).
 
 -record(none, {
-    size = 5000,
-    reservoir = []
-   }).
+	  size = 5000,
+	  n = 0,
+	  reservoir = ets:new(folsom_none,[ordered_set])
+	 }).
 
 -define(SYSTEM_INFO, [
                    allocated_areas,
