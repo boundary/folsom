@@ -191,7 +191,14 @@ histogram_checks(List) ->
     0 = proplists:get_value(min, List),
     5000 = proplists:get_value(max, List),
     869.6363636363636 = proplists:get_value(arithmetic_mean, List),
-    100.17443147308997 = proplists:get_value(geometric_mean, List),
+
+    GeoMean = proplists:get_value(geometric_mean, List),
+    ok = case GeoMean - 100.17443147308997 of
+             GeoDiff when GeoDiff <  0.00000001 ->
+                 ok;
+             _ ->
+                 error
+         end,
 
     Value = proplists:get_value(harmonic_mean, List),
     %?debugFmt("~p~n", [Value]),
