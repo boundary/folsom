@@ -25,13 +25,13 @@ arithmetic_mean(List) when is_list(List) ->
 geometric_mean([]) ->
     0.0;
 geometric_mean(List) when is_list(List) ->
-    math:exp(arithmetic_mean([ math:log(X) || X<-List ])).
+    math:exp(arithmetic_mean([ math_log(X) || X<-List ])).
 
 % http://en.wikipedia.org/wiki/Harmonic_mean
 harmonic_mean([]) ->
     0.0;
 harmonic_mean(List) when is_list(List) ->
-  length(List) / lists:sum([ 1/X || X<-List ]).
+  length(List) / lists:sum([ inverse(X) || X<-List ]).
 
 
 % seems to match the value returned by the 'cor' (method="kendal") R function
@@ -134,3 +134,15 @@ tied_rank_worker([Item|Remainder], Work, PrevValue) ->
 
             end
     end.
+
+%% wrapper for math:log/1 to avoid dividing by zero
+math_log(0) ->
+    0;
+math_log(X) ->
+    math:log(X).
+
+%% wrapper for calculating inverse to avoid dividing by zero
+inverse(0) ->
+    0;
+inverse(X) ->
+    1/X.

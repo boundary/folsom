@@ -35,9 +35,9 @@
          counter_metric/2
         ]).
 
--define(DATA, [1, 5, 10, 100, 200, 500, 750, 1000, 2000, 5000]).
+-define(DATA, [0, 1, 5, 10, 100, 200, 500, 750, 1000, 2000, 5000]).
 
--define(DATA1, [5, 10, 15, 20, 25, 30, 35, 40, 45, 50]).
+-define(DATA1, [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50]).
 
 -include("folsom.hrl").
 
@@ -188,13 +188,14 @@ ensure_meter_tick_exists(Name) ->
 histogram_checks(List) ->
     ?debugFmt("checking histogram statistics", []),
     %?debugFmt("~p~n", [List]),
-    1 = proplists:get_value(min, List),
+    0 = proplists:get_value(min, List),
     5000 = proplists:get_value(max, List),
-    956.6 = proplists:get_value(arithmetic_mean, List),
-    143.6822521631216 = proplists:get_value(geometric_mean, List),
+    869.6363636363636 = proplists:get_value(arithmetic_mean, List),
+    91.46934513124687 = proplists:get_value(geometric_mean, List),
 
     Value = proplists:get_value(harmonic_mean, List),
-    ok = case Value - 7.57556627 of
+    ?debugFmt("~p~n", [Value]),
+    ok = case Value - 8.333122900936845 of
              Diff when Diff < 0.00000001 ->
                  ok;
              _ ->
@@ -202,10 +203,10 @@ histogram_checks(List) ->
          end,
 
     200 = proplists:get_value(median, List),
-    2412421.1555555556 = proplists:get_value(variance, List),
-    1553.1970755688267 = proplists:get_value(standard_deviation, List),
-    1.6945363114445593 = proplists:get_value(skewness, List),
-    1.6710725994068278 = proplists:get_value(kurtosis, List),
+    2254368.454545454 = proplists:get_value(variance, List),
+    1501.4554454080394 = proplists:get_value(standard_deviation, List),
+    1.8399452806806476 = proplists:get_value(skewness, List),
+    2.2856772911293186 = proplists:get_value(kurtosis, List),
     List1 = proplists:get_value(percentile, List),
     percentile_check(List1),
     List2 = proplists:get_value(histogram, List),
@@ -215,20 +216,20 @@ histogram_co_checks(List) ->
     ?debugFmt("checking histogram covariance and etc statistics", []),
     %?debugFmt("~p~n", [List]),
     [
-     {covariance,16539.0},
+     {covariance,17209.545454545456},
      {tau,1.0},
-     {rho,0.7815638250437413},
+     {rho,0.760297020598996},
      {r,1.0}
     ] = List.
 
 percentile_check(List) ->
-    1000 = proplists:get_value(75, List),
-    5000 = proplists:get_value(95, List),
+    750 = proplists:get_value(75, List),
+    2000 = proplists:get_value(95, List),
     5000 = proplists:get_value(99, List),
     5000 = proplists:get_value(999, List).
 
 histogram_check(List) ->
-    1 = proplists:get_value(1, List),
+    2 = proplists:get_value(1, List),
     1 = proplists:get_value(5, List),
     1 = proplists:get_value(10, List),
     0 = proplists:get_value(20, List),
