@@ -206,7 +206,7 @@ histogram_checks(List) ->
     2254368.454545454 = proplists:get_value(variance, List),
     1501.4554454080394 = proplists:get_value(standard_deviation, List),
     1.8399452806806476 = proplists:get_value(skewness, List),
-    2.2856772911293186 = proplists:get_value(kurtosis, List),
+    2.2856772911293204 = proplists:get_value(kurtosis, List),
     List1 = proplists:get_value(percentile, List),
     percentile_check(List1),
     List2 = proplists:get_value(histogram, List),
