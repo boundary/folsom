@@ -214,7 +214,7 @@ histogram_checks(List) ->
 
 histogram_co_checks(List) ->
     ?debugFmt("checking histogram covariance and etc statistics", []),
-    %?debugFmt("~p~n", [List]),
+    ?debugFmt("~p~n", [List]),
     [
      {covariance,17209.545454545456},
      {tau,1.0},

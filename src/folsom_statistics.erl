@@ -178,6 +178,8 @@ get_covariance(Values, _) when length(Values) < ?STATS_MIN ->
     0.0;
 get_covariance(_, Values) when length(Values) < ?STATS_MIN ->
     0.0;
+get_covariance(Values1, Values2) when length(Values1) /= length(Values2) ->
+    0.0;
 get_covariance(Values1, Values2) ->
     {SumX, SumY, N} = foldl2(fun (X, Y, {SumX, SumY, N}) ->
              {SumX+X, SumY+Y, N+1}
@@ -237,6 +239,8 @@ ranks_of([],  Acc, N, P, S) ->
 get_pearson_correlation(Values, _) when length(Values) < ?STATS_MIN ->
     0.0;
 get_pearson_correlation(_, Values) when length(Values) < ?STATS_MIN ->
+    0.0;
+get_pearson_correlation(Values1, Values2) when length(Values1) /= length(Values2) ->
     0.0;
 get_pearson_correlation(Values1, Values2) ->
     {SumX, SumY, SumXX, SumYY, SumXY, N} =
