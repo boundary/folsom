@@ -32,11 +32,7 @@
          get_statistics/2
         ]).
 
--define(HIST, [1, 5, 10, 20, 30, 40, 50, 100, 150,
-               200, 250, 300, 350, 400, 450, 500,
-               750, 1000, 1500, 2000, 3000, 4000,
-               5000, 10000, 20000, 30000, 40000,
-               50000, 99999999999999]).
+-define(HIST_BINS, 10).
 
 -define(STATS_MIN, 5).
 
@@ -69,7 +65,7 @@ get_statistics(Values) ->
        {999, percentile(SortedValues, Scan_res, 0.999)}
       ]
      },
-     {histogram, get_histogram(Values)}
+     {histogram, get_histogram(Values, Scan_res)}
      ].
 
 get_statistics(Values1, Values2) ->
@@ -158,11 +154,12 @@ skewness(#scan_result{n=N}=Scan_res, #scan_result2{x3=X3}=Scan_res2) ->
 kurtosis(#scan_result{n=N}=Scan_res, #scan_result2{x4=X4}=Scan_res2) ->
     (X4/N)/(math:pow(std_deviation(Scan_res,Scan_res2), 4)) - 3.
 
-get_histogram(Values) ->
+get_histogram(Values, Scan_res) ->
+    Bins = get_hist_bins(Scan_res#scan_result.min, Scan_res#scan_result.max),
     Dict = lists:foldl(fun (Value, Dict) ->
-             update_bin(Value, ?HIST, Dict)
+             update_bin(Value, Bins, Dict)
            end,
-           dict:from_list([{Bin, 0} || Bin <- ?HIST]),
+           dict:from_list([{Bin, 0} || Bin <- Bins]),
            Values),
     lists:sort(dict:to_list(Dict)).
 
@@ -275,3 +272,22 @@ inverse(0) ->
     0;
 inverse(X) ->
     1/X.
+
+get_hist_bins(Min, Max) ->
+    Width = round((Max - Min) / ?HIST_BINS),
+    get_bin_list(Width, ?HIST_BINS, []).
+
+get_bin_list(Width, Bins, Acc) when Bins > length(Acc) ->
+    Bin = ((length(Acc) + 1) * Width ),
+    get_bin_list(Width, Bins, [round_bin(Bin) | Acc]);
+get_bin_list(_, _, Acc) ->
+    lists:usort(Acc).
+
+round_bin(Bin) ->
+    Base = erlang:trunc(math:pow(10, round(math:log10(Bin) - 1))),
+    round_bin(Bin, Base).
+
+round_bin(Bin, Base) when Bin rem Base == 0 ->
+    Bin;
+round_bin(Bin, Base) ->
+    Bin + Base - (Bin rem Base).

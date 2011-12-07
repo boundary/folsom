@@ -236,33 +236,16 @@ percentile_check(List) ->
     5000 = proplists:get_value(999, List).
 
 histogram_check(List) ->
-    2 = proplists:get_value(1, List),
-    1 = proplists:get_value(5, List),
-    1 = proplists:get_value(10, List),
-    0 = proplists:get_value(20, List),
-    0 = proplists:get_value(30, List),
-    0 = proplists:get_value(40, List),
-    0 = proplists:get_value(50, List),
-    1 = proplists:get_value(100, List),
-    0 = proplists:get_value(150, List),
-    1 = proplists:get_value(200, List),
-    0 = proplists:get_value(250, List),
-    0 = proplists:get_value(300, List),
-    0 = proplists:get_value(350, List),
-    0 = proplists:get_value(400, List),
-    1 = proplists:get_value(500, List),
-    1 = proplists:get_value(750, List),
-    1 = proplists:get_value(1000, List),
-    0 = proplists:get_value(1500, List),
-    1 = proplists:get_value(2000, List),
-    0 = proplists:get_value(3000, List),
-    0 = proplists:get_value(4000, List),
-    1 = proplists:get_value(5000, List),
-    0 = proplists:get_value(10000, List),
-    0 = proplists:get_value(20000, List),
-    0 = proplists:get_value(30000, List),
-    0 = proplists:get_value(50000, List),
-    0 = proplists:get_value(99999999999999, List).
+    [
+     {500,7},
+     {1000,2},
+     {1500,0},
+     {2000,1},
+     {2500,0},
+     {3000,0},
+     {4000,0},
+     {5000,1}
+    ] = List.
 
 counter_inc_dec(Counter) ->
     ok = folsom_metrics:notify({Counter, {inc, 1}}),
