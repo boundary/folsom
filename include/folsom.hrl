@@ -12,23 +12,27 @@
 -define(DEFAULT_SAMPLE_TYPE, uniform).
 
 -record(uniform, {
-	  size = 5000,
-	  n = 1,
-	  reservoir = dict:new()
-	 }).
+          size = 5000,
+          n = 1,
+          reservoir = ets:new(folsom_uniform,[set]),
+          seed = now()
+         }).
 
 -record(exdec, {
           start = 0,
           next = 0,
           alpha = 1,
           size = 5000,
+          seed = now(),
+          n = 0,
           reservoir = []
          }).
 
 -record(none, {
-    size = 5000,
-    reservoir = []
-   }).
+          size = 5000,
+          n = 0,
+          reservoir = ets:new(folsom_none,[ordered_set])
+         }).
 
 -define(SYSTEM_INFO, [
                    allocated_areas,

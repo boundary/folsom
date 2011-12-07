@@ -38,29 +38,25 @@
          get_values/1
         ]).
 
--define(RAND, 999999999999).
-
 -include("folsom.hrl").
 
 new(Size) ->
     #uniform{size = Size}.
 
-%% update1(#uniform1{reservoir = dict} = Sample, Value) ->
-%%     Sample#uniform1{reservoir = [Value]};
-update(#uniform{size = Size, reservoir = Reservoir, n=N} = Sample, Value) when N =< Size ->
-    Sample#uniform{reservoir = dict:store(N, Value, Reservoir), n = N+1};
+update(#uniform{size = Size, reservoir = Reservoir, n = N} = Sample, Value) when N =< Size ->
+    ets:insert(Reservoir, {N, Value}),
+    Sample#uniform{n = N+1};
 
-update(#uniform{reservoir = Reservoir, size = Size, n = N} = Sample, Value) ->
-    NewReservoir = maybe_update(rand(N), Size, Value, Reservoir),
-    Sample#uniform{reservoir = NewReservoir, n=N+1}.
+update(#uniform{reservoir = Reservoir, size = Size, n = N, seed = Seed} = Sample,
+       Value) ->
+    {Rnd, New_seed} = random:uniform_s(N, Seed),
+    maybe_update(Rnd, Size, Value, Reservoir),
+    Sample#uniform{n = N+1, seed=New_seed}.
 
 get_values(#uniform{reservoir = Reservoir}) ->
-    [Val || {_,Val} <- dict:to_list(Reservoir)].
+    [Val || {_,Val} <- ets:tab2list(Reservoir)].
 
 maybe_update(Rnd, Size, Value, Reservoir) when Rnd < Size ->
-    dict:store(Rnd, Value, Reservoir);
-maybe_update(_Rnd, _Size, _Value, Reservoir) ->
-    Reservoir.
-
-rand(Count) ->
-    random:uniform(Count).
+    ets:insert(Reservoir, {Rnd, Value});
+maybe_update(_Rnd, _Size, _Value, _Reservoir) ->
+    ok.
