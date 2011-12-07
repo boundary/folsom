@@ -36,20 +36,15 @@
 new(Size) ->
     #none{size = Size}.
 
-update(#none{reservoir = []} = Sample, Value) ->
-    Sample#none{reservoir = [Value]};
-update(#none{size = Size, reservoir = Reservoir} = Sample, Value) when length(Reservoir) < Size ->
-    Sample#none{reservoir = lists:append(Reservoir, [Value])};
-update(#none{reservoir = Reservoir} = Sample, Value) ->
-    NewReservoir = [Value | drop_last(Reservoir)],
-    Sample#none{reservoir = NewReservoir}.
+update(#none{size = Size, reservoir = Reservoir, n = N} = Sample, Value)
+  when N < Size ->
+    ets:insert(Reservoir, {N, Value}),
+    Sample#none{n = N+1};
+update(#none{reservoir = Reservoir, n = N} = Sample, Value) ->
+    Oldest = ets:first(Reservoir),
+    ets:delete(Reservoir, Oldest),
+    ets:insert(Reservoir, {N, Value}),
+    Sample#none{n = N+1}.
 
 get_values(#none{reservoir = Reservoir}) ->
-    Reservoir.
-
-% internal api
-
-drop_last([_]) ->
-    [];
-drop_last([H|T]) ->
-    [H | drop_last(T)].
+    [Val || {_,Val} <- ets:tab2list(Reservoir)].
