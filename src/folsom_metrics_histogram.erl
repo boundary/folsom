@@ -29,7 +29,6 @@
          new/3,
          new/4,
          update/2,
-         clear/1,
          get_value/1,
          get_values/1
          ]).
@@ -56,10 +55,6 @@ update(Name, Value) ->
     Hist = get_value(Name),
     NewSample = folsom_sample:update(Hist#histogram.type, Hist#histogram.sample, Value),
     ets:insert(?HISTOGRAM_TABLE, {Name, Hist#histogram{sample = NewSample}}).
-
-clear(Name) ->
-    Hist = get_value(Name),
-    ets:insert(?HISTOGRAM_TABLE, {Name, Hist#histogram{sample = []}}).
 
 % gets the histogram record from ets
 get_value(Name) ->
