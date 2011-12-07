@@ -24,7 +24,6 @@
           alpha = 1,
           size = 5000,
           seed = now(),
-          n = 0,
           reservoir = []
          }).
 
@@ -32,6 +31,11 @@
           size = 5000,
           n = 0,
           reservoir = ets:new(folsom_none,[ordered_set])
+         }).
+
+-record(histogram, {
+          type = uniform,
+          sample = #uniform{}
          }).
 
 -define(SYSTEM_INFO, [

@@ -31,6 +31,8 @@
          get_values/1
         ]).
 
+-export([get_sample_table_name/1]).
+
 -include("folsom.hrl").
 
 new(Size) ->
@@ -48,3 +50,6 @@ update(#none{reservoir = Reservoir, n = N} = Sample, Value) ->
 
 get_values(#none{reservoir = Reservoir}) ->
     [Val || {_,Val} <- ets:tab2list(Reservoir)].
+
+get_sample_table_name(#none{reservoir = Reservoir}) ->
+    Reservoir.

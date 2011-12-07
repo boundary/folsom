@@ -203,8 +203,8 @@ delete_metric(Name, history) ->
     true = ets:delete(?FOLSOM_TABLE, Name),
     ok;
 delete_metric(Name, histogram) ->
-    true = ets:delete(?HISTOGRAM_TABLE, Name),
-    true = ets:delete(?FOLSOM_TABLE, Name),
+    Metric = folsom_metrics_histogram:get_value(Name),
+    ok = delete_histogram(Name, Metric),
     ok;
 delete_metric(Name, counter) ->
     true = ets:delete(?COUNTER_TABLE, Name),
@@ -216,6 +216,21 @@ delete_metric(Name, gauge) ->
     ok;
 delete_metric(Name, meter) ->
     true = ets:delete(?METER_TABLE, Name),
+    true = ets:delete(?FOLSOM_TABLE, Name),
+    ok.
+
+delete_histogram(Name, #histogram{type = uniform, sample = #uniform{reservoir = Reservoir}}) ->
+    true = ets:delete(?HISTOGRAM_TABLE, Name),
+    true = ets:delete(?FOLSOM_TABLE, Name),
+    true = ets:delete(Reservoir),
+    ok;
+delete_histogram(Name, #histogram{type = none, sample = #none{reservoir = Reservoir}}) ->
+    true = ets:delete(?HISTOGRAM_TABLE, Name),
+    true = ets:delete(?FOLSOM_TABLE, Name),
+    true = ets:delete(Reservoir),
+    ok;
+delete_histogram(Name, #histogram{type = exdec}) ->
+    true = ets:delete(?HISTOGRAM_TABLE, Name),
     true = ets:delete(?FOLSOM_TABLE, Name),
     ok.
 

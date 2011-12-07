@@ -36,11 +36,6 @@
 
 -include("folsom.hrl").
 
--record(histogram, {
-          type = uniform,
-          sample = #uniform{}
-         }).
-
 new(Name) ->
     new(Name, uniform).
 
