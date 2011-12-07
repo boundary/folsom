@@ -40,8 +40,6 @@
 
 -define(HOURSECS, 3600).
 
--define(RAND, 999999999999).
-
 -include("folsom.hrl").
 
 new(Size, Alpha) ->
@@ -57,23 +55,25 @@ get_values(#exdec{reservoir = Reservoir}) ->
 
 % internal api
 
-update(#exdec{start = Start, alpha = Alpha, size = Size, reservoir = Reservoir} = Sample, Value, Tick) when length(Reservoir) < Size ->
-    NewList = lists:append(Reservoir, [{priority(Alpha, Tick, Start), Value}]),
-    Sample#exdec{reservoir = NewList};
-update(#exdec{start = Start, alpha = Alpha} = Sample, Value, Tick) ->
-    Priority = priority(Alpha, Tick, Start),
-    NewSample = maybe_update(Priority, Value, Sample),
+update(#exdec{start = Start, alpha = Alpha, size = Size, reservoir = Reservoir, n = N, seed = Seed} = Sample, Value, Tick) when N =< Size ->
+    {Rand, New_seed} = random:uniform_s(N, Seed),
+    NewList = lists:append(Reservoir, [{priority(Alpha, Tick, Start, Rand), Value}]),
+    Sample#exdec{reservoir = NewList, n = N+1, seed = New_seed};
+update(#exdec{start = Start, alpha = Alpha, n = N, seed = Seed} = Sample, Value, Tick) ->
+    {Rand, New_seed} = random:uniform_s(N, Seed),
+    Priority = priority(Alpha, Tick, Start, Rand),
+    NewSample = maybe_update(Priority, Value, Sample, New_seed),
     maybe_rescale(NewSample, folsom_utils:now_epoch()).
 
 weight(Alpha, T) ->
     math:exp(Alpha * T).
 
-priority(Alpha, Time, Start) ->
-    weight(Alpha, Time - Start) / random:uniform(?RAND).
+priority(Alpha, Time, Start, Rand) ->
+    weight(Alpha, Time - Start) / Rand.
 
-maybe_update(Priority, Value, #exdec{reservoir = [{First, _}| Tail]} = Sample) when First < Priority ->
-    Sample#exdec{reservoir = lists:append(Tail, [{Priority, Value}])};
-maybe_update(_, _, Sample) ->
+maybe_update(Priority, Value, #exdec{reservoir = [{First, _}| Tail], n = N} = Sample, Seed) when First < Priority ->
+    Sample#exdec{reservoir = lists:append(Tail, [{Priority, Value}]), n = N+1, seed = Seed};
+maybe_update(_, _, Sample, _) ->
     Sample.
 
 maybe_rescale(#exdec{next = Next} = Sample, Now) when Now >= Next ->

@@ -24,6 +24,7 @@
           alpha = 1,
           size = 5000,
           seed = now(),
+          n = 1,
           reservoir = []
          }).
 
