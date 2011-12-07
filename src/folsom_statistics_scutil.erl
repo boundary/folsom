@@ -137,7 +137,7 @@ tied_rank_worker([Item|Remainder], Work, PrevValue) ->
 
 %% wrapper for math:log/1 to avoid dividing by zero
 math_log(0) ->
-    0;
+    1;
 math_log(X) ->
     math:log(X).
 

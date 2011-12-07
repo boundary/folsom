@@ -191,10 +191,10 @@ histogram_checks(List) ->
     0 = proplists:get_value(min, List),
     5000 = proplists:get_value(max, List),
     869.6363636363636 = proplists:get_value(arithmetic_mean, List),
-    91.46934513124687 = proplists:get_value(geometric_mean, List),
+    100.17443147308997 = proplists:get_value(geometric_mean, List),
 
     Value = proplists:get_value(harmonic_mean, List),
-    ?debugFmt("~p~n", [Value]),
+    %?debugFmt("~p~n", [Value]),
     ok = case Value - 8.333122900936845 of
              Diff when Diff < 0.00000001 ->
                  ok;

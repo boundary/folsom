@@ -7,3 +7,4 @@
 * Sampling functions test coverage
 * More production testing
 * Regex history querying
+* Customizable geometric mean zero value substitution value
