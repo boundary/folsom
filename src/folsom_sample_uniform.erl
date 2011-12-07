@@ -38,8 +38,6 @@
          get_values/1
         ]).
 
--export([get_sample_table_name/1]).
-
 -include("folsom.hrl").
 
 new(Size) ->
@@ -62,6 +60,3 @@ maybe_update(Rnd, Size, Value, Reservoir) when Rnd < Size ->
     ets:insert(Reservoir, {Rnd, Value});
 maybe_update(_Rnd, _Size, _Value, _Reservoir) ->
     ok.
-
-get_sample_table_name(#uniform{reservoir = Reservoir}) ->
-    Reservoir.
