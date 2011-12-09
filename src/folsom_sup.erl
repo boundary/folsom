@@ -81,11 +81,15 @@ init([]) ->
     Shutdown = 2000,
     Type = worker,
 
-    AChild = {folsom_meter_timer_server,
+    TimerServer = {folsom_meter_timer_server,
               {folsom_meter_timer_server, start_link, []},
               Restart, Shutdown, Type, [folsom_meter_timer_server]},
 
-    {ok, {SupFlags, [AChild]}}.
+    HistETSServer = {folsom_metrics_histogram_ets,
+              {folsom_metrics_histogram_ets, start_link, []},
+              Restart, Shutdown, Type, [folsom_metrics_histogram_ets]},
+
+    {ok, {SupFlags, [TimerServer, HistETSServer]}}.
 
 %%%===================================================================
 %%% Internal functions

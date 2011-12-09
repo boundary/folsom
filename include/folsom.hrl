@@ -14,7 +14,7 @@
 -record(uniform, {
           size = 5000,
           n = 1,
-          reservoir = ets:new(folsom_uniform,[set]),
+          reservoir = folsom_metrics_histogram_ets:new(folsom_uniform,[set, {write_concurrency, true}, public]),
           seed = now()
          }).
 
@@ -31,7 +31,7 @@
 -record(none, {
           size = 5000,
           n = 0,
-          reservoir = ets:new(folsom_none,[ordered_set])
+          reservoir = folsom_metrics_histogram_ets:new(folsom_none,[ordered_set, {write_concurrency, true}, public])
          }).
 
 -record(histogram, {
