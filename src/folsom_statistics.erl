@@ -65,7 +65,7 @@ get_statistics(Values) ->
        {999, percentile(SortedValues, Scan_res, 0.999)}
       ]
      },
-     {histogram, get_histogram(Values, Scan_res)}
+     {histogram, get_histogram(Values, Scan_res, Scan_res2)}
      ].
 
 get_statistics(Values1, Values2) ->
@@ -154,13 +154,19 @@ skewness(#scan_result{n=N}=Scan_res, #scan_result2{x3=X3}=Scan_res2) ->
 kurtosis(#scan_result{n=N}=Scan_res, #scan_result2{x4=X4}=Scan_res2) ->
     (X4/N)/(math:pow(std_deviation(Scan_res,Scan_res2), 4)) - 3.
 
-get_histogram(Values, Scan_res) ->
-    Bins = get_hist_bins(Scan_res#scan_result.min, Scan_res#scan_result.max),
+get_histogram(Values, Scan_res, Scan_res2) ->
+    Bins = get_hist_bins(Scan_res#scan_result.min,
+                         Scan_res#scan_result.max,
+                         std_deviation(Scan_res, Scan_res2),
+                         length(Values)
+                        ),
+
     Dict = lists:foldl(fun (Value, Dict) ->
              update_bin(Value, Bins, Dict)
            end,
            dict:from_list([{Bin, 0} || Bin <- Bins]),
            Values),
+
     lists:sort(dict:to_list(Dict)).
 
 update_bin(Value, [Bin|_Bins], Dict) when Value =< Bin ->
@@ -273,13 +279,14 @@ inverse(0) ->
 inverse(X) ->
     1/X.
 
-get_hist_bins(Min, Max) ->
-    Width = round((Max - Min) / ?HIST_BINS),
-    get_bin_list(Width, ?HIST_BINS, []).
+get_hist_bins(Min, Max, StdDev, Count) ->
+    BinWidth = get_bin_width(StdDev, Count),
+    BinCount = get_bin_count(Min, Max, BinWidth),
+    get_bin_list(BinWidth, BinCount, []).
 
 get_bin_list(Width, Bins, Acc) when Bins > length(Acc) ->
     Bin = ((length(Acc) + 1) * Width ),
-    get_bin_list(Width, Bins, [round_bin(Bin) | Acc]);
+    get_bin_list(Width, Bins, [round_bin(Bin)| Acc]);
 get_bin_list(_, _, Acc) ->
     lists:usort(Acc).
 
@@ -291,3 +298,18 @@ round_bin(Bin, Base) when Bin rem Base == 0 ->
     Bin;
 round_bin(Bin, Base) ->
     Bin + Base - (Bin rem Base).
+
+% the following is up for debate as far as what the best method
+% of choosing bin counts and widths. these seem to work *good enough*
+% in my testing
+
+% bin width based on Sturges
+% http://www.jstor.org/pss/2965501
+get_bin_width(StdDev, Count) ->
+    round((3.5 * StdDev) / math:pow(Count, 0.3333333)).
+
+% based on the simple ceilng function at
+% http://en.wikipedia.org/wiki/Histograms#Number_of_bins_and_width
+% with a modification to attempt to get on bin beyond the max value
+get_bin_count(Min, Max, Width) ->
+    round((Max - Min) / Width) + 1.

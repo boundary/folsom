@@ -236,16 +236,7 @@ percentile_check(List) ->
     5000 = proplists:get_value(999, List).
 
 histogram_check(List) ->
-    [
-     {500,7},
-     {1000,2},
-     {1500,0},
-     {2000,1},
-     {2500,0},
-     {3000,0},
-     {4000,0},
-     {5000,1}
-    ] = List.
+    [{2400,10},{5000,1},{8000,0}] = List.
 
 counter_inc_dec(Counter) ->
     ok = folsom_metrics:notify({Counter, {inc, 1}}),
