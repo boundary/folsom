@@ -41,6 +41,28 @@
 
 -compile([native]).
 
+get_statistics(Values) when length(Values) < ?STATS_MIN ->
+    [
+     {min, 0.0},
+     {max, 0.0},
+     {arithmetic_mean, 0.0},
+     {geometric_mean, 0.0},
+     {harmonic_mean, 0.0},
+     {median, 0.0},
+     {variance, 0.0},
+     {standard_deviation, 0.0},
+     {skewness, 0.0},
+     {kurtosis, 0.0},
+     {percentile,
+      [
+       {75, 0.0},
+       {95, 0.0},
+       {99, 0.0},
+       {999, 0.0}
+      ]
+     },
+     {histogram, [{0, 0}]}
+     ];
 get_statistics(Values) ->
     Scan_res = scan_values(Values),
     Scan_res2 = scan_values2(Values, Scan_res),
@@ -68,6 +90,12 @@ get_statistics(Values) ->
      {histogram, get_histogram(Values, Scan_res, Scan_res2)}
      ].
 
+get_statistics(Values, _) when length(Values) < ?STATS_MIN ->
+    0.0;
+get_statistics(_, Values) when length(Values) < ?STATS_MIN ->
+    0.0;
+get_statistics(Values1, Values2) when length(Values1) /= length(Values2) ->
+    0.0;
 get_statistics(Values1, Values2) ->
     [
      {covariance, get_covariance(Values1, Values2)},
