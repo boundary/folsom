@@ -319,7 +319,13 @@ get_bin_list(_, _, Acc) ->
     lists:usort(Acc).
 
 round_bin(Bin) ->
-    Base = erlang:trunc(math:pow(10, round(math:log10(Bin) - 1))),
+    Base = case erlang:trunc(math:pow(10, round(math:log10(Bin) - 1))) of
+        0 ->
+            1;
+        Else ->
+            Else
+    end,
+    %io:format("bin ~p, base ~p~n", [Bin, Base]),
     round_bin(Bin, Base).
 
 round_bin(Bin, Base) when Bin rem Base == 0 ->
@@ -334,10 +340,18 @@ round_bin(Bin, Base) ->
 % bin width based on Sturges
 % http://www.jstor.org/pss/2965501
 get_bin_width(StdDev, Count) ->
-    round((3.5 * StdDev) / math:pow(Count, 0.3333333)).
+    %io:format("stddev: ~p, count: ~p~n", [StdDev, Count]),
+    case round((3.5 * StdDev) / math:pow(Count, 0.3333333)) of
+        0 ->
+            1;
+        Else ->
+            Else
+    end.
+
 
 % based on the simple ceilng function at
 % http://en.wikipedia.org/wiki/Histograms#Number_of_bins_and_width
 % with a modification to attempt to get on bin beyond the max value
 get_bin_count(Min, Max, Width) ->
+    %io:format("min: ~p, max: ~p, width ~p~n", [Min, Max, Width]),
     round((Max - Min) / Width) + 1.
