@@ -169,7 +169,12 @@ std_deviation(Scan_res, Scan_res2) ->
 %%    skew
 %% }
 skewness(#scan_result{n=N}=Scan_res, #scan_result2{x3=X3}=Scan_res2) ->
-    (X3/N)/(math:pow(std_deviation(Scan_res,Scan_res2), 3)).
+    case math:pow(std_deviation(Scan_res,Scan_res2), 3) of
+        0.0 ->
+            0.0;  %% Is this really the correct thing to do here?
+        Else ->
+            (X3/N)/Else
+    end.
 
 %% http://en.wikipedia.org/wiki/Kurtosis
 %%
@@ -180,7 +185,12 @@ skewness(#scan_result{n=N}=Scan_res, #scan_result2{x3=X3}=Scan_res2) ->
 %%     kurt
 %% }
 kurtosis(#scan_result{n=N}=Scan_res, #scan_result2{x4=X4}=Scan_res2) ->
-    (X4/N)/(math:pow(std_deviation(Scan_res,Scan_res2), 4)) - 3.
+    case math:pow(std_deviation(Scan_res,Scan_res2), 4) of
+        0.0 ->
+            0.0;  %% Is this really the correct thing to do here?
+        Else ->
+            ((X4/N)/Else) - 3
+    end.
 
 get_histogram(Values, Scan_res, Scan_res2) ->
     Bins = get_hist_bins(Scan_res#scan_result.min,
@@ -280,10 +290,10 @@ get_pearson_correlation(Values1, Values2) ->
         end, {0,0,0,0,0,0}, Values1, Values2),
     Numer = (N*SumXY) - (SumX * SumY),
     case math:sqrt(((N*SumXX)-(SumX*SumX)) * ((N*SumYY)-(SumY*SumY))) of
-  0.0 ->
-      0.0; %% Is this really the correct thing to do here?
-  Denom ->
-      Numer/Denom
+        0.0 ->
+            0.0; %% Is this really the correct thing to do here?
+        Denom ->
+            Numer/Denom
     end.
 
 revsort(L) ->
@@ -310,7 +320,12 @@ inverse(X) ->
 get_hist_bins(Min, Max, StdDev, Count) ->
     BinWidth = get_bin_width(StdDev, Count),
     BinCount = get_bin_count(Min, Max, BinWidth),
-    get_bin_list(BinWidth, BinCount, []).
+    case get_bin_list(BinWidth, BinCount, []) of
+        List when length(List) =< 1 ->
+            [Max];
+        Else ->
+            Else
+    end.
 
 get_bin_list(Width, Bins, Acc) when Bins > length(Acc) ->
     Bin = ((length(Acc) + 1) * Width ),
@@ -347,7 +362,6 @@ get_bin_width(StdDev, Count) ->
         Else ->
             Else
     end.
-
 
 % based on the simple ceilng function at
 % http://en.wikipedia.org/wiki/Histograms#Number_of_bins_and_width
