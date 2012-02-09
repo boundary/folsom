@@ -323,8 +323,9 @@ get_hist_bins(Min, Max, StdDev, Count) ->
     case get_bin_list(BinWidth, BinCount, []) of
         List when length(List) =< 1 ->
             [Max];
-        Else ->
-            Else
+        Bins ->
+            %% add Min to Bins
+            [Bin + Min || Bin <- Bins]
     end.
 
 get_bin_list(Width, Bins, Acc) when Bins > length(Acc) ->
