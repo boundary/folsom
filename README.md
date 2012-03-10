@@ -20,7 +20,7 @@ folsom can be run standalone or embedded in an Erlang application.
 
 folsom_metrics.erl is the API module you will need to use most of the time.
 
-Retreive a list of current installed metrics:
+Retrieve a list of current installed metrics:
 
       > folsom_metrics:get_metrics().
 
@@ -47,7 +47,7 @@ Gauges are point-in-time single value metrics.
 
 ##### Histograms (and Timers)
 
-Histograms are collections of values that have statistical analysis done to them, such as mean, min, max, kurtosis and percentile. The can be used like "timers" as well with the timed update functions.
+Histograms are collections of values that have statistical analysis done to them, such as mean, min, max, kurtosis and percentile. They can be used like "timers" as well with the timed update functions.
 
       > folsom_metrics:new_histogram(Name).
       > folsom_metrics:histogram_timed_update(Name, Mod, Fun, Args).
