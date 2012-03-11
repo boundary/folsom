@@ -1,6 +1,6 @@
 ### folsom
 
-Folsom is an Erlang based metrics system inspired by Coda Hale's metrics (https://github.com/codahale/metrics/). The metrics API's purpose is to collect realtime metrics from your Erlang applications and publish them via Erlang APIs and output plugins. folsom is *not* a persistent store. There are 5 types of metrics, counters, gauges, histograms (and timers), histories and meters. Metrics can be created, read, and updated via the `folsom_metrics` module.
+Folsom is an Erlang based metrics system inspired by Coda Hale's metrics (https://github.com/codahale/metrics/). The metrics API's purpose is to collect realtime metrics from your Erlang applications and publish them via Erlang APIs and output plugins. folsom is *not* a persistent store. There are 5 types of metrics: counters, gauges, histograms (and timers), histories and meters. Metrics can be created, read and updated via the `folsom_metrics` module.
 
 #### Building and running
 
