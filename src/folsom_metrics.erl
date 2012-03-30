@@ -115,12 +115,12 @@ get_metric_value(Name) ->
 
 get_histogram_statistics(Name) ->
     Values = folsom_ets:get_values(Name),
-    folsom_statistics:get_statistics(Values).
+    bear:get_statistics(Values).
 
 get_histogram_statistics(Name1, Name2) ->
     Values1 = get_metric_value(Name1),
     Values2 = get_metric_value(Name2),
-    folsom_statistics:get_statistics(Values1, Values2).
+    bear:get_statistics(Values1, Values2).
 
 get_history_values(Name, Count) ->
     folsom_ets:get_history_values(Name, Count).
