@@ -45,5 +45,11 @@ run_test() ->
     folsom_erlang_checks:vm_metrics(),
 
     ?debugFmt("deleting metrics", []),
-    folsom_erlang_checks:delete_metrics().
+    folsom_erlang_checks:delete_metrics(),
+
+    ?debugFmt("cpu topology test", []),
+    folsom_erlang_checks:cpu_topology().
+
+
+
 

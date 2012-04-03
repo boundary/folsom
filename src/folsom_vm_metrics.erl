@@ -32,6 +32,9 @@
          get_port_info/0
         ]).
 
+%% exported for eunit test
+-export([convert_cpu_topology/2]).
+
 -include("folsom.hrl").
 
 
@@ -131,6 +134,10 @@ convert_cpu_topology([{thread, Value}| Tail], Acc) ->
   convert_cpu_topology(Tail, lists:append(Acc, [{thread, tuple_to_list(Value)}]));
 convert_cpu_topology({logical, Value}, Acc) ->
   convert_cpu_topology([], lists:append(Acc, [logical, Value]));
+convert_cpu_topology([{node, Value}| Tail], Acc) ->
+  convert_cpu_topology(Tail, lists:append(Acc, [{node, convert_cpu_topology(Value, [])}]));
+convert_cpu_topology([{processor, Value}| Tail], Acc) ->
+  convert_cpu_topology(Tail, lists:append(Acc, [{processor, convert_cpu_topology(Value, [])}]));
 convert_cpu_topology([], Acc) ->
   Acc.
 

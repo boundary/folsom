@@ -32,7 +32,8 @@
          check_metrics/0,
          delete_metrics/0,
          vm_metrics/0,
-         counter_metric/2
+         counter_metric/2,
+         cpu_topology/0
         ]).
 
 -define(DATA, [0, 1, 5, 10, 100, 200, 500, 750, 1000, 2000, 5000]).
@@ -249,3 +250,24 @@ for(N, Count, _Counter) when N == Count ->
 for(N, LoopCount, Counter) ->
     counter_inc_dec(Counter),
     for(N, LoopCount + 1, Counter).
+
+cpu_topology() ->
+    Test = [{node,[{processor,[{core,[{thread,{logical,1}},{thread,{logical,9}}]},
+                               {core,[{thread,{logical,3}},{thread,{logical,11}}]},
+                               {core,[{thread,{logical,5}},{thread,{logical,13}}]},
+                               {core,[{thread,{logical,7}},{thread,{logical,15}}]}]}]},
+            {node,[{processor,[{core,[{thread,{logical,0}},{thread,{logical,8}}]},
+                               {core,[{thread,{logical,2}},{thread,{logical,10}}]},
+                               {core,[{thread,{logical,4}},{thread,{logical,12}}]},
+                               {core,[{thread,{logical,6}},{thread,{logical,14}}]}]}]}],
+
+    ExpectedResult = [{node,[{processor,[{core,[{thread,[logical,1]},{thread,[logical,9]}]},
+                                         {core,[{thread,[logical,3]},{thread,[logical,11]}]},
+                                         {core,[{thread,[logical,5]},{thread,[logical,13]}]},
+                                         {core,[{thread,[logical,7]},{thread,[logical,15]}]}]}]},
+                      {node,[{processor,[{core,[{thread,[logical,0]},{thread,[logical,8]}]},
+                                         {core,[{thread,[logical,2]},{thread,[logical,10]}]},
+                                         {core,[{thread,[logical,4]},{thread,[logical,12]}]},
+                                         {core,[{thread,[logical,6]},{thread,[logical,14]}]}]}]}],
+
+    ExpectedResult = folsom_vm_metrics:convert_cpu_topology(Test, []).
