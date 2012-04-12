@@ -86,7 +86,7 @@ notify(Name, Event) ->
             Type = proplists:get_value(type, Info),
             notify(Name, Event, Type, true);
         false ->
-            {error, Name, nonexistant_metric}
+            {error, Name, nonexistent_metric}
     end.
 
 %% notify/3, makes sure metric exist, if not creates metric
@@ -106,16 +106,25 @@ get_handlers() ->
     proplists:get_keys(ets:tab2list(?FOLSOM_TABLE)).
 
 get_handlers_info() ->
-    Handlers = get_handlers(),
-    [get_info(Id) || Id <- Handlers].
+    [get_info(Id) || Id <- get_handlers()].
 
 get_info(Name) ->
-    [{_, #metric{type = Type}}] = ets:lookup(?FOLSOM_TABLE, Name),
-    {Name, [{type, Type}]}.
+    case handler_exists(Name) of
+        true ->
+            [{_, #metric{type = Type}}] = ets:lookup(?FOLSOM_TABLE, Name),
+            {Name, [{type, Type}]};
+        false ->
+            {error, Name, nonexistent_metric}
+    end.
 
 get_values(Name) ->
-    {_, Info} = get_info(Name),
-    get_values(Name, proplists:get_value(type, Info)).
+    case handler_exists(Name) of
+        true ->
+            {_, Info} = get_info(Name),
+            get_values(Name, proplists:get_value(type, Info));
+        false ->
+            {error, Name, nonexistent_metric}
+    end.
 
 get_values(Name, counter) ->
     folsom_metrics_counter:get_value(Name);

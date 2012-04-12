@@ -89,7 +89,7 @@ populate_metrics() ->
 
     ok = folsom_metrics:notify({<<"history">>, "string"}),
 
-    {error, _, nonexistant_metric} = folsom_metrics:notify({historya, "5"}),
+    {error, _, nonexistent_metric} = folsom_metrics:notify({historya, "5"}),
     ok = folsom_metrics:notify(historya, <<"binary">>, history),
 
     % simulate an interval tick
