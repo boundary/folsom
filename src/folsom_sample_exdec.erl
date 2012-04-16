@@ -50,15 +50,16 @@ update(Sample, Value) ->
     update(Sample, Value, folsom_utils:now_epoch()).
 
 get_values(#exdec{reservoir = Reservoir}) ->
-    {_, Values} = lists:unzip(Reservoir),
+    ReservoirList = ets:tab2list(Reservoir),
+    {_, _, Values} = lists:unzip3(ReservoirList),
     Values.
 
 % internal api
 
 update(#exdec{start = Start, alpha = Alpha, size = Size, reservoir = Reservoir, n = N, seed = Seed} = Sample, Value, Tick) when N =< Size ->
     {Rand, New_seed} = random:uniform_s(N, Seed),
-    NewList = lists:append(Reservoir, [{priority(Alpha, Tick, Start, Rand), Value}]),
-    Sample#exdec{reservoir = NewList, n = N+1, seed = New_seed};
+    ets:insert(Reservoir, {folsom_utils:now_epoch_micro(), priority(Alpha, Tick, Start, Rand), Value}),
+    Sample#exdec{n = N+1, seed = New_seed};
 update(#exdec{start = Start, alpha = Alpha, n = N, seed = Seed} = Sample, Value, Tick) ->
     {Rand, New_seed} = random:uniform_s(N, Seed),
     Priority = priority(Alpha, Tick, Start, Rand),
@@ -71,9 +72,18 @@ weight(Alpha, T) ->
 priority(Alpha, Time, Start, Rand) ->
     weight(Alpha, Time - Start) / Rand.
 
-maybe_update(Priority, Value, #exdec{reservoir = [{First, _}| Tail], n = N} = Sample, Seed) when First < Priority ->
-    Sample#exdec{reservoir = lists:append(Tail, [{Priority, Value}]), n = N+1, seed = Seed};
-maybe_update(_, _, Sample, _) ->
+maybe_update(Priority, Value, #exdec{reservoir = Reservoir} = Sample, Seed) ->
+    case ets:first(Reservoir) of
+        '$end_of_table' ->
+            ets:insert(Reservoir, {folsom_utils:now_epoch_micro(), Priority, Value});
+        {_, First, _} ->
+            update(First, Priority, Sample, Seed, Value)
+    end.
+
+update(First, Priority, #exdec{reservoir = Reservoir, n = N} = Sample, Seed, Value) when First < Priority ->
+    ets:insert(Reservoir, {folsom_utils:now_epoch_micro(), Priority, Value}),
+    Sample#exdec{n = N+1, seed = Seed};
+update(_, _, Sample, _, _) ->
     Sample.
 
 maybe_rescale(#exdec{next = Next} = Sample, Now) when Now >= Next ->
@@ -84,5 +94,7 @@ maybe_rescale(Sample, _) ->
 rescale(#exdec{start = OldStart, next = Next, alpha = Alpha, reservoir = Reservoir} = Sample, Now) when Next == Now ->
     NewNext = Now + ?HOURSECS,
     NewStart = folsom_utils:now_epoch(),
-    NewReservoir = [{Key * math:exp(-Alpha * (NewStart - OldStart)), Value} || {Key, Value} <- Reservoir],
-    Sample#exdec{start = NewStart, next = NewNext, reservoir = NewReservoir}.
+    ReservoirList = ets:tab2list(Reservoir),
+    true = ets:delete_all_objects(Reservoir),
+    [ets:insert(Reservoir, {Epoch, Key * math:exp(-Alpha * (NewStart - OldStart)), Value}) || {Epoch, Key, Value} <- ReservoirList],
+    Sample#exdec{start = NewStart, next = NewNext}.

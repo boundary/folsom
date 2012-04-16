@@ -14,7 +14,7 @@
 -record(uniform, {
           size = 5000,
           n = 1,
-          reservoir = folsom_metrics_histogram_ets:new(folsom_uniform,[set, {write_concurrency, true}, public]),
+          reservoir = folsom_metrics_histogram_ets:new(folsom_uniform, [set, {write_concurrency, true}, public]),
           seed = now()
          }).
 
@@ -25,13 +25,13 @@
           size = 5000,
           seed = now(),
           n = 1,
-          reservoir = []
+          reservoir = folsom_metrics_histogram_ets:new(folsom_exdec, [ordered_set, {write_concurrency, true}, public])
          }).
 
 -record(none, {
           size = 5000,
           n = 0,
-          reservoir = folsom_metrics_histogram_ets:new(folsom_none,[ordered_set, {write_concurrency, true}, public])
+          reservoir = folsom_metrics_histogram_ets:new(folsom_none, [ordered_set, {write_concurrency, true}, public])
          }).
 
 -record(histogram, {
