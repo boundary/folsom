@@ -3,6 +3,7 @@
 -define(GAUGE_TABLE, folsom_gauges).
 -define(HISTOGRAM_TABLE, folsom_histograms).
 -define(METER_TABLE, folsom_meters).
+-define(METER_READER_TABLE, folsom_meter_readers).
 -define(HISTORY_TABLE, folsom_histories).
 
 -define(DEFAULT_LIMIT, 5).

@@ -136,6 +136,8 @@ get_values(Name, history) ->
     folsom_metrics_history:get_events(Name);
 get_values(Name, meter) ->
     folsom_metrics_meter:get_values(Name);
+get_values(Name, meter_reader) ->
+    folsom_metrics_meter_reader:get_values(Name);
 get_values(_, Type) ->
     {error, Type, unsupported_metric_type}.
 
@@ -163,9 +165,14 @@ maybe_add_handler(history, Name, false) ->
     true = ets:insert(?FOLSOM_TABLE, {Name, #metric{type = history, history_size = ?DEFAULT_SIZE}}),
     ok;
 maybe_add_handler(meter, Name, false) ->
-    ok = folsom_meter_timer_server:register(Name),
+    ok = folsom_meter_timer_server:register(Name, folsom_metrics_meter),
     true = folsom_metrics_meter:new(Name),
     true = ets:insert(?FOLSOM_TABLE, {Name, #metric{type = meter}}),
+    ok;
+maybe_add_handler(meter_reader, Name, false) ->
+    ok = folsom_meter_timer_server:register(Name, folsom_metrics_meter_reader),
+    true = folsom_metrics_meter_reader:new(Name),
+    true = ets:insert(?FOLSOM_TABLE, {Name, #metric{type = meter_reader}}),
     ok;
 maybe_add_handler(Type, _, false) ->
     {error, Type, unsupported_metric_type};
@@ -225,6 +232,10 @@ delete_metric(Name, gauge) ->
     ok;
 delete_metric(Name, meter) ->
     true = ets:delete(?METER_TABLE, Name),
+    true = ets:delete(?FOLSOM_TABLE, Name),
+    ok;
+delete_metric(Name, meter_reader) ->
+    true = ets:delete(?METER_READER_TABLE, Name),
     true = ets:delete(?FOLSOM_TABLE, Name),
     ok.
 
@@ -286,6 +297,13 @@ notify(Name, Value, meter, true) ->
 notify(Name, Value, meter, false) ->
     add_handler(meter, Name),
     folsom_metrics_meter:mark(Name, Value),
+    ok;
+notify(Name, Value, meter_reader, true) ->
+    folsom_metrics_meter_reader:mark(Name, Value),
+    ok;
+notify(Name, Value, meter_reader, false) ->
+    add_handler(meter, Name),
+    folsom_metrics_meter_reader:mark(Name, Value),
     ok;
 notify(_, _, Type, _) ->
     {error, Type, unsupported_metric_type}.

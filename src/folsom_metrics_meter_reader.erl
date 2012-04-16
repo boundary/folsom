@@ -1,5 +1,6 @@
 %%%
 %%% Copyright 2011, Boundary
+%%% Copyright 2011, Opscode
 %%%
 %%% Licensed under the Apache License, Version 2.0 (the "License");
 %%% you may not use this file except in compliance with the License.
@@ -16,13 +17,14 @@
 
 
 %%%-------------------------------------------------------------------
-%%% File:      folsom_metrics_meter.erl
+%%% File:      folsom_metrics_meter_reader.erl
+%%% @author    Seth Falcon <seth@opscode.com>
 %%% @author    joe williams <j@boundary.com>
 %%% @doc
 %%% @end
 %%%------------------------------------------------------------------
 
--module(folsom_metrics_meter).
+-module(folsom_metrics_meter_reader).
 
 -export([new/1,
          tick/1,
@@ -33,12 +35,13 @@
         ]).
 
 
--record(meter, {
+-record(meter_reader, {
           one,
           five,
           fifteen,
           count = 0,
-          start_time
+          start_time,
+          last_count = unset
          }).
 
 -include("folsom.hrl").
@@ -48,52 +51,60 @@ new(Name) ->
     FiveMin = folsom_ewma:five_minute_ewma(),
     FifteenMin = folsom_ewma:fifteen_minute_ewma(),
 
-    ets:insert(?METER_TABLE,
-               {Name, #meter{one = OneMin,
-                             five = FiveMin,
-                             fifteen = FifteenMin,
-                             start_time = folsom_utils:now_epoch_micro()}}).
+    ets:insert(?METER_READER_TABLE,
+               {Name, #meter_reader{one = OneMin,
+                                    five = FiveMin,
+                                    fifteen = FifteenMin,
+                                    start_time = folsom_utils:now_epoch_micro()}}).
 
 tick(Name) ->
-    #meter{one = OneMin,
-           five = FiveMin,
-           fifteen = FifteenMin} = Meter = get_value(Name),
+    #meter_reader{one = OneMin,
+                  five = FiveMin,
+                  fifteen = FifteenMin} = Meter = get_value(Name),
 
     OneMin1 = folsom_ewma:tick(OneMin),
     FiveMin1 = folsom_ewma:tick(FiveMin),
     FifteenMin1 = folsom_ewma:tick(FifteenMin),
 
-    ets:insert(?METER_TABLE,
-               {Name, Meter#meter{one = OneMin1,
-                                  five = FiveMin1,
-                                  fifteen = FifteenMin1}}).
+    ets:insert(?METER_READER_TABLE,
+               {Name, Meter#meter_reader{one = OneMin1,
+                                         five = FiveMin1,
+                                         fifteen = FifteenMin1}}).
 
 mark(Name) ->
     mark(Name, 1).
 
 mark(Name, Value) ->
-    #meter{count = Count,
-           one = OneMin,
-           five = FiveMin,
-           fifteen = FifteenMin} = Meter = get_value(Name),
+    % skip first reading to bootstrap last value
+    #meter_reader{count = Count,
+                  last_count = LastCount,
+                  one = OneMin,
+                  five = FiveMin,
+                  fifteen = FifteenMin} = Meter = get_value(Name),
 
-    OneMin1 = folsom_ewma:update(OneMin, Value),
-    FiveMin1 = folsom_ewma:update(FiveMin, Value),
-    FifteenMin1 = folsom_ewma:update(FifteenMin, Value),
+    NewMeter = case LastCount of
+                   unset ->
+                       Meter#meter_reader{last_count = Value};
+                   _ ->
+                       Delta = Value - LastCount,
+                       OneMin1 = folsom_ewma:update(OneMin, Delta),
+                       FiveMin1 = folsom_ewma:update(FiveMin, Delta),
+                       FifteenMin1 = folsom_ewma:update(FifteenMin, Delta),
+                       Meter#meter_reader{count = Count + Delta,
+                                          last_count = Value,
+                                          one = OneMin1,
+                                          five = FiveMin1,
+                                          fifteen = FifteenMin1}
+               end,
 
-    ets:insert(?METER_TABLE, {Name, Meter#meter{count = Count + Value,
-                                                one = OneMin1,
-                                                five = FiveMin1,
-                                                fifteen = FifteenMin1}}).
+    ets:insert(?METER_READER_TABLE, {Name, NewMeter}).
 
 get_values(Name) ->
-    #meter{one = OneMin,
-           five = FiveMin,
-           fifteen = FifteenMin,
-           count = Count} = Meter = get_value(Name),
+    #meter_reader{one = OneMin,
+                  five = FiveMin,
+                  fifteen = FifteenMin} = Meter = get_value(Name),
 
     L = [
-         {count, Count},
          {one, get_rate(OneMin)},
          {five, get_rate(FiveMin)},
          {fifteen, get_rate(FifteenMin)},
@@ -104,9 +115,9 @@ get_values(Name) ->
     [ {K,V} || {K,V} <- L, V /= undefined ].
 
 get_acceleration(Name) ->
-    #meter{one = OneMin,
-           five = FiveMin,
-           fifteen = FifteenMin} = get_value(Name),
+    #meter_reader{one = OneMin,
+                  five = FiveMin,
+                  fifteen = FifteenMin} = get_value(Name),
 
     [
      {one_to_five, calc_acceleration(get_rate(OneMin), get_rate(FiveMin), 300)},
@@ -119,11 +130,11 @@ get_acceleration(Name) ->
 get_rate(EWMA) ->
     folsom_ewma:rate(EWMA).
 
-get_mean_rate(#meter{count = Count, start_time = Start}) ->
+get_mean_rate(#meter_reader{count = Count, start_time = Start}) ->
     calc_mean_rate(Start, Count).
 
 get_value(Name) ->
-    [{_, Value}] = ets:lookup(?METER_TABLE, Name),
+    [{_, Value}] = ets:lookup(?METER_READER_TABLE, Name),
     Value.
 
 calc_mean_rate(_, 0) ->
@@ -133,10 +144,9 @@ calc_mean_rate(Start, Count) ->
     Count / Elapsed.
 
 calc_acceleration(Rate1, Rate2, Interval) ->
-     % most current velocity minus previous velocity
+    % most current velocity minus previous velocity
     get_rate(Rate1, Rate2, Interval).
 
 get_rate(Value1, Value2, Interval) ->
     Delta = Value1 - Value2,
     Delta / Interval.
-

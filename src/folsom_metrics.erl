@@ -34,6 +34,7 @@
          new_history/1,
          new_history/2,
          new_meter/1,
+         new_meter_reader/1,
          delete_metric/1,
          notify/1,
          notify/2,
@@ -82,6 +83,9 @@ new_history(Name, SampleSize) ->
 
 new_meter(Name) ->
     folsom_ets:add_handler(meter, Name).
+
+new_meter_reader(Name) ->
+    folsom_ets:add_handler(meter_reader, Name).
 
 delete_metric(Name) ->
     folsom_ets:delete_handler(Name).

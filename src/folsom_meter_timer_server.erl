@@ -28,7 +28,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/0, register/1, dump/0]).
+-export([start_link/0, register/2, dump/0]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -88,12 +88,12 @@ init([]) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_call({register, Name}, _From, State) ->
+handle_call({register, Name, Module}, _From, State) ->
     NewState = case proplists:is_defined(Name, State#state.registered_timers) of
                    true ->
                        State;
                    false ->
-                       {ok, Ref} = timer:apply_interval(?DEFAULT_INTERVAL, folsom_metrics_meter, tick, [Name]),
+                       {ok, Ref} = timer:apply_interval(?DEFAULT_INTERVAL, Module, tick, [Name]),
                        NewList = [{Name, Ref} | State#state.registered_timers],
                        #state{registered_timers = NewList}
                end,
@@ -156,8 +156,9 @@ code_change(_OldVsn, State, _Extra) ->
 %%% Internal functions
 %%%===================================================================
 
-register(Name) ->
-    gen_server:call(?SERVER, {register, Name}).
+%% Name of the metric and name of the module used to tick said metric
+register(Name, Module) ->
+    gen_server:call(?SERVER, {register, Name, Module}).
 
 dump() ->
     gen_server:call(?SERVER, dump).

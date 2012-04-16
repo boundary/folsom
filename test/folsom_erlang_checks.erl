@@ -57,19 +57,21 @@ create_metrics() ->
     ok = folsom_metrics:new_history(<<"history">>),
     ok = folsom_metrics:new_meter(meter),
 
+    ok = folsom_metrics:new_meter_reader(meter_reader),
+
     ?debugFmt("ensuring meter tick is registered with gen_server~n", []),
-    ok = ensure_meter_tick_exists(meter),
+    ok = ensure_meter_tick_exists(),
 
     ?debugFmt("ensuring multiple timer registrations dont cause issues", []),
-    ok = folsom_meter_timer_server:register(meter),
-    ok = folsom_meter_timer_server:register(meter),
-    ok = folsom_meter_timer_server:register(meter),
+    ok = folsom_meter_timer_server:register(meter, folsom_metrics_meter),
+    ok = folsom_meter_timer_server:register(meter, folsom_metrics_meter),
+    ok = folsom_meter_timer_server:register(meter, folsom_metrics_meter),
 
     ?debugFmt("~p", [folsom_meter_timer_server:dump()]),
     {state, List} = folsom_meter_timer_server:dump(),
-    1 = length(List),
+    2 = length(List),
 
-    9 = length(folsom_metrics:get_metrics()),
+    10 = length(folsom_metrics:get_metrics()),
 
     ?debugFmt("~n~nmetrics: ~p~n", [folsom_metrics:get_metrics()]).
 
@@ -92,13 +94,28 @@ populate_metrics() ->
     {error, _, nonexistent_metric} = folsom_metrics:notify({historya, "5"}),
     ok = folsom_metrics:notify(historya, <<"binary">>, history),
 
+
+    ?debugFmt("testing meter ...", []),
+
     % simulate an interval tick
     folsom_metrics_meter:tick(meter),
 
-    [ok,ok,ok,ok,ok] = [ folsom_metrics:notify({meter, Item}) || Item <- [100, 100, 100, 100, 100]],
+    [ok,ok,ok,ok,ok] =
+        [ folsom_metrics:notify({meter, Item}) || Item <- [100, 100, 100, 100, 100]],
 
     % simulate an interval tick
-    folsom_metrics_meter:tick(meter).
+    folsom_metrics_meter:tick(meter),
+
+    ?debugFmt("testing meter reader ...", []),
+
+    % simulate an interval tick
+    folsom_metrics_meter_reader:tick(meter_reader),
+
+    [ok,ok,ok,ok,ok] =
+        [ folsom_metrics:notify({meter_reader, Item}) || Item <- [100, 100, 100, 100, 100]],
+
+    % simulate an interval tick
+    folsom_metrics_meter_reader:tick(meter_reader).
 
 check_metrics() ->
     0 = folsom_metrics:get_metric_value(counter),
@@ -125,14 +142,25 @@ check_metrics() ->
     Meter = folsom_metrics:get_metric_value(meter),
     ?debugFmt("~p", [Meter]),
     ok = case proplists:get_value(one, Meter) of
-        Value when Value > 1 ->
-            ok;
-        _ ->
-            error
-    end.
+             Value when Value > 1 ->
+                 ok;
+             _ ->
+                 error
+         end,
+
+    ?debugFmt("checking meter reader~n", []),
+    MeterReader = folsom_metrics:get_metric_value(meter_reader),
+    ?debugFmt("~p", [MeterReader]),
+    ok = case proplists:get_value(one, MeterReader) of
+             Value1 when Value1 < 1 ->
+                 ok;
+             _ ->
+                 error
+         end.
+
 
 delete_metrics() ->
-    11 = length(ets:tab2list(?FOLSOM_TABLE)),
+    12 = length(ets:tab2list(?FOLSOM_TABLE)),
 
     ok = folsom_metrics:delete_metric(counter),
     ok = folsom_metrics:delete_metric(<<"gauge">>),
@@ -151,6 +179,10 @@ delete_metrics() ->
     1 = length(ets:tab2list(?METER_TABLE)),
     ok = folsom_metrics:delete_metric(meter),
     0 = length(ets:tab2list(?METER_TABLE)),
+
+    1 = length(ets:tab2list(?METER_READER_TABLE)),
+    ok = folsom_metrics:delete_metric(meter_reader),
+    0 = length(ets:tab2list(?METER_READER_TABLE)),
 
     0 = length(ets:tab2list(?FOLSOM_TABLE)).
 
@@ -180,8 +212,9 @@ counter_metric(Count, Counter) ->
 
     0 = Result.
 
-ensure_meter_tick_exists(Name) ->
-    {state, [{Name ,{interval, _}} | _]} = folsom_meter_timer_server:dump(),
+ensure_meter_tick_exists() ->
+    {state, State} = folsom_meter_timer_server:dump(),
+    2 = length(State),
     ok.
 
 %% internal function
