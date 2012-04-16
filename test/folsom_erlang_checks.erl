@@ -112,7 +112,7 @@ populate_metrics() ->
     folsom_metrics_meter_reader:tick(meter_reader),
 
     [ok,ok,ok,ok,ok] =
-        [ folsom_metrics:notify({meter_reader, Item}) || Item <- [100, 100, 100, 100, 100]],
+        [ folsom_metrics:notify({meter_reader, Item}) || Item <- [1, 10, 100, 1000, 10000]],
 
     % simulate an interval tick
     folsom_metrics_meter_reader:tick(meter_reader).
@@ -152,7 +152,7 @@ check_metrics() ->
     MeterReader = folsom_metrics:get_metric_value(meter_reader),
     ?debugFmt("~p", [MeterReader]),
     ok = case proplists:get_value(one, MeterReader) of
-             Value1 when Value1 < 1 ->
+             Value1 when Value1 > 1 ->
                  ok;
              _ ->
                  error
