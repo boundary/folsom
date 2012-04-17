@@ -70,6 +70,13 @@ Meters are increment only counters with mean rates and exponentially weighted mo
       > folsom_metrics:new_meter(Name).
       > folsom_metrics:notify({Name, Value}).
 
+##### Meter Reader
+
+Meter readers are like a meter except that the values passed to it are monotonically increasing, e.g., reading from a water or gas meter, CPU jiffies, or I/O operation count.
+
+      > folsom_metrics:new_meter_reader(Name).
+      > folsom_metrics:notify({Name, Value}).
+
 ##### Erlang VM
 
 folsom also produces Erlang VM statistics.
