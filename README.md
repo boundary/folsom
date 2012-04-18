@@ -100,3 +100,8 @@ The result of `erlang:process_info/1`:
 The result of `inet:getstat/1`, `prim_inet:getstatus/1`, `erlang:port_info/1`, `prim_inet:gettype/1`, `inet:getopts/1`, `inet:sockname/1`:
 
        > folsom_vm_metrics:get_port_info(). %% use with caution
+
+The result from `ets:info/1` and `dets:info/1` across all tables
+
+       > folsom_vm_metrics:get_ets_info().
+       > folsom_vm_metrics:get_dets_info().

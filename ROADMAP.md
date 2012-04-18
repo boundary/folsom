@@ -8,4 +8,3 @@
 * More production testing
 * Regex history querying
 * Customizable geometric mean zero value substitution value
-* A cowboy+jiffy based REST wrapper (as an alternative to webmachine)
