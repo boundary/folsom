@@ -29,7 +29,9 @@
          get_statistics/0,
          get_memory/0,
          get_process_info/0,
-         get_port_info/0
+         get_port_info/0,
+         get_ets_info/0,
+         get_dets_info/0
         ]).
 
 %% exported for eunit test
@@ -55,7 +57,11 @@ get_process_info() ->
 get_port_info() ->
     [{pid_port_fun_to_atom(Port), get_port_info(Port)} || Port <- erlang:ports()].
 
+get_ets_info() ->
+    [{Tab, get_ets_dets_info(ets, Tab)} || Tab <- ets:all()].
 
+get_dets_info() ->
+    [{Tab, get_ets_dets_info(dets, Tab)} || Tab <- dets:all()].
 
 % internal functions
 
@@ -222,6 +228,9 @@ get_socket_sockname(Socket) ->
         _ ->
             []
     end.
+
+get_ets_dets_info(Type, Tab) ->
+    [{Key, pid_port_fun_to_atom(Value)} || {Key, Value} <- Type:info(Tab)].
 
 ip_to_binary(Tuple) ->
     iolist_to_binary(string:join(lists:map(fun integer_to_list/1, tuple_to_list(Tuple)), ".")).
