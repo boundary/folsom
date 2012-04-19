@@ -85,4 +85,6 @@ rescale(#exdec{start = OldStart, next = Next, alpha = Alpha, reservoir = Reservo
     NewNext = Now + ?HOURSECS,
     NewStart = folsom_utils:now_epoch(),
     NewReservoir = [{Key * math:exp(-Alpha * (NewStart - OldStart)), Value} || {Key, Value} <- Reservoir],
-    Sample#exdec{start = NewStart, next = NewNext, reservoir = NewReservoir}.
+    Sample#exdec{start = NewStart, next = NewNext, reservoir = NewReservoir};
+rescale(Sample, _) ->
+    Sample.
