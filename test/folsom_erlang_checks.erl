@@ -221,7 +221,7 @@ ensure_meter_tick_exists() ->
 
 histogram_checks(List) ->
     ?debugFmt("checking histogram statistics", []),
-    %?debugFmt("~p~n", [List]),
+    ?debugFmt("~p~n", [List]),
     0 = proplists:get_value(min, List),
     5000 = proplists:get_value(max, List),
     869.6363636363636 = proplists:get_value(arithmetic_mean, List),

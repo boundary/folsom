@@ -62,8 +62,8 @@ update(#exdec{start = Start, alpha = Alpha, size = Size, reservoir = Reservoir, 
 update(#exdec{start = Start, alpha = Alpha, n = N, seed = Seed} = Sample, Value, Tick) ->
     {Rand, New_seed} = random:uniform_s(N, Seed),
     Priority = priority(Alpha, Tick, Start, Rand),
-    NewSample = maybe_update(Priority, Value, Sample, New_seed),
-    maybe_rescale(NewSample, folsom_utils:now_epoch()).
+    NewSample = maybe_rescale(Sample, folsom_utils:now_epoch()),
+    maybe_update(Priority, Value, NewSample, New_seed).
 
 weight(Alpha, T) ->
     math:exp(Alpha * T).
@@ -81,10 +81,6 @@ maybe_rescale(#exdec{next = Next} = Sample, Now) when Now >= Next ->
 maybe_rescale(Sample, _) ->
     Sample.
 
-rescale(#exdec{start = OldStart, next = Next, alpha = Alpha, reservoir = Reservoir} = Sample, Now) when Next == Now ->
-    NewNext = Now + ?HOURSECS,
-    NewStart = folsom_utils:now_epoch(),
-    NewReservoir = [{Key * math:exp(-Alpha * (NewStart - OldStart)), Value} || {Key, Value} <- Reservoir],
-    Sample#exdec{start = NewStart, next = NewNext, reservoir = NewReservoir};
-rescale(Sample, _) ->
-    Sample.
+rescale(#exdec{start = OldStart, alpha = Alpha, reservoir = Reservoir} = Sample, Now) ->
+    NewReservoir = [{Key * math:exp(-Alpha * (Now - OldStart)), Value} || {Key, Value} <- Reservoir],
+    Sample#exdec{start = Now, next =  Now + ?HOURSECS, reservoir = NewReservoir}.

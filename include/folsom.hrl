@@ -7,13 +7,13 @@
 -define(HISTORY_TABLE, folsom_histories).
 
 -define(DEFAULT_LIMIT, 5).
--define(DEFAULT_SIZE, 5000).
--define(DEFAULT_ALPHA, 1).
+-define(DEFAULT_SIZE, 1028). % mimic codahale's metrics
+-define(DEFAULT_ALPHA, 0.015). % mimic codahale's metrics
 -define(DEFAULT_INTERVAL, 5000).
 -define(DEFAULT_SAMPLE_TYPE, uniform).
 
 -record(uniform, {
-          size = 5000,
+          size = ?DEFAULT_SIZE,
           n = 1,
           reservoir = folsom_metrics_histogram_ets:new(folsom_uniform,[set, {write_concurrency, true}, public]),
           seed = now()
@@ -22,15 +22,15 @@
 -record(exdec, {
           start = 0,
           next = 0,
-          alpha = 1,
-          size = 5000,
+          alpha = ?DEFAULT_ALPHA,
+          size = ?DEFAULT_SIZE,
           seed = now(),
           n = 1,
           reservoir = []
          }).
 
 -record(none, {
-          size = 5000,
+          size = ?DEFAULT_SIZE,
           n = 0,
           reservoir = folsom_metrics_histogram_ets:new(folsom_none,[ordered_set, {write_concurrency, true}, public])
          }).
