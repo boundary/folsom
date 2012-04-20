@@ -39,12 +39,13 @@ new(Size) ->
 update(#none{size = Size, reservoir = Reservoir, n = N} = Sample, Value)
   when N < Size ->
     ets:insert(Reservoir, {N, Value}),
-    Sample#none{n = N+1};
+    Sample#none{n = folsom_utils:get_ets_size(Reservoir) + 1};
 update(#none{reservoir = Reservoir, n = N} = Sample, Value) ->
     Oldest = ets:first(Reservoir),
     ets:delete(Reservoir, Oldest),
     ets:insert(Reservoir, {N, Value}),
-    Sample#none{n = N+1}.
+    Sample#none{n = folsom_utils:get_ets_size(Reservoir) + 1}.
 
 get_values(#none{reservoir = Reservoir}) ->
-    [Val || {_,Val} <- ets:tab2list(Reservoir)].
+    {_, Values} = lists:unzip(ets:tab2list(Reservoir)),
+    Values.

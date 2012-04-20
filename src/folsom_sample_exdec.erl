@@ -56,8 +56,7 @@ update(#exdec{reservoir = Reservoir, alpha = Alpha, start = Start, next = Next} 
     update(Sample#exdec{reservoir = NewRes, next = NewNext, start = NewStart}, Value, Timestamp).
 
 get_values(#exdec{reservoir = Reservoir}) ->
-    ResList = ets:tab2list(Reservoir),
-    {_, Values} = lists:unzip(ResList),
+    {_, Values} = lists:unzip(ets:tab2list(Reservoir)),
     Values.
 
 % internal api
