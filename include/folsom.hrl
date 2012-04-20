@@ -26,7 +26,7 @@
           size = ?DEFAULT_SIZE,
           seed = now(),
           n = 1,
-          reservoir = []
+          reservoir = folsom_metrics_histogram_ets:new(folsom_exdec,[ordered_set, {write_concurrency, true}, public])
          }).
 
 -record(none, {

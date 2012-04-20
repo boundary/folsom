@@ -46,24 +46,52 @@ new(Size, Alpha) ->
     Now = folsom_utils:now_epoch(),
     #exdec{start = Now, next = Now + ?HOURSECS, alpha = Alpha, size = Size}.
 
-update(Sample, Value) ->
-    update(Sample, Value, folsom_utils:now_epoch()).
+update(#exdec{reservoir = Reservoir, alpha = Alpha, start = Start, next = Next} = Sample, Value) ->
+    Timestamp = folsom_utils:now_epoch(),
+
+    % immediately see if we need to rescale
+    {NewRes, NewStart, NewNext} = rescale(Reservoir, Timestamp, Next, Start, Alpha),
+
+    % now lets update the sample if the new value is worthy
+    update(Sample#exdec{reservoir = NewRes, next = NewNext, start = NewStart}, Value, Timestamp).
 
 get_values(#exdec{reservoir = Reservoir}) ->
-    {_, Values} = lists:unzip(Reservoir),
+    ResList = ets:tab2list(Reservoir),
+    {_, Values} = lists:unzip(ResList),
     Values.
 
 % internal api
 
-update(#exdec{start = Start, alpha = Alpha, size = Size, reservoir = Reservoir, n = N, seed = Seed} = Sample, Value, Tick) when N =< Size ->
+update(#exdec{reservoir = Reservoir, alpha = Alpha, start = Start, n = N, size = Size, seed = Seed} = Sample, Value, Timestamp) when N =< Size ->
+    % since N is =< Size we can just add the new value to the sample
+
     {Rand, New_seed} = random:uniform_s(N, Seed),
-    NewList = lists:append(Reservoir, [{priority(Alpha, Tick, Start, Rand), Value}]),
-    Sample#exdec{reservoir = NewList, n = N+1, seed = New_seed};
-update(#exdec{start = Start, alpha = Alpha, n = N, seed = Seed} = Sample, Value, Tick) ->
-    {Rand, New_seed} = random:uniform_s(N, Seed),
-    Priority = priority(Alpha, Tick, Start, Rand),
-    NewSample = maybe_rescale(Sample, folsom_utils:now_epoch()),
-    maybe_update(Priority, Value, NewSample, New_seed).
+    Priority = priority(Alpha, Timestamp, Start, Rand),
+    true = ets:insert(Reservoir, {Priority, Value}),
+
+    Sample#exdec{n = folsom_utils:get_ets_size(Reservoir), seed = New_seed};
+update(#exdec{reservoir = Reservoir, alpha = Alpha, start = Start, n = N, seed = Seed} = Sample, Value, Timestamp) ->
+    % when N is not =< Size we need to check to see if the priority of
+    % the new value is greater than the first (smallest) existing priority
+
+    {Rand, NewSeed} = random:uniform_s(N, Seed),
+    Priority = priority(Alpha, Timestamp, Start, Rand),
+    First = ets:first(Reservoir),
+
+    update_on_priority(Sample, First, Priority, NewSeed, Value).
+
+update_on_priority(#exdec{reservoir = Reservoir} = Sample, First, Priority, NewSeed, Value) when First < Priority ->
+    true = case ets:insert_new(Reservoir, {Priority, Value}) of
+        true ->
+            % priority didnt already exist, so we created it and need to delete the first one
+            ets:delete(Reservoir, First);
+        false ->
+            % priority existed, we dont need to do anything
+            true
+    end,
+    Sample#exdec{n = folsom_utils:get_ets_size(Reservoir), seed = NewSeed};
+update_on_priority(Sample, _, _, _, _) ->
+    Sample.
 
 weight(Alpha, T) ->
     math:exp(Alpha * T).
@@ -71,16 +99,28 @@ weight(Alpha, T) ->
 priority(Alpha, Time, Start, Rand) ->
     weight(Alpha, Time - Start) / Rand.
 
-maybe_update(Priority, Value, #exdec{reservoir = [{First, _}| Tail], n = N} = Sample, Seed) when First < Priority ->
-    Sample#exdec{reservoir = lists:append(Tail, [{Priority, Value}]), n = N+1, seed = Seed};
-maybe_update(_, _, Sample, _) ->
-    Sample.
+rescale(Reservoir, Now, Next, OldStart, Alpha) when Now >= Next ->
+    NewStart = Now + ?HOURSECS,
+    NewRes = delete_and_rescale(Reservoir, NewStart, OldStart, Alpha),
+    {NewRes, Now, NewStart};
+rescale(Reservoir, _, Next, Start, _) ->
+    {Reservoir, Start, Next}.
 
-maybe_rescale(#exdec{next = Next} = Sample, Now) when Now >= Next ->
-    rescale(Sample, Now);
-maybe_rescale(Sample, _) ->
-    Sample.
+delete_and_rescale(Reservoir, NewStart, OldStart, Alpha) ->
+    % get the existing reservoir
+    ResList = ets:tab2list(Reservoir),
 
-rescale(#exdec{start = OldStart, alpha = Alpha, reservoir = Reservoir} = Sample, Now) ->
-    NewReservoir = [{Key * math:exp(-Alpha * (Now - OldStart)), Value} || {Key, Value} <- Reservoir],
-    Sample#exdec{start = Now, next =  Now + ?HOURSECS, reservoir = NewReservoir}.
+    % create a new ets table to use
+    NewRes = folsom_metrics_histogram_ets:new(folsom_exdec,[ordered_set, {write_concurrency, true}, public]),
+
+    % populate it with new priorities and the existing values
+    [true = ets:insert(NewRes, {recalc_priority(Priority, Alpha, NewStart, OldStart) ,Value}) || {Priority, Value} <- ResList],
+
+    % delete the old ets table
+    true = ets:delete(Reservoir),
+
+    % return the new ets table
+    NewRes.
+
+recalc_priority(Priority, Alpha, Start, OldStart) ->
+    Priority * math:exp(-Alpha * (Start - OldStart)).

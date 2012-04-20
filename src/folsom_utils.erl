@@ -28,7 +28,8 @@
          to_atom/1,
          convert_tags/1,
          now_epoch/0,
-         now_epoch_micro/0
+         now_epoch_micro/0,
+         get_ets_size/1
         ]).
 
 to_atom(Binary) when is_binary(Binary) ->
@@ -46,3 +47,7 @@ now_epoch() ->
 now_epoch_micro() ->
     {Mega, Sec, Micro} = erlang:now(),
     (Mega * 1000000 + Sec) * 1000000 + Micro.
+
+get_ets_size(Tab) ->
+    ets:info(Tab, size).
+
