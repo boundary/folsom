@@ -82,7 +82,9 @@ populate_metrics() ->
     ok = folsom_metrics:notify({<<"gauge">>, 2}),
 
     [ok = folsom_metrics:notify({<<"uniform">>, Value}) || Value <- ?DATA],
-    [ok = folsom_metrics:notify({exdec, Value}) || Value <- ?DATA],
+
+    [ok = folsom_metrics:notify({exdec, Value}) || Value <- lists:seq(1, 100000)],
+
     [ok = folsom_metrics:notify({none, Value}) || Value <- ?DATA],
 
     [ok = folsom_metrics:notify({nonea, Value}) || Value <- ?DATA1],
@@ -124,8 +126,19 @@ check_metrics() ->
 
     Histogram1 = folsom_metrics:get_histogram_statistics(<<"uniform">>),
     histogram_checks(Histogram1),
-    Histogram2 = folsom_metrics:get_histogram_statistics(exdec),
-    histogram_checks(Histogram2),
+
+    % just check exdec for non-zero values
+    Exdec = folsom_metrics:get_histogram_statistics(exdec),
+
+    ?debugFmt("checking exdec sample~n~p~n", [Exdec]),
+
+    ok = case proplists:get_value(median, Exdec) of
+        Median when Median > 0 ->
+                 ok;
+             _ ->
+                 error
+         end,
+
     Histogram3 = folsom_metrics:get_histogram_statistics(none),
     histogram_checks(Histogram3),
 
