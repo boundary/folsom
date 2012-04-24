@@ -46,13 +46,13 @@ create_metrics() ->
     ok = folsom_metrics:new_counter(counter),
     ok = folsom_metrics:new_gauge(<<"gauge">>),
 
-    ok = folsom_metrics:new_histogram(<<"uniform">>, uniform, 5000, 1),
-    ok = folsom_metrics:new_histogram(exdec, exdec, 5000, 1),
-    ok = folsom_metrics:new_histogram(none, none, 5000, 1),
+    ok = folsom_metrics:new_histogram(<<"uniform">>, uniform, 5000),
+    ok = folsom_metrics:new_histogram(exdec, exdec),
+    ok = folsom_metrics:new_histogram(none, none, 5000),
 
-    ok = folsom_metrics:new_histogram(nonea, none, 5000, 1),
+    ok = folsom_metrics:new_histogram(nonea, none, 5000),
 
-    ok = folsom_metrics:new_histogram(timed, none, 5000, 1),
+    ok = folsom_metrics:new_histogram(timed, none, 5000),
 
     ok = folsom_metrics:new_history(<<"history">>),
     ok = folsom_metrics:new_meter(meter),
