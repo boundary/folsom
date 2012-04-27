@@ -66,11 +66,13 @@ new_gauge(Name) ->
 new_histogram(Name) ->
     folsom_metrics:new_histogram(Name, ?DEFAULT_SAMPLE_TYPE, ?DEFAULT_SIZE, ?DEFAULT_ALPHA).
 
+new_histogram(Name, exdec) ->
+    folsom_metrics:new_histogram(Name, exdec, ?DEFAULT_SIZE, ?DEFAULT_ALPHA);
 new_histogram(Name, SampleType) ->
-    folsom_metrics:new_histogram(Name, SampleType, ?DEFAULT_SIZE, ?DEFAULT_ALPHA).
+    folsom_metrics:new_histogram(Name, SampleType, ?DEFAULT_SIZE).
 
 new_histogram(Name, SampleType, SampleSize) ->
-    folsom_metrics:new_histogram(Name, SampleType, SampleSize, ?DEFAULT_ALPHA).
+    folsom_ets:add_handler(histogram, Name, SampleType, SampleSize).
 
 new_histogram(Name, SampleType, SampleSize, Alpha) ->
     folsom_ets:add_handler(histogram, Name, SampleType, SampleSize, Alpha).

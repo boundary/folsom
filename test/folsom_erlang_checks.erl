@@ -83,7 +83,9 @@ populate_metrics() ->
 
     [ok = folsom_metrics:notify({<<"uniform">>, Value}) || Value <- ?DATA],
 
-    [ok = folsom_metrics:notify({exdec, Value}) || Value <- lists:seq(1, 100000)],
+    [ok = folsom_metrics:notify({exdec, Value}) || Value <- lists:seq(1, 1000)],
+    [ok = folsom_metrics:notify({exdec, Value}) || Value <- lists:seq(1000, 5000)],
+    [ok = folsom_metrics:notify({exdec, Value}) || Value <- lists:seq(5000, 10000)],
 
     [ok = folsom_metrics:notify({none, Value}) || Value <- ?DATA],
 

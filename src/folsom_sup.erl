@@ -89,7 +89,11 @@ init([]) ->
               {folsom_metrics_histogram_ets, start_link, []},
               Restart, Shutdown, Type, [folsom_metrics_histogram_ets]},
 
-    {ok, {SupFlags, [TimerServer, HistETSServer]}}.
+    SampleSup = {folsom_sample_sup,
+              {folsom_sample_sup, start_link, []},
+              Restart, Shutdown, supervisor, [folsom_sample_sup]},
+
+    {ok, {SupFlags, [TimerServer, HistETSServer, SampleSup]}}.
 
 %%%===================================================================
 %%% Internal functions

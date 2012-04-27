@@ -47,14 +47,19 @@ new(Name, SampleType, SampleSize) ->
     ets:insert(?HISTOGRAM_TABLE, {Name, Hist}).
 
 new(Name, SampleType, SampleSize, Alpha) ->
-    Sample = folsom_sample:new(SampleType, SampleSize, Alpha),
+    Sample = folsom_sample:new(Name, SampleType, SampleSize, Alpha),
     Hist = #histogram{type = SampleType, sample = Sample},
     ets:insert(?HISTOGRAM_TABLE, {Name, Hist}).
 
 update(Name, Value) ->
     Hist = get_value(Name),
-    NewSample = folsom_sample:update(Hist#histogram.type, Hist#histogram.sample, Value),
-    ets:insert(?HISTOGRAM_TABLE, {Name, Hist#histogram{sample = NewSample}}).
+    case Hist#histogram.type of
+        exdec ->
+            folsom_sample:update(Name, Hist#histogram.type, Value);
+        _ ->
+            NewSample = folsom_sample:update(Hist#histogram.type, Hist#histogram.sample, Value),
+            ets:insert(?HISTOGRAM_TABLE, {Name, Hist#histogram{sample = NewSample}})
+    end.
 
 % gets the histogram record from ets
 get_value(Name) ->
@@ -64,4 +69,9 @@ get_value(Name) ->
 % pulls the sample out of the record gotten from ets
 get_values(Name) ->
     Hist = get_value(Name),
-    folsom_sample:get_values(Hist#histogram.type, Hist#histogram.sample).
+    case Hist#histogram.type of
+        exdec ->
+            folsom_sample:get_values(Name, Hist#histogram.type);
+        _ ->
+            folsom_sample:get_values(Hist#histogram.type, Hist#histogram.sample)
+    end.
