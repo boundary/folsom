@@ -55,5 +55,5 @@ start(_Type, _Args) ->
        {meter_reader, fun folsom_metrics:new_meter_reader/1}]),
     {ok, Pid}.
 
-stop(?APP) ->
+stop(_State) ->
     ok.
