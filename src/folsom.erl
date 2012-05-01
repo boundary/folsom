@@ -23,7 +23,37 @@
 %%%------------------------------------------------------------------
 
 -module(folsom).
--export([start/0]).
+-export([start/0, stop/0]).
+-export([start/2, stop/1]).
+-behaviour(application).
+-define(APP, ?MODULE).
 
 start() ->
-    folsom_sup:start_link().
+    application:start(?APP).
+
+stop() ->
+    application:stop(?APP).
+
+start(_Type, _Args) ->
+    {ok, Pid} = folsom_sup:start_link(),
+    lists:foreach(
+      fun ({K, New}) ->
+              case application:get_env(?APP, K) of
+                  {ok, Name} when is_atom(Name) ->
+                      New(Name);
+                  {ok, Names} when is_list(Names) ->
+                      lists:foreach(New, Names);
+                  undefined ->
+                      ok
+              end
+      end,
+      [{counter, fun folsom_metrics:new_counter/1},
+       {gauge, fun folsom_metrics:new_gauge/1},
+       {histogram, fun folsom_metrics:new_histogram/1},
+       {history, fun folsom_metrics:new_history/1},
+       {meter, fun folsom_metrics:new_meter/1},
+       {meter_reader, fun folsom_metrics:new_meter_reader/1}]),
+    {ok, Pid}.
+
+stop(?APP) ->
+    ok.

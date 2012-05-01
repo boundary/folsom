@@ -26,30 +26,23 @@
 
 -include_lib("eunit/include/eunit.hrl").
 
-run_test() ->
-    folsom:start(),
-
-    ?debugFmt("creating metrics", []),
-    folsom_erlang_checks:create_metrics(),
-
-    ?debugFmt("populating metrics", []),
-    folsom_erlang_checks:populate_metrics(),
-
-    ?debugFmt("checking metrics", []),
-    folsom_erlang_checks:check_metrics(),
-
-    ?debugFmt("checking counter metric", []),
-    folsom_erlang_checks:counter_metric(10000, testcounter),
-
-    ?debugFmt("checking erlang vm metrics", []),
-    folsom_erlang_checks:vm_metrics(),
-
-    ?debugFmt("deleting metrics", []),
-    folsom_erlang_checks:delete_metrics(),
-
-    ?debugFmt("cpu topology test", []),
-    folsom_erlang_checks:cpu_topology().
-
-
-
-
+run_test_() ->
+    {setup,
+     fun () -> folsom:start() end,
+     fun (_) -> folsom:stop() end,
+     [{"creating metrics",
+       fun folsom_erlang_checks:create_metrics/0},
+      {"populating metrics",
+       {timeout, 30, fun folsom_erlang_checks:populate_metrics/0}},
+      {"checking metrics",
+       fun folsom_erlang_checks:check_metrics/0},
+      {"checking counter metric",
+       fun () ->
+               folsom_erlang_checks:counter_metric(10000, testcounter)
+       end},
+      {"checking erlang vm metrics",
+       fun folsom_erlang_checks:vm_metrics/0},
+      {"deleting metrics",
+       fun folsom_erlang_checks:delete_metrics/0},
+      {"cpu topology test",
+       fun folsom_erlang_checks:cpu_topology/0}]}.
