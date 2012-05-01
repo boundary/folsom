@@ -8,13 +8,31 @@ First, regarding using folsom and folsom_webmachine together. To make sure you h
 
 You need a (preferably recent) version of Erlang installed but that should be it.
 
-       ./rebar compile
+       ./rebar get-deps compile
 
 folsom can be run standalone or embedded in an Erlang application.
 
-       $ erl -pa ebin
+       $ erl -pa ebin deps/*/ebin
 
-       > folsom_sup:start_link(). % this creates the needed ETS tables and starts a gen_server
+       > folsom:start(). % this creates the needed ETS tables and starts a gen_server
+
+You can also start it as an application:
+
+       $ erl -pa ebin deps/*/ebin
+       > application:start(folsom).
+
+       $ erl -pa ebin deps/*/ebin -s folsom
+
+The application can be configured to create individual or lists of metrics at
+startup on the command line or in an application config file:
+
+       $ erl -pa ebin deps/*/ebin -s folsom \
+          -folsom history '[hist1,hist2]' \
+          -folsom gauge gauge1
+
+       $ echo '[{folsom, [{history, [hist1, hist2]}, {gauge, gauge1}]}].' \
+          > myapp.config
+       $ erl -pa ebin deps/*/ebin -config myapp.config -s folsom
 
 #### Metrics API
 
