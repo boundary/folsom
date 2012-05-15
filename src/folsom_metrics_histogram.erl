@@ -38,6 +38,8 @@
 new(Name) ->
     new(Name, uniform).
 
+new(Name, slide) ->
+    new(Name, slide, ?DEFAULT_SLIDING_WINDOW);
 new(Name, SampleType) ->
     new(Name, SampleType, ?DEFAULT_SIZE).
 
