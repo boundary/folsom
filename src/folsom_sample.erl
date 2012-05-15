@@ -42,6 +42,8 @@ new(Type) ->
 new(Type, Size) ->
     new(Type, Size, ?DEFAULT_ALPHA).
 
+new(slide, Size, _) ->
+    folsom_sample_slide:new(Size);
 new(uniform, Size, _) ->
     folsom_sample_uniform:new(Size);
 new(none, Size, _) ->
@@ -54,11 +56,15 @@ update(uniform, Sample, Value) ->
 update(none, Sample, Value) ->
     folsom_sample_none:update(Sample, Value);
 update(exdec, Sample, Value) ->
-    folsom_sample_exdec:update(Sample, Value).
+    folsom_sample_exdec:update(Sample, Value);
+update(slide, Sample, Value) ->
+    folsom_sample_slide:update(Sample, Value).
 
 get_values(uniform, Sample) ->
     folsom_sample_uniform:get_values(Sample);
 get_values(none, Sample) ->
     folsom_sample_none:get_values(Sample);
 get_values(exdec, Sample) ->
-    folsom_sample_exdec:get_values(Sample).
+    folsom_sample_exdec:get_values(Sample);
+get_values(slide, Sample) ->
+    folsom_sample_slide:get_values(Sample).

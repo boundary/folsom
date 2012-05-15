@@ -9,9 +9,17 @@
 
 -define(DEFAULT_LIMIT, 5).
 -define(DEFAULT_SIZE, 1028). % mimic codahale's metrics
+-define(DEFAULT_SLIDING_WINDOW, 60). % sixty second sliding window
 -define(DEFAULT_ALPHA, 0.015). % mimic codahale's metrics
 -define(DEFAULT_INTERVAL, 5000).
 -define(DEFAULT_SAMPLE_TYPE, uniform).
+
+-record(slide, {
+          window = ?DEFAULT_SLIDING_WINDOW,
+          reservoir = folsom_metrics_histogram_ets:new(folsom_slide,
+                                                       [duplicate_bag, {write_concurrency, true}, public]),
+          server
+         }).
 
 -record(uniform, {
           size = ?DEFAULT_SIZE,
