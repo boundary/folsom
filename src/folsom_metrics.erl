@@ -35,6 +35,10 @@
          new_history/2,
          new_meter/1,
          new_meter_reader/1,
+         new_duration/1,
+         new_duration/2,
+         new_duration/3,
+         new_duration/4,
          delete_metric/1,
          notify/1,
          notify/2,
@@ -86,6 +90,18 @@ new_meter(Name) ->
 
 new_meter_reader(Name) ->
     folsom_ets:add_handler(meter_reader, Name).
+
+new_duration(Name) ->
+    folsom_metrics:new_duration(Name, ?DEFAULT_SAMPLE_TYPE, ?DEFAULT_SIZE, ?DEFAULT_ALPHA).
+
+new_duration(Name, SampleType) ->
+    folsom_metrics:new_duration(Name, SampleType, ?DEFAULT_SIZE, ?DEFAULT_ALPHA).
+
+new_duration(Name, SampleType, SampleSize) ->
+    folsom_metrics:new_duration(Name, SampleType, SampleSize, ?DEFAULT_ALPHA).
+
+new_duration(Name, SampleType, SampleSize, Alpha) ->
+    folsom_ets:add_handler(duration, Name, SampleType, SampleSize, Alpha).
 
 delete_metric(Name) ->
     folsom_ets:delete_handler(Name).
