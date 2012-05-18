@@ -40,6 +40,8 @@ new(Name) ->
 
 new(Name, slide) ->
     new(Name, slide, ?DEFAULT_SLIDING_WINDOW);
+new(Name, slide_uniform) ->
+    new(Name, slide_uniform, {?DEFAULT_SLIDING_WINDOW, ?DEFAULT_SIZE});
 new(Name, SampleType) ->
     new(Name, SampleType, ?DEFAULT_SIZE).
 

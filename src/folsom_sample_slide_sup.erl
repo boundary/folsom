@@ -33,13 +33,13 @@
         ]).
 
 %% public functions
--export([start_slide_server/2]).
+-export([start_slide_server/3]).
 
 start_link () ->
     supervisor:start_link({local,?MODULE},?MODULE,[]).
 
-start_slide_server(Reservoir, Window) ->
-    {ok, Pid} = supervisor:start_child(?MODULE, [Reservoir, Window]),
+start_slide_server(SampleMod, Reservoir, Window) ->
+    {ok, Pid} = supervisor:start_child(?MODULE, [SampleMod, Reservoir, Window]),
     Pid.
 
 %% @private
