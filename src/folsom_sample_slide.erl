@@ -35,7 +35,7 @@
 
 new(Size) ->
     Sample = #slide{window = Size},
-    Pid = folsom_sample_slide_sup:start_slide_server(Sample#slide.reservoir, Sample#slide.window),
+    Pid = folsom_sample_slide_sup:start_slide_server(?MODULE, Sample#slide.reservoir, Sample#slide.window),
     Sample#slide{server=Pid}.
 
 update(#slide{reservoir = Reservoir} = Sample, Value) ->

@@ -50,4 +50,3 @@ now_epoch_micro() ->
 
 get_ets_size(Tab) ->
     ets:info(Tab, size).
-

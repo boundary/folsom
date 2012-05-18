@@ -31,22 +31,22 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/2, stop/1]).
+-export([start_link/3, stop/1]).
 
--record(state, {reservoir, window}).
+-record(state, {sample_mod,  reservoir, window}).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
          terminate/2, code_change/3]).
 
-start_link(Reservoir, Window) ->
-    gen_server:start_link(?MODULE, [Reservoir, Window], []).
+start_link(SampleMod, Reservoir, Window) ->
+    gen_server:start_link(?MODULE, [SampleMod, Reservoir, Window], []).
 
 stop(Pid) ->
     gen_server:cast(Pid, stop).
 
-init([Reservoir, Window]) ->
-    {ok, #state{reservoir = Reservoir, window = Window}, timeout(Window)}.
+init([SampleMod, Reservoir, Window]) ->
+    {ok, #state{sample_mod = SampleMod, reservoir = Reservoir, window = Window}, timeout(Window)}.
 
 handle_call(_Request, _From, State) ->
     Reply = ok,
@@ -57,8 +57,8 @@ handle_cast(stop, State) ->
 handle_cast(_Msg, State) ->
     {noreply, State}.
 
-handle_info(timeout, State=#state{reservoir = Reservoir, window = Window}) ->
-    folsom_sample_slide:trim(Reservoir, Window),
+handle_info(timeout, State=#state{sample_mod = SampleMod, reservoir = Reservoir, window = Window}) ->
+    SampleMod:trim(Reservoir, Window),
     {noreply, State, timeout(Window)};
 handle_info(_Info, State) ->
     {noreply, State}.
