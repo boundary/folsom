@@ -211,11 +211,11 @@ maybe_add_handler(_, Name, _, _, _, true) ->
     {error, Name, metric_already_exists}.
 
 delete_metric(Name, history) when is_binary(Name) ->
-    true = ets:delete(folsom_utils:to_atom(Name)),
+    catch ets:delete(folsom_utils:to_atom(Name)),
     true = ets:delete(?FOLSOM_TABLE, Name),
     ok;
 delete_metric(Name, history) ->
-    true = ets:delete(Name),
+    catch ets:delete(Name),
     true = ets:delete(?FOLSOM_TABLE, Name),
     ok;
 delete_metric(Name, histogram) ->
