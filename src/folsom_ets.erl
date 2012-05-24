@@ -252,6 +252,11 @@ delete_histogram(Name, #histogram{type = none, sample = #none{reservoir = Reserv
 delete_histogram(Name, #histogram{type = exdec}) ->
     true = ets:delete(?HISTOGRAM_TABLE, Name),
     true = ets:delete(?FOLSOM_TABLE, Name),
+    ok;
+delete_histogram(Name, #histogram{type = slide, sample = #slide{reservoir = Reservoir}}) ->
+    true = ets:delete(?HISTOGRAM_TABLE, Name),
+    true = ets:delete(?FOLSOM_TABLE, Name),
+    true = ets:delete(Reservoir),
     ok.
 
 notify(Name, {inc, Value}, counter, true) ->
