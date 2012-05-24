@@ -40,6 +40,10 @@
           sample = #uniform{}
          }).
 
+-record(history, {
+          tid
+          }).
+
 -define(SYSTEM_INFO, [
                       allocated_areas,
                       allocator,
