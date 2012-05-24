@@ -27,44 +27,41 @@
 -export([new/1,
          update/3,
          get_events/1,
-         get_events/2
+         get_events/2,
+         get_value/1
         ]).
 
 -include("folsom.hrl").
 
 -define(ETSOPTS, [
-                  named_table,
                   ordered_set,
                   public,
                   {write_concurrency, true}
                  ]).
 
-new(Name) when is_binary(Name) ->
-    new(folsom_utils:to_atom(Name));
 new(Name) ->
-    Name = ets:new(Name, ?ETSOPTS),
+    Tid = ets:new(history, ?ETSOPTS),
+    ets:insert(?HISTORY_TABLE, {Name, #history{tid=Tid}}),
     ok.
 
-update(Name, Size, Value) when is_binary(Name) ->
-    update(folsom_utils:to_atom(Name), Size, Value);
 update(Name, Size, Value) ->
+    #history{tid=Tid} = get_value(Name),
     Key = folsom_utils:now_epoch_micro(),
-    insert(Name, Key, Size, Value, ets:info(Name, size)).
+    insert(Tid, Key, Size, Value, ets:info(Tid, size)).
 
-get_events(Name) when is_binary(Name) ->
-    get_events(folsom_utils:to_atom(Name));
+get_value(Name) ->
+    [{_, Value}] = ets:lookup(?HISTORY_TABLE, Name),
+    Value.
+
 get_events(Name) ->
     get_events(Name, ?DEFAULT_LIMIT).
 
-get_events(Name, Count) when is_binary(Name) ->
-    get_events(folsom_utils:to_atom(Name, Count));
 get_events(Name, Count) ->
-    get_last_events(Name, Count).
+    #history{tid=Tid} = get_value(Name),
+    get_last_events(Tid, Count).
 
 % Internal API
 
-insert(Name, Key, Size, Value, Count) when is_list(Value) ->
-    insert(Name, Key, Size, list_to_binary(Value), Count);
 insert(Name, Key, Size, Value, Count) when Count < Size ->
     true = ets:insert(Name, {Key, [{event, Value}]});
 insert(Name, Key, _, Value, _) ->

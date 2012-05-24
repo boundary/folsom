@@ -210,13 +210,9 @@ maybe_add_handler(Type, _, _, _, _, false) ->
 maybe_add_handler(_, Name, _, _, _, true) ->
     {error, Name, metric_already_exists}.
 
-delete_metric(Name, history) when is_binary(Name) ->
-    true = ets:delete(folsom_utils:to_atom(Name)),
-    true = ets:delete(?FOLSOM_TABLE, Name),
-    ok;
 delete_metric(Name, history) ->
-    true = ets:delete(Name),
-    true = ets:delete(?FOLSOM_TABLE, Name),
+    History = folsom_metrics_history:get_value(Name),
+    ok = delete_history(Name, History),
     ok;
 delete_metric(Name, histogram) ->
     Metric = folsom_metrics_histogram:get_value(Name),
@@ -252,6 +248,12 @@ delete_histogram(Name, #histogram{type = none, sample = #none{reservoir = Reserv
 delete_histogram(Name, #histogram{type = exdec}) ->
     true = ets:delete(?HISTOGRAM_TABLE, Name),
     true = ets:delete(?FOLSOM_TABLE, Name),
+    ok.
+
+delete_history(Name, #history{tid = Tid}) ->
+    true = ets:delete(?HISTORY_TABLE, Name),
+    true = ets:delete(?FOLSOM_TABLE, Name),
+    true = ets:delete(Tid),
     ok.
 
 notify(Name, {inc, Value}, counter, true) ->
