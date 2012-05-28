@@ -37,6 +37,7 @@
         ]).
 
 -define(DATA, [0, 1, 5, 10, 100, 200, 500, 750, 1000, 2000, 5000]).
+-define(HUGEDATA, lists:seq(1,10000)).
 
 -define(DATA1, [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50]).
 
@@ -47,6 +48,7 @@ create_metrics() ->
     ok = folsom_metrics:new_gauge(<<"gauge">>),
 
     ok = folsom_metrics:new_histogram(<<"uniform">>, uniform, 5000),
+    ok = folsom_metrics:new_histogram(<<"hugedata">>, uniform, 5000),
     ok = folsom_metrics:new_histogram(exdec, exdec),
     ok = folsom_metrics:new_histogram(none, none, 5000),
 
@@ -71,7 +73,7 @@ create_metrics() ->
     {state, List} = folsom_meter_timer_server:dump(),
     2 = length(List),
 
-    10 = length(folsom_metrics:get_metrics()),
+    11 = length(folsom_metrics:get_metrics()),
 
     ?debugFmt("~n~nmetrics: ~p~n", [folsom_metrics:get_metrics()]).
 
@@ -82,6 +84,8 @@ populate_metrics() ->
     ok = folsom_metrics:notify({<<"gauge">>, 2}),
 
     [ok = folsom_metrics:notify({<<"uniform">>, Value}) || Value <- ?DATA],
+
+    [ok = folsom_metrics:notify({<<"hugedata">>, Value}) || Value <- ?HUGEDATA],
 
     [ok = folsom_metrics:notify({exdec, Value}) || Value <- lists:seq(1, 100000)],
 
@@ -126,6 +130,9 @@ check_metrics() ->
 
     Histogram1 = folsom_metrics:get_histogram_statistics(<<"uniform">>),
     histogram_checks(Histogram1),
+
+    HugeHistogram = folsom_metrics:get_histogram_statistics(<<"hugedata">>),
+    huge_histogram_checks(HugeHistogram),
 
     % just check exdec for non-zero values
     Exdec = folsom_metrics:get_histogram_statistics(exdec),
@@ -173,11 +180,12 @@ check_metrics() ->
 
 
 delete_metrics() ->
-    12 = length(ets:tab2list(?FOLSOM_TABLE)),
+    13 = length(ets:tab2list(?FOLSOM_TABLE)),
 
     ok = folsom_metrics:delete_metric(counter),
     ok = folsom_metrics:delete_metric(<<"gauge">>),
 
+    ok = folsom_metrics:delete_metric(<<"hugedata">>),
     ok = folsom_metrics:delete_metric(<<"uniform">>),
     ok = folsom_metrics:delete_metric(exdec),
     ok = folsom_metrics:delete_metric(none),
@@ -265,6 +273,13 @@ histogram_checks(List) ->
     percentile_check(List1),
     List2 = proplists:get_value(histogram, List),
     histogram_check(List2).
+
+huge_histogram_checks(List) ->
+    Skew = erlang:abs(proplists:get_value(skewness, List)),
+    A = skewness_is_too_high_for_sample_of_this_size,
+    B = this_event_is_very_unprobable,
+    C = please_rerun_this_test__if_it_fails_again_your_code_is_bugged,
+    {A, B, C, true} = {A, B, C, Skew < 0.2}.
 
 histogram_co_checks(List) ->
     ?debugFmt("checking histogram covariance and etc statistics", []),
