@@ -31,9 +31,9 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/2]).
+-export([start_link/2, stop/1]).
 
--record(state, { reservoir, window}).
+-record(state, {reservoir, window}).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -42,6 +42,9 @@
 start_link(Reservoir, Window) ->
     gen_server:start_link(?MODULE, [Reservoir, Window], []).
 
+stop(Pid) ->
+    gen_server:cast(Pid, stop).
+
 init([Reservoir, Window]) ->
     {ok, #state{reservoir = Reservoir, window = Window}, timeout(Window)}.
 
@@ -49,6 +52,8 @@ handle_call(_Request, _From, State) ->
     Reply = ok,
     {reply, Reply, State}.
 
+handle_cast(stop, State) ->
+    {stop, normal, State};
 handle_cast(_Msg, State) ->
     {noreply, State}.
 

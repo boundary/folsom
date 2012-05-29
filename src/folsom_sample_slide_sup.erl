@@ -39,8 +39,8 @@ start_link () ->
     supervisor:start_link({local,?MODULE},?MODULE,[]).
 
 start_slide_server(Reservoir, Window) ->
-    {ok, _Pid} = supervisor:start_child(?MODULE, [Reservoir, Window]),
-    ok.
+    {ok, Pid} = supervisor:start_child(?MODULE, [Reservoir, Window]),
+    Pid.
 
 %% @private
 init ([]) ->

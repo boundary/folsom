@@ -35,8 +35,8 @@
 
 new(Size) ->
     Sample = #slide{window = Size},
-    ok = folsom_sample_slide_sup:start_slide_server(Sample#slide.reservoir, Sample#slide.window),
-    Sample.
+    Pid = folsom_sample_slide_sup:start_slide_server(Sample#slide.reservoir, Sample#slide.window),
+    Sample#slide{server=Pid}.
 
 update(#slide{reservoir = Reservoir} = Sample, Value) ->
     Moment = moment(),
@@ -45,10 +45,10 @@ update(#slide{reservoir = Reservoir} = Sample, Value) ->
 
 get_values(#slide{window = Window, reservoir = Reservoir}) ->
     Oldest = moment() - Window,
-    ets:select(Reservoir, [{{'$1','$2'},[{'>', '$1', Oldest}],['$2']}]).
+    ets:select(Reservoir, [{{'$1','$2'},[{'>=', '$1', Oldest}],['$2']}]).
 
 moment() ->
-    calendar:datetime_to_gregorian_seconds(calendar:local_time()).
+    folsom_utils:now_epoch().
 
 trim(Reservoir, Window) ->
     Oldest = moment() - Window,

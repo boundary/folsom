@@ -16,7 +16,8 @@
 -record(slide, {
           window = ?DEFAULT_SLIDING_WINDOW,
           reservoir = folsom_metrics_histogram_ets:new(folsom_slide,
-                                                       [duplicate_bag, {write_concurrency, true}, public])
+                                                       [duplicate_bag, {write_concurrency, true}, public]),
+          server
          }).
 
 -record(uniform, {
