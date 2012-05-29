@@ -45,13 +45,13 @@ new(Size) ->
 
 update(#uniform{size = Size, reservoir = Reservoir, n = N} = Sample, Value) when N =< Size ->
     ets:insert(Reservoir, {N, Value}),
-    Sample#uniform{n = folsom_utils:get_ets_size(Reservoir) + 1};
+    Sample#uniform{n = N + 1};
 
 update(#uniform{reservoir = Reservoir, size = Size, n = N, seed = Seed} = Sample,
        Value) ->
     {Rnd, New_seed} = random:uniform_s(N, Seed),
     maybe_update(Rnd, Size, Value, Reservoir),
-    Sample#uniform{n = folsom_utils:get_ets_size(Reservoir) + 1, seed=New_seed}.
+    Sample#uniform{n = N + 1, seed = New_seed}.
 
 get_values(#uniform{reservoir = Reservoir}) ->
     {_, Values} = lists:unzip(ets:tab2list(Reservoir)),
