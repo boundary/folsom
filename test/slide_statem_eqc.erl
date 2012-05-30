@@ -23,13 +23,18 @@
 
 -module(slide_statem_eqc).
 
+-compile(export_all).
+
+-ifdef(TEST).
+-ifdef(EQC).
+
 -include("folsom.hrl").
 
 -include_lib("eqc/include/eqc.hrl").
 -include_lib("eqc/include/eqc_statem.hrl").
 -include_lib("eunit/include/eunit.hrl").
 
--compile(export_all).
+
 
 -define(NUMTESTS, 200).
 -define(QC_OUT(P),
@@ -40,6 +45,7 @@
 
 -record(state, {moment=1000,
                 sample,
+                name,
                 values=[]}).
 
 initial_state() ->
@@ -57,14 +63,14 @@ command(S) ->
 
 %% Next state transformation, S is the current state
 next_state(S, V, {call, ?MODULE, new_histo, []}) ->
-    S#state{sample=V};
+    S#state{name={call, erlang, element, [1, V]}, sample={call, erlang, element, [2, V]}};
 next_state(S, V, {call, ?MODULE, tick, [_Moment]}) ->
     S#state{moment=V};
 next_state(#state{moment=Moment, values=Values0}=S, V, {call, ?MODULE, update, [_, _Val]}) ->
-    S#state{values=Values0 ++[{Moment, V}]};
+    S#state{values=Values0 ++ [{Moment, V}]};
 next_state(#state{values=Values, moment=Moment}=S, _V, {call, ?MODULE, trim, _}) ->
     %% trim the model
-    S#state{values=trim(Values, Moment, ?WINDOW)};
+    S#state{values = trim(Values, Moment, ?WINDOW)};
 next_state(S,_V,{call, ?MODULE, _, _}) ->
     S.
 
@@ -80,11 +86,23 @@ precondition(_S, {call, _, _, _}) ->
 %% OBS: S is the state before next_state(S,_,<command>)
 postcondition(#state{values=Values0, moment=Moment}, {call, ?MODULE, get_values, _}, Res) ->
     Values = [V || {K, V} <- Values0, K >= Moment - ?WINDOW],
-    lists:sort(Values) == lists:sort(Res);
-postcondition(#state{values=Values, sample={_Name, Sample}, moment=Moment}, {call, ?MODULE, trim, _}, _TrimCnt) ->
+    case lists:sort(Values) == lists:sort(Res) of
+        true ->
+            true;
+        _ ->
+            {"get values", {"model", lists:sort(Values)},
+             {"smaple", lists:sort(Res)}}
+    end;
+postcondition(#state{values=Values, sample=Sample, moment=Moment}, {call, ?MODULE, trim, _}, _TrimCnt) ->
     %% check that values and the actual table contents are the same after a trim
     Table = ets:tab2list(Sample#slide.reservoir),
-    lists:sort(trim(Values, Moment, ?WINDOW)) == lists:sort(Table);
+    Model = lists:sort(trim(Values, Moment, ?WINDOW)),
+    case Model == lists:sort(Table) of
+        true ->
+            true;
+        _ ->
+            {"after trim", {"model", Model}, {"sample", lists:sort(Table)}}
+    end;
 postcondition(_S, {call, ?MODULE, _, _}, _Res) ->
     true.
 
@@ -103,10 +121,10 @@ prop_window() ->
                 {Actual, Expected} = case S#state.sample of
                                          undefined ->
                                              {S#state.values, []};
-                                         {Name, _Sample} ->
-                                             A = folsom_metrics:get_metric_value(Name),
+                                         Sample ->
+                                             A = folsom_metrics:get_metric_value(S#state.name),
                                              E = [V || {K, V} <- S#state.values, K >= S#state.moment - ?WINDOW],
-                                             folsom_metrics:delete_metric(Name),
+                                             folsom_metrics:delete_metric(S#state.name),
                                              {A, E}
                                     end,
                 ?WHENFAIL(
@@ -128,16 +146,19 @@ tick(Moment) ->
     meck:expect(folsom_utils, now_epoch, fun() -> Moment + IncrBy end),
     Moment+IncrBy.
 
-update({_Name, Sample}, Val) ->
+update(Sample, Val) ->
     Sample = folsom_sample_slide:update(Sample, Val),
     Val.
 
-trim({_Name, Sample}, Window) ->
+trim(Sample, Window) ->
     folsom_sample_slide:trim(Sample#slide.reservoir, Window).
 
-get_values({_Name, Sample}) ->
+get_values(Sample) ->
     folsom_sample_slide:get_values(Sample).
 
 %% private
 trim(L, Moment, Window) ->
     [{K, V} || {K, V} <- L, K >= Moment - Window].
+
+-endif.
+-endif.
