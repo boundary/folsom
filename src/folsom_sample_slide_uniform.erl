@@ -35,14 +35,14 @@
 
 new({Window, SampleSize}) ->
     Sample = #slide_uniform{window = Window, size = SampleSize},
-    ok = folsom_sample_slide_sup:start_slide_server(?MODULE, Sample#slide_uniform.reservoir, Sample#slide_uniform.window),
-    Sample.
+    Pid = folsom_sample_slide_sup:start_slide_server(?MODULE, Sample#slide_uniform.reservoir, Sample#slide_uniform.window),
+    Sample#slide_uniform{server=Pid}.
 
 update(#slide_uniform{reservoir = Reservoir, size = Size, seed = Seed} = Sample0, Value) ->
     Moment = moment(),
     ets:insert_new(Reservoir, {Moment, 0}),
     MCnt = ets:update_counter(Reservoir, Moment, 1),
-    Sample = case MCnt >= Size of
+    Sample = case MCnt > Size of
                  true ->
                      {Rnd, NewSeed} = random:uniform_s(Size, Seed),
                      maybe_update(Reservoir, {{Moment, Rnd}, Value}, Size),
@@ -53,20 +53,20 @@ update(#slide_uniform{reservoir = Reservoir, size = Size, seed = Seed} = Sample0
                       end,
     Sample.
 
-maybe_update(Reservoir, {{_Moment, Rnd}, _Value}=Obj, Size) when Rnd < Size ->
+maybe_update(Reservoir, {{_Moment, Rnd}, _Value}=Obj, Size) when Rnd =< Size ->
     ets:insert(Reservoir, Obj);
 maybe_update(_Reservoir, _Obj, _Size) ->
     ok.
 
 get_values(#slide_uniform{window = Window, reservoir = Reservoir}) ->
     Oldest = moment() - Window,
-    ets:select(Reservoir, [{{{'$1', '_'},'$2'},[{'>', '$1', Oldest}],['$2']}]).
+    ets:select(Reservoir, [{{{'$1', '_'},'$2'},[{'>=', '$1', Oldest}],['$2']}]).
 
 moment() ->
-    calendar:datetime_to_gregorian_seconds(calendar:local_time()).
+    folsom_utils:now_epoch().
 
 trim(Reservoir, Window) ->
-    Oldest = moment() - (Window - 1),
+    Oldest = moment() - Window,
     ets:select_delete(Reservoir, [{{{'$1', '_'},'_'},[{'<', '$1', Oldest}],['true']}]),
     %% and trim the counters
     ets:select_delete(Reservoir, [{{'$1','_'},[{is_integer, '$1'}, {'<', '$1', Oldest}],['true']}]).
