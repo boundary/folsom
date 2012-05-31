@@ -103,7 +103,8 @@ create_tables() ->
               {?HISTOGRAM_TABLE, [set, named_table, public, {write_concurrency, true}]},
               {?METER_TABLE, [set, named_table, public, {write_concurrency, true}]},
               {?METER_READER_TABLE, [set, named_table, public, {write_concurrency, true}]},
-              {?HISTORY_TABLE, [set, named_table, public, {write_concurrency, true}]}
+              {?HISTORY_TABLE, [set, named_table, public, {write_concurrency, true}]},
+              {?DURATION_TABLE, [ordered_set, named_table, public, {write_concurrency, true}]}
              ],
     [maybe_create_table(ets:info(Name), Name, Opts) || {Name, Opts} <- Tables],
     ok.

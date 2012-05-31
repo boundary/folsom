@@ -5,6 +5,7 @@
 -define(METER_TABLE, folsom_meters).
 -define(METER_READER_TABLE, folsom_meter_readers).
 -define(HISTORY_TABLE, folsom_histories).
+-define(DURATION_TABLE, folsom_durations).
 
 -define(DEFAULT_LIMIT, 5).
 -define(DEFAULT_SIZE, 1028). % mimic codahale's metrics
