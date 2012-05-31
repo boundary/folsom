@@ -138,6 +138,8 @@ get_values(Name, meter) ->
     folsom_metrics_meter:get_values(Name);
 get_values(Name, meter_reader) ->
     folsom_metrics_meter_reader:get_values(Name);
+get_values(Name, duration) ->
+    folsom_metrics_duration:get_values(Name);
 get_values(_, Type) ->
     {error, Type, unsupported_metric_type}.
 
@@ -159,6 +161,11 @@ maybe_add_handler(gauge, Name, false) ->
 maybe_add_handler(histogram, Name, false) ->
     true = folsom_metrics_histogram:new(Name),
     true = ets:insert(?FOLSOM_TABLE, {Name, #metric{type = histogram}}),
+    ok;
+maybe_add_handler(duration, Name, false) ->
+    true = folsom_metrics_histogram:new(Name),
+    true = folsom_metrics_duration:new(Name),
+    true = ets:insert(?FOLSOM_TABLE, {Name, #metric{type = duration}}),
     ok;
 maybe_add_handler(history, Name, false) ->
     ok = folsom_metrics_history:new(Name),
@@ -205,6 +212,11 @@ maybe_add_handler(histogram, Name, SampleType, SampleSize, Alpha, false) ->
     true = folsom_metrics_histogram:new(Name, SampleType, SampleSize, Alpha),
     true = ets:insert(?FOLSOM_TABLE, {Name, #metric{type = histogram}}),
     ok;
+maybe_add_handler(duration, Name, SampleType, SampleSize, Alpha, false) ->
+    true = folsom_metrics_histogram:new(Name, SampleType, SampleSize, Alpha),
+    true = folsom_metrics_duration:new(Name),
+    true = ets:insert(?FOLSOM_TABLE, {Name, #metric{type = duration}}),
+    ok;
 maybe_add_handler(Type, _, _, _, _, false) ->
     {error, Type, unsupported_metric_type};
 maybe_add_handler(_, Name, _, _, _, true) ->
@@ -217,6 +229,12 @@ delete_metric(Name, history) ->
 delete_metric(Name, histogram) ->
     Metric = folsom_metrics_histogram:get_value(Name),
     ok = delete_histogram(Name, Metric),
+    ok;
+delete_metric(Name, duration) ->
+    Histo = folsom_metrics_histogram:get_value(Name),
+    ok = delete_histogram(Name, Histo),
+    true = ets:delete(?DURATION_TABLE, Name),
+    true = ets:delete(?FOLSOM_TABLE, Name),
     ok;
 delete_metric(Name, counter) ->
     true = ets:delete(?COUNTER_TABLE, Name),
@@ -306,6 +324,13 @@ notify(Name, Value, meter_reader, true) ->
 notify(Name, Value, meter_reader, false) ->
     add_handler(meter, Name),
     folsom_metrics_meter_reader:mark(Name, Value),
+    ok;
+notify(Name, Value, duration, true) ->
+    folsom_metrics_duration:update(Name, Value),
+    ok;
+notify(Name, Value, duration, false) ->
+    add_handler(duration, Name),
+    folsom_metrics_duration:update(Name, Value),
     ok;
 notify(_, _, Type, _) ->
     {error, Type, unsupported_metric_type}.
