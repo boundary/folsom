@@ -61,6 +61,8 @@ create_metrics() ->
 
     ok = folsom_metrics:new_meter_reader(meter_reader),
 
+    ok = folsom_metrics:new_duration(duration),
+
     ?debugFmt("ensuring meter tick is registered with gen_server~n", []),
     ok = ensure_meter_tick_exists(),
 
@@ -73,7 +75,7 @@ create_metrics() ->
     {state, List} = folsom_meter_timer_server:dump(),
     2 = length(List),
 
-    11 = length(folsom_metrics:get_metrics()),
+    12 = length(folsom_metrics:get_metrics()),
 
     ?debugFmt("~n~nmetrics: ~p~n", [folsom_metrics:get_metrics()]).
 
@@ -95,11 +97,17 @@ populate_metrics() ->
 
     3.141592653589793 = folsom_metrics:histogram_timed_update(timed, math, pi, []),
 
+    PopulateDuration = fun() ->
+                               ok = folsom_metrics:notify_existing_metric(duration, timer_start, duration),
+                               timer:sleep(10),
+                               ok = folsom_metrics:notify_existing_metric(duration, timer_end, duration) end,
+
+    [PopulateDuration() || _ <- lists:seq(1, 10)],
+
     ok = folsom_metrics:notify({<<"history">>, "string"}),
 
     {error, _, nonexistent_metric} = folsom_metrics:notify({historya, "5"}),
     ok = folsom_metrics:notify(historya, <<"binary">>, history),
-
 
     ?debugFmt("testing meter ...", []),
 
@@ -170,17 +178,20 @@ check_metrics() ->
 
     ?debugFmt("checking meter reader~n", []),
     MeterReader = folsom_metrics:get_metric_value(meter_reader),
-    ?debugFmt("~p", [MeterReader]),
+    ?debugFmt("~p~n", [MeterReader]),
     ok = case proplists:get_value(one, MeterReader) of
              Value1 when Value1 > 1 ->
                  ok;
              _ ->
                  error
-         end.
+         end,
 
+    %% check duration
+    Dur = folsom_metrics:get_metric_value(duration),
+    duration_check(Dur).
 
 delete_metrics() ->
-    13 = length(ets:tab2list(?FOLSOM_TABLE)),
+    14= length(ets:tab2list(?FOLSOM_TABLE)),
 
     ok = folsom_metrics:delete_metric(counter),
     ok = folsom_metrics:delete_metric(<<"gauge">>),
@@ -204,6 +215,8 @@ delete_metrics() ->
     1 = length(ets:tab2list(?METER_READER_TABLE)),
     ok = folsom_metrics:delete_metric(meter_reader),
     0 = length(ets:tab2list(?METER_READER_TABLE)),
+
+    ok = folsom_metrics:delete_metric(duration),
 
     0 = length(ets:tab2list(?FOLSOM_TABLE)).
 
@@ -332,3 +345,14 @@ cpu_topology() ->
                                          {core,[{thread,[logical,6]},{thread,[logical,14]}]}]}]}],
 
     ExpectedResult = folsom_vm_metrics:convert_cpu_topology(Test, []).
+
+duration_check(Duration) ->
+    [?assert(lists:keymember(Key, 1, Duration)) || Key <-
+                                                       [count, last, min, max, arithmetic_mean,
+                                                        geometric_mean, harmonic_mean, median,
+                                                        variance, standard_deviation, skewness,
+                                                        kurtosis, percentile, histogram]],
+    ?assertEqual(10, proplists:get_value(count, Duration)),
+    Last = proplists:get_value(last, Duration),
+    ?assert(Last > 10000),
+    ?assert(Last < 15000).
