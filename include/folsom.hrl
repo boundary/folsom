@@ -20,6 +20,14 @@
           server
          }).
 
+-record(slide_uniform, {
+          window = ?DEFAULT_SLIDING_WINDOW,
+          size = ?DEFAULT_SIZE,
+          reservoir = folsom_metrics_histogram_ets:new(folsom_slide_uniform,[ordered_set, {write_concurrency, true}, public]),
+          seed = now(),
+          server
+         }).
+
 -record(uniform, {
           size = ?DEFAULT_SIZE,
           n = 1,
