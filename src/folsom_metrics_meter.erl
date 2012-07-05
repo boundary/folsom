@@ -52,7 +52,7 @@ new(Name) ->
                {Name, #meter{one = OneMin,
                              five = FiveMin,
                              fifteen = FifteenMin,
-                             start_time = folsom_utils:now_epoch_micro()}}).
+                             start_time = folsom_utils:now_epoch()}}).
 
 tick(Name) ->
     #meter{one = OneMin,
@@ -129,7 +129,7 @@ get_value(Name) ->
 calc_mean_rate(_, 0) ->
     0.0;
 calc_mean_rate(Start, Count) ->
-    Elapsed = folsom_utils:now_epoch_micro() - Start,
+    Elapsed = folsom_utils:now_epoch() - Start,
     Count / Elapsed.
 
 calc_acceleration(Rate1, Rate2, Interval) ->
