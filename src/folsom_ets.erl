@@ -140,6 +140,8 @@ get_values(Name, meter_reader) ->
     folsom_metrics_meter_reader:get_values(Name);
 get_values(Name, duration) ->
     folsom_metrics_duration:get_values(Name);
+get_values(Name, spiral) ->
+    folsom_metrics_spiral:get_values(Name);
 get_values(_, Type) ->
     {error, Type, unsupported_metric_type}.
 
@@ -180,6 +182,10 @@ maybe_add_handler(meter_reader, Name, false) ->
     ok = folsom_meter_timer_server:register(Name, folsom_metrics_meter_reader),
     true = folsom_metrics_meter_reader:new(Name),
     true = ets:insert(?FOLSOM_TABLE, {Name, #metric{type = meter_reader}}),
+    ok;
+maybe_add_handler(spiral, Name, false) ->
+    true = folsom_metrics_spiral:new(Name),
+    true = ets:insert(?FOLSOM_TABLE, {Name, #metric{type = spiral}}),
     ok;
 maybe_add_handler(Type, _, false) ->
     {error, Type, unsupported_metric_type};
@@ -251,6 +257,13 @@ delete_metric(Name, meter) ->
 delete_metric(Name, meter_reader) ->
     true = ets:delete(?METER_READER_TABLE, Name),
     true = ets:delete(?FOLSOM_TABLE, Name),
+    ok;
+delete_metric(Name, spiral) ->
+    #spiral{tid=Tid, server=Pid} = folsom_metrics_spiral:get_value(Name),
+    folsom_sample_slide_server:stop(Pid),
+    true = ets:delete(Tid),
+    ets:delete(?SPIRAL_TABLE, Name),
+    ets:delete(?FOLSOM_TABLE, Name),
     ok.
 
 delete_histogram(Name, #histogram{type = uniform, sample = #uniform{reservoir = Reservoir}}) ->
@@ -343,6 +356,13 @@ notify(Name, Value, duration, true) ->
 notify(Name, Value, duration, false) ->
     add_handler(duration, Name),
     folsom_metrics_duration:update(Name, Value),
+    ok;
+notify(Name, Value, spiral, true) ->
+    folsom_metrics_spiral:update(Name, Value),
+    ok;
+notify(Name, Value, spiral, false) ->
+    add_handler(spiral, Name),
+    folsom_metrics_spiral:update(Name, Value),
     ok;
 notify(_, _, Type, _) ->
     {error, Type, unsupported_metric_type}.
