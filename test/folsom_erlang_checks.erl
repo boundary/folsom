@@ -63,6 +63,8 @@ create_metrics() ->
 
     ok = folsom_metrics:new_duration(duration),
 
+    ok = folsom_metrics:new_spiral(spiral),
+
     ?debugFmt("ensuring meter tick is registered with gen_server~n", []),
     ok = ensure_meter_tick_exists(),
 
@@ -75,7 +77,10 @@ create_metrics() ->
     {state, List} = folsom_meter_timer_server:dump(),
     2 = length(List),
 
-    12 = length(folsom_metrics:get_metrics()),
+    %% check a server got started for the spiral metric
+    1 = length(supervisor:which_children(folsom_sample_slide_sup)),
+
+    13 = length(folsom_metrics:get_metrics()),
 
     ?debugFmt("~n~nmetrics: ~p~n", [folsom_metrics:get_metrics()]).
 
@@ -129,7 +134,9 @@ populate_metrics() ->
         [ folsom_metrics:notify({meter_reader, Item}) || Item <- [1, 10, 100, 1000, 10000]],
 
     % simulate an interval tick
-    folsom_metrics_meter_reader:tick(meter_reader).
+    folsom_metrics_meter_reader:tick(meter_reader),
+
+    folsom_metrics:notify_existing_metric(spiral, 100, spiral).
 
 check_metrics() ->
     0 = folsom_metrics:get_metric_value(counter),
@@ -188,10 +195,14 @@ check_metrics() ->
 
     %% check duration
     Dur = folsom_metrics:get_metric_value(duration),
-    duration_check(Dur).
+    duration_check(Dur),
+
+    %% check spiral
+    [{count, 100}, {one, 100}] = folsom_metrics:get_metric_value(spiral).
+
 
 delete_metrics() ->
-    14= length(ets:tab2list(?FOLSOM_TABLE)),
+    15 = length(ets:tab2list(?FOLSOM_TABLE)),
 
     ok = folsom_metrics:delete_metric(counter),
     ok = folsom_metrics:delete_metric(<<"gauge">>),
@@ -217,6 +228,7 @@ delete_metrics() ->
     0 = length(ets:tab2list(?METER_READER_TABLE)),
 
     ok = folsom_metrics:delete_metric(duration),
+    ok = folsom_metrics:delete_metric(spiral),
 
     0 = length(ets:tab2list(?FOLSOM_TABLE)).
 
