@@ -39,6 +39,7 @@
          new_duration/2,
          new_duration/3,
          new_duration/4,
+         new_spiral/1,
          delete_metric/1,
          notify/1,
          notify/2,
@@ -102,6 +103,9 @@ new_duration(Name, SampleType, SampleSize) ->
 
 new_duration(Name, SampleType, SampleSize, Alpha) ->
     folsom_ets:add_handler(duration, Name, SampleType, SampleSize, Alpha).
+
+new_spiral(Name) ->
+    folsom_ets:add_handler(spiral, Name).
 
 delete_metric(Name) ->
     folsom_ets:delete_handler(Name).
