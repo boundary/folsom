@@ -36,24 +36,29 @@ stop() ->
 
 start(_Type, _Args) ->
     {ok, Pid} = folsom_sup:start_link(),
-    lists:foreach(
-      fun ({K, New}) ->
-              case application:get_env(?APP, K) of
-                  {ok, Name} when is_atom(Name) ->
-                      New(Name);
-                  {ok, Names} when is_list(Names) ->
-                      lists:foreach(New, Names);
-                  undefined ->
-                      ok
-              end
-      end,
-      [{counter, fun folsom_metrics:new_counter/1},
-       {gauge, fun folsom_metrics:new_gauge/1},
-       {histogram, fun folsom_metrics:new_histogram/1},
-       {history, fun folsom_metrics:new_history/1},
-       {meter, fun folsom_metrics:new_meter/1},
-       {meter_reader, fun folsom_metrics:new_meter_reader/1}]),
+    lists:foreach(fun configure/1,
+      [{counter, new_counter},
+       {gauge, new_gauge},
+       {histogram, new_histogram},
+       {history, new_history},
+       {meter, new_meter},
+       {meter_reader, new_meter_reader}]),
     {ok, Pid}.
 
 stop(_State) ->
     ok.
+
+%% internal
+configure({K, New}) ->
+    case application:get_env(?APP, K) of
+        {ok, Specs} when is_list(Specs) ->
+            [configure_metric(New, Spec) || Spec <- Specs];
+        {ok, Spec} ->
+            configure_metric(New, Spec);
+        undefined -> ok
+    end.
+
+configure_metric(New, Spec) when is_list(Spec) ->
+    apply(folsom_metrics, New, Spec);
+configure_metric(New, Name) ->
+    folsom_metrics:New(Name).

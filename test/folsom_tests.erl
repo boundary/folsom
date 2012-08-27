@@ -46,3 +46,28 @@ run_test_() ->
        fun folsom_erlang_checks:delete_metrics/0},
       {"cpu topology test",
        fun folsom_erlang_checks:cpu_topology/0}]}.
+
+configure_test_() ->
+    {foreach, fun setup_app/0, fun cleanup_app/1,
+     [{"start with configured metrics",
+       fun() ->
+               ?assertMatch(ok, application:start(folsom)),
+               [counter, slide, <<"gauge">>, <<"uniform">>] =
+                   lists:sort(folsom_metrics:get_metrics())
+       end}]}.
+
+setup_app() ->
+    application:unload(folsom),
+    Env = [{counter, counter},
+           {gauge, <<"gauge">>},
+           {histogram, [[<<"uniform">>, uniform, 5000],
+                        [slide, slide_uniform, {60, 1028}]]}],
+    application:load({application, folsom, [{mod, {folsom, []}}, {env, Env}]}),
+    ok.
+
+cleanup_app(ok) ->
+    lists:foreach(fun folsom_metrics:delete_metric/1,
+                  [counter, slide, <<"gauge">>, <<"uniform">>]),
+    application:stop(folsom),
+    application:unload(folsom),
+    ok.
