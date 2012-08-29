@@ -356,7 +356,9 @@ cpu_topology() ->
                                          {core,[{thread,[logical,4]},{thread,[logical,12]}]},
                                          {core,[{thread,[logical,6]},{thread,[logical,14]}]}]}]}],
 
-    ExpectedResult = folsom_vm_metrics:convert_cpu_topology(Test, []).
+    ExpectedResult = folsom_vm_metrics:convert_cpu_topology(Test, []),
+
+    [{logical, 0}] = folsom_vm_metrics:convert_cpu_topology({logical, 0}, []).
 
 duration_check(Duration) ->
     [?assert(lists:keymember(Key, 1, Duration)) || Key <-
