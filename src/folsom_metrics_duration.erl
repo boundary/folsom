@@ -45,10 +45,10 @@ new(Name) ->
     ets:insert(?DURATION_TABLE, Dur).
 
 update(Name, timer_start) ->
-    StartTime = erlang:now(),
+    StartTime = os:timestamp(),
     ets:update_element(?DURATION_TABLE, Name, {3, StartTime});
 update(Name, timer_end) ->
-    EndTime = erlang:now(),
+    EndTime = os:timestamp(),
     case ets:lookup_element(?DURATION_TABLE, Name, 3) of
         undefined ->
             ok;
