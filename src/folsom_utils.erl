@@ -41,11 +41,11 @@ convert_tags(Tags) ->
     [to_atom(Tag) || Tag <- Tags].
 
 now_epoch() ->
-    {Mega, Sec, _} = erlang:now(),
+    {Mega, Sec, _} = os:timestamp(),
     (Mega * 1000000 + Sec).
 
 now_epoch_micro() ->
-    {Mega, Sec, Micro} = erlang:now(),
+    {Mega, Sec, Micro} = os:timestamp(),
     (Mega * 1000000 + Sec) * 1000000 + Micro.
 
 get_ets_size(Tab) ->
