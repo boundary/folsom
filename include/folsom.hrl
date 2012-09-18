@@ -88,7 +88,7 @@
                       dist_buf_busy_limit,
                       %fullsweep_after, % included in garbage_collection
                       garbage_collection,
-                      global_heaps_size,
+                      %global_heaps_size, % deprecated
                       heap_sizes,
                       heap_type,
                       info,
