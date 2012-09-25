@@ -338,27 +338,14 @@ for(N, LoopCount, Counter) ->
     for(N, LoopCount + 1, Counter).
 
 cpu_topology() ->
-    Test = [{node,[{processor,[{core,[{thread,{logical,1}},{thread,{logical,9}}]},
-                               {core,[{thread,{logical,3}},{thread,{logical,11}}]},
-                               {core,[{thread,{logical,5}},{thread,{logical,13}}]},
-                               {core,[{thread,{logical,7}},{thread,{logical,15}}]}]}]},
-            {node,[{processor,[{core,[{thread,{logical,0}},{thread,{logical,8}}]},
-                               {core,[{thread,{logical,2}},{thread,{logical,10}}]},
-                               {core,[{thread,{logical,4}},{thread,{logical,12}}]},
-                               {core,[{thread,{logical,6}},{thread,{logical,14}}]}]}]}],
+    {ok, [Data]} = file:consult("./cpu_topo_data"),
+    [run_convert_and_jsonify(Item) || Item <- Data].
 
-    ExpectedResult = [{node,[{processor,[{core,[{thread,[logical,1]},{thread,[logical,9]}]},
-                                         {core,[{thread,[logical,3]},{thread,[logical,11]}]},
-                                         {core,[{thread,[logical,5]},{thread,[logical,13]}]},
-                                         {core,[{thread,[logical,7]},{thread,[logical,15]}]}]}]},
-                      {node,[{processor,[{core,[{thread,[logical,0]},{thread,[logical,8]}]},
-                                         {core,[{thread,[logical,2]},{thread,[logical,10]}]},
-                                         {core,[{thread,[logical,4]},{thread,[logical,12]}]},
-                                         {core,[{thread,[logical,6]},{thread,[logical,14]}]}]}]}],
 
-    ExpectedResult = folsom_vm_metrics:convert_cpu_topology(Test, []),
-
-    [{logical, 0}] = folsom_vm_metrics:convert_cpu_topology({logical, 0}, []).
+run_convert_and_jsonify(Item) ->
+    io:format("Converting ... ~n~p~n", [Item]),
+    Result = folsom_vm_metrics:convert_system_info({cpu_topology, Item}),
+    io:format("~p~n", [mochijson2:encode(Result)]).
 
 duration_check(Duration) ->
     [?assert(lists:keymember(Key, 1, Duration)) || Key <-

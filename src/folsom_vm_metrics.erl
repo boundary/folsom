@@ -35,7 +35,7 @@
         ]).
 
 %% exported for eunit test
--export([convert_cpu_topology/2]).
+-export([convert_system_info/1]).
 
 -include("folsom.hrl").
 

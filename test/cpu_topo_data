@@ -1,0 +1,137 @@
+[
+%% Intel(R) Xeon(R) CPU X5647 @ 2.93GHz (Dual CPU)
+
+[{node,[{processor,[{core,[{thread,{logical,1}},
+                           {thread,{logical,9}}]},
+                    {core,[{thread,{logical,3}},{thread,{logical,11}}]},
+                    {core,[{thread,{logical,5}},{thread,{logical,13}}]},
+                    {core,[{thread,{logical,7}},{thread,{logical,15}}]}]}]},
+ {node,[{processor,[{core,[{thread,{logical,0}},
+                           {thread,{logical,8}}]},
+                    {core,[{thread,{logical,2}},{thread,{logical,10}}]},
+                    {core,[{thread,{logical,4}},{thread,{logical,12}}]},
+                    {core,[{thread,{logical,6}},{thread,{logical,14}}]}]}]}],
+
+%% Intel(R) Xeon(R) CPU X5647 @ 2.93GHz
+
+[{processor,[{core,[{thread,{logical,0}},
+                    {thread,{logical,4}}]},
+             {core,[{thread,{logical,1}},{thread,{logical,5}}]},
+             {core,[{thread,{logical,2}},{thread,{logical,6}}]},
+             {core,[{thread,{logical,3}},{thread,{logical,7}}]}]}],
+
+%% Intel Core 2 Quad Q8300 LGA775 'Yorkfield' 2.5GHz 4MB-cache (1333FSB) Processor
+
+[{processor,[{core,{logical,0}},
+             {core,{logical,1}},
+             {core,{logical,2}},
+             {core,{logical,3}}]}],
+
+%% Intel® Xeon® Six Core E5-2620 (2.0 GHz, 7.20 GT/s, 15M L3 Cache)
+
+[{processor,[{core,[{thread,{logical,0}},
+                    {thread,{logical,6}}]},
+             {core,[{thread,{logical,1}},{thread,{logical,7}}]},
+             {core,[{thread,{logical,2}},{thread,{logical,8}}]},
+             {core,[{thread,{logical,3}},{thread,{logical,9}}]},
+             {core,[{thread,{logical,4}},{thread,{logical,10}}]},
+             {core,[{thread,{logical,5}},{thread,{logical,11}}]}]}],
+
+%% OSX
+
+undefined,
+
+%% Intel(R) Xeon(R) CPU W3530 @ 2.80GHz
+
+[{processor,[{core,[{thread,{logical,0}},
+                    {thread,{logical,4}}]},
+             {core,[{thread,{logical,1}},{thread,{logical,5}}]},
+             {core,[{thread,{logical,2}},{thread,{logical,6}}]},
+             {core,[{thread,{logical,3}},{thread,{logical,7}}]}]}],
+
+%% Intel(R) Atom(TM) CPU N2800 @ 1.86GHz (8GB memory)
+
+[{processor,[{core,[{thread,{logical,0}},
+                    {thread,{logical,1}}]},
+             {core,[{thread,{logical,2}},{thread,{logical,3}}]}]}],
+
+%% Intel(R) Core(TM) i7-2675QM CPU @ 2.20GHz
+
+[{processor,[{core,[{thread,{logical,0}},
+                    {thread,{logical,4}}]},
+             {core,[{thread,{logical,1}},{thread,{logical,5}}]},
+             {core,[{thread,{logical,2}},{thread,{logical,6}}]},
+             {core,[{thread,{logical,3}},{thread,{logical,7}}]}]}],
+
+%% Intel(R) Xeon(R) CPU L3426  @ 1.87GHz
+
+[{processor,[{core,[{thread,{logical,0}},
+                    {thread,{logical,4}}]},
+             {core,[{thread,{logical,1}},{thread,{logical,5}}]},
+             {core,[{thread,{logical,2}},{thread,{logical,6}}]},
+             {core,[{thread,{logical,3}},{thread,{logical,7}}]}]}],
+
+%% Intel(R) Core(TM) i7 CPU M 640  @ 2.80GHz (in a vmware fusion vm, one cpu enabled)
+
+[{processor,{logical,0}}],
+
+%% Intel(R) Core(TM) i7 CPU M 640  @ 2.80GHz (in a vmware fusion vm, two cpus enabled)
+
+[{processor,{logical,0}},{processor,{logical,1}}],
+
+%% Intel(R) Core(TM) i7 CPU M 640  @ 2.80GHz (in a vmware fusion vm, four cpus enabled)
+
+[{processor,{logical,0}},
+ {processor,{logical,1}},
+ {processor,{logical,2}},
+ {processor,{logical,3}}],
+
+%% Intel(R) Xeon(R) CPU E5620  @ 2.40GHz (EC2 hi1.4xlarge)
+
+[{processor,[{thread,{logical,0}},
+             {thread,{logical,1}},
+             {thread,{logical,2}},
+             {thread,{logical,3}},
+             {thread,{logical,4}},
+             {thread,{logical,5}},
+             {thread,{logical,6}},
+             {thread,{logical,7}},
+             {thread,{logical,8}},
+             {thread,{logical,9}},
+             {thread,{logical,10}},
+             {thread,{logical,11}},
+             {thread,{logical,12}},
+             {thread,{logical,13}},
+             {thread,{logical,14}},
+             {thread,{logical,15}}]}],
+
+%% Intel(R) Xeon(R) CPU E5-2670 0 @ 2.60GHz (EC2 cc2.8xlarge)
+
+[{processor,[{core,[{thread,{logical,0}},
+                    {thread,{logical,16}}]},
+             {core,[{thread,{logical,1}},{thread,{logical,17}}]},
+             {core,[{thread,{logical,2}},{thread,{logical,18}}]},
+             {core,[{thread,{logical,3}},{thread,{logical,19}}]},
+             {core,[{thread,{logical,4}},{thread,{logical,20}}]},
+             {core,[{thread,{logical,5}},{thread,{logical,21}}]},
+             {core,[{thread,{logical,6}},{thread,{logical,22}}]},
+             {core,[{thread,{logical,7}},{thread,{logical,23}}]}]},
+ {processor,[{core,[{thread,{logical,8}},
+                    {thread,{logical,24}}]},
+             {core,[{thread,{logical,9}},{thread,{logical,25}}]},
+             {core,[{thread,{logical,10}},{thread,{logical,26}}]},
+             {core,[{thread,{logical,11}},{thread,{logical,27}}]},
+             {core,[{thread,{logical,12}},{thread,{logical,28}}]},
+             {core,[{thread,{logical,13}},{thread,{logical,29}}]},
+             {core,[{thread,{logical,14}},{thread,{logical,30}}]},
+             {core,[{thread,{logical,15}},{thread,{logical,31}}]}]}],
+
+%% Unknown
+
+[{processor,{logical,0}},{processor,{logical,1}}],
+
+%% single-core ppc32
+
+{logical,0}
+
+].
