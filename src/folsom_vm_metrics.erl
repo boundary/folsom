@@ -98,8 +98,10 @@ convert_system_info({c_compiler_used, {Compiler, Version}}) ->
     [{compiler, Compiler}, {version, convert_c_compiler_version(Version)}];
 convert_system_info({cpu_topology, undefined}) ->
     undefined;
-convert_system_info({cpu_topology, List}) ->
+convert_system_info({cpu_topology, List}) when is_list(List) ->
     [{Type, convert_cpu_topology(Item, [])} || {Type, Item} <- List];
+convert_system_info({cpu_topology, {logical,Item}}) ->
+    convert_system_info({cpu_topology, [{processor,[{core,{logical,Item}}]}]});
 convert_system_info({dist_ctrl, List}) ->
     lists:map(fun({Node, Socket}) ->
                       {ok, Stats} = inet:getstat(Socket),
