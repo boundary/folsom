@@ -338,14 +338,16 @@ for(N, LoopCount, Counter) ->
     for(N, LoopCount + 1, Counter).
 
 cpu_topology() ->
-    {ok, [Data]} = file:consult("./cpu_topo_data"),
+    ?debugFmt("Testing various CPU topologies ...~n", []),
+    {ok, [Data]} = file:consult("../test/cpu_topo_data"),
     [run_convert_and_jsonify(Item) || Item <- Data].
 
 
 run_convert_and_jsonify(Item) ->
-    io:format("Converting ... ~n~p~n", [Item]),
+    ?debugFmt("Converting ... ~n~p~n", [Item]),
     Result = folsom_vm_metrics:convert_system_info({cpu_topology, Item}),
-    io:format("~p~n", [mochijson2:encode(Result)]).
+    %?debugFmt("~p~n", [mochijson2:encode(Result)]).
+    mochijson2:encode(Result).
 
 duration_check(Duration) ->
     [?assert(lists:keymember(Key, 1, Duration)) || Key <-
