@@ -33,7 +33,8 @@
          delete_metrics/0,
          vm_metrics/0,
          counter_metric/2,
-         cpu_topology/0
+         cpu_topology/0,
+         c_compiler_used/0
         ]).
 
 -define(DATA, [0, 1, 5, 10, 100, 200, 500, 750, 1000, 2000, 5000]).
@@ -348,6 +349,19 @@ run_convert_and_jsonify(Item) ->
     Result = folsom_vm_metrics:convert_system_info({cpu_topology, Item}),
     %?debugFmt("~p~n", [mochijson2:encode(Result)]).
     mochijson2:encode(Result).
+
+c_compiler_used() ->
+    Test = [{gnuc, {4,4,5}},
+            {gnuc, {4,4}},
+            {msc, 1600}],
+
+    Expected = [[{compiler, gnuc}, {version, <<"4.4.5">>}],
+                [{compiler, gnuc}, {version, <<"4.4">>}],
+                [{compiler, msc}, {version, <<"1600">>}]],
+
+    ?assertEqual(Expected, [folsom_vm_metrics:convert_system_info({c_compiler_used, {Compiler, Version}})
+                             || {Compiler, Version} <- Test]).
+
 
 duration_check(Duration) ->
     [?assert(lists:keymember(Key, 1, Duration)) || Key <-
