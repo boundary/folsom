@@ -132,7 +132,9 @@ convert_allocated_areas({Key, Value}) ->
 convert_c_compiler_version({A, B, C}) ->
     list_to_binary(io_lib:format("~p.~p.~p", [A, B, C]));
 convert_c_compiler_version({A, B}) ->
-    list_to_binary(io_lib:format("~p.~p", [A, B])).
+    list_to_binary(io_lib:format("~p.~p", [A, B]));
+convert_c_compiler_version(A) ->
+    list_to_binary(io_lib:format("~p", [A])).
 
 convert_cpu_topology([{core, Value}| Tail], Acc) when is_tuple(Value) ->
     convert_cpu_topology(Tail, lists:append(Acc, [{core, tuple_to_list(Value)}]));
