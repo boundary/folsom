@@ -28,7 +28,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/0, register/2, dump/0]).
+-export([start_link/0, register/2, unregister/1, dump/0]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -98,6 +98,15 @@ handle_call({register, Name, Module}, _From, State) ->
                        #state{registered_timers = NewList}
                end,
     {reply, ok, NewState};
+handle_call({unregister, Name}, _From, State) ->
+    NewState = case proplists:is_defined(Name, State#state.registered_timers) of
+                    true ->
+                        Ref = proplists:get_value(Name, State#state.registered_timers),
+                        {ok, cancel} = timer:cancel(Ref),
+                        #state{registered_timers = proplists:delete(Name, State#state.registered_timers)};
+                    false -> State
+                end,
+    {reply, ok, NewState};
 handle_call(dump, _From, State) ->
     {reply, State, State}.
 
@@ -159,6 +168,9 @@ code_change(_OldVsn, State, _Extra) ->
 %% Name of the metric and name of the module used to tick said metric
 register(Name, Module) ->
     gen_server:call(?SERVER, {register, Name, Module}).
+
+unregister(Name) ->
+    gen_server:call(?SERVER, {unregister, Name}).
 
 dump() ->
     gen_server:call(?SERVER, dump).
