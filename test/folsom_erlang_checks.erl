@@ -67,7 +67,7 @@ create_metrics() ->
     ok = folsom_metrics:new_spiral(spiral),
 
     ?debugFmt("ensuring meter tick is registered with gen_server~n", []),
-    ok = ensure_meter_tick_exists(),
+    ok = ensure_meter_tick_exists(2),
 
     ?debugFmt("ensuring multiple timer registrations dont cause issues", []),
     ok = folsom_meter_timer_server:register(meter, folsom_metrics_meter),
@@ -220,6 +220,8 @@ delete_metrics() ->
     ok = folsom_metrics:delete_metric(timed),
     ok = folsom_metrics:delete_metric(testcounter),
 
+    ok = ensure_meter_tick_exists(2),
+
     1 = length(ets:tab2list(?METER_TABLE)),
     ok = folsom_metrics:delete_metric(meter),
     0 = length(ets:tab2list(?METER_TABLE)),
@@ -227,6 +229,8 @@ delete_metrics() ->
     1 = length(ets:tab2list(?METER_READER_TABLE)),
     ok = folsom_metrics:delete_metric(meter_reader),
     0 = length(ets:tab2list(?METER_READER_TABLE)),
+
+    ok = ensure_meter_tick_exists(0),
 
     ok = folsom_metrics:delete_metric(duration),
     ok = folsom_metrics:delete_metric(spiral),
@@ -259,9 +263,9 @@ counter_metric(Count, Counter) ->
 
     0 = Result.
 
-ensure_meter_tick_exists() ->
+ensure_meter_tick_exists(MeterCnt) ->
     {state, State} = folsom_meter_timer_server:dump(),
-    2 = length(State),
+    MeterCnt = length(State),
     ok.
 
 %% internal function

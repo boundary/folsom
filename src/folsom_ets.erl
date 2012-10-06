@@ -251,10 +251,12 @@ delete_metric(Name, gauge) ->
     true = ets:delete(?FOLSOM_TABLE, Name),
     ok;
 delete_metric(Name, meter) ->
+    ok = folsom_meter_timer_server:unregister(Name),
     true = ets:delete(?METER_TABLE, Name),
     true = ets:delete(?FOLSOM_TABLE, Name),
     ok;
 delete_metric(Name, meter_reader) ->
+    ok = folsom_meter_timer_server:unregister(Name),
     true = ets:delete(?METER_READER_TABLE, Name),
     true = ets:delete(?FOLSOM_TABLE, Name),
     ok;
