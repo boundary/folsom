@@ -29,9 +29,10 @@
 
 -module(folsom_ewma).
 
--define(M1_ALPHA, 1 - math:exp(-5 / 60.0)).
--define(M5_ALPHA, 1 - math:exp(-5 / 60.0 / 5)).
--define(M15_ALPHA, 1 - math:exp(-5 / 60.0 / 15)).
+-define(M1_ALPHA,   1 - math:exp(-5 / 60.0)).
+-define(M5_ALPHA,   1 - math:exp(-5 / 60.0 / 5)).
+-define(M15_ALPHA,  1 - math:exp(-5 / 60.0 / 15)).
+-define(D1_ALPHA,   1 - math:exp(-5 / 60.0 / 1440)).
 
 -record(ewma, {
           alpha,
@@ -47,7 +48,8 @@
          tick/1,
          one_minute_ewma/0,
          five_minute_ewma/0,
-         fifteen_minute_ewma/0]).
+         fifteen_minute_ewma/0,
+         one_day_ewma/0]).
 
 
 % API
@@ -60,6 +62,9 @@ five_minute_ewma() ->
 
 fifteen_minute_ewma() ->
     new(?M15_ALPHA, 5).
+
+one_day_ewma() ->
+    new(?D1_ALPHA, 5).
 
 new(Alpha, Interval) ->
     #ewma{alpha = Alpha, interval = Interval}.
