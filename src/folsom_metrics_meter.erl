@@ -37,6 +37,7 @@
           one,
           five,
           fifteen,
+          day,
           count = 0,
           start_time
          }).
@@ -47,26 +48,31 @@ new(Name) ->
     OneMin = folsom_ewma:one_minute_ewma(),
     FiveMin = folsom_ewma:five_minute_ewma(),
     FifteenMin = folsom_ewma:fifteen_minute_ewma(),
+    OneDay = folsom_ewma:one_day_ewma(),
 
     ets:insert(?METER_TABLE,
                {Name, #meter{one = OneMin,
                              five = FiveMin,
                              fifteen = FifteenMin,
+                             day = OneDay,
                              start_time = folsom_utils:now_epoch_micro()}}).
 
 tick(Name) ->
     #meter{one = OneMin,
            five = FiveMin,
-           fifteen = FifteenMin} = Meter = get_value(Name),
+           fifteen = FifteenMin,
+           day = OneDay} = Meter = get_value(Name),
 
     OneMin1 = folsom_ewma:tick(OneMin),
     FiveMin1 = folsom_ewma:tick(FiveMin),
     FifteenMin1 = folsom_ewma:tick(FifteenMin),
+    OneDay1 = folsom_ewma:tick(OneDay),
 
     ets:insert(?METER_TABLE,
                {Name, Meter#meter{one = OneMin1,
                                   five = FiveMin1,
-                                  fifteen = FifteenMin1}}).
+                                  fifteen = FifteenMin1,
+                                  day = OneDay1}}).
 
 mark(Name) ->
     mark(Name, 1).
@@ -75,21 +81,25 @@ mark(Name, Value) ->
     #meter{count = Count,
            one = OneMin,
            five = FiveMin,
-           fifteen = FifteenMin} = Meter = get_value(Name),
+           fifteen = FifteenMin,
+           day = OneDay} = Meter = get_value(Name),
 
     OneMin1 = folsom_ewma:update(OneMin, Value),
     FiveMin1 = folsom_ewma:update(FiveMin, Value),
     FifteenMin1 = folsom_ewma:update(FifteenMin, Value),
+    OneDay1 = folsom_ewma:update(OneDay, Value),
 
     ets:insert(?METER_TABLE, {Name, Meter#meter{count = Count + Value,
                                                 one = OneMin1,
                                                 five = FiveMin1,
-                                                fifteen = FifteenMin1}}).
+                                                fifteen = FifteenMin1,
+                                                day = OneDay1}}).
 
 get_values(Name) ->
     #meter{one = OneMin,
            five = FiveMin,
            fifteen = FifteenMin,
+           day = OneDay,
            count = Count} = Meter = get_value(Name),
 
     L = [
@@ -97,6 +107,7 @@ get_values(Name) ->
          {one, get_rate(OneMin)},
          {five, get_rate(FiveMin)},
          {fifteen, get_rate(FifteenMin)},
+         {day, get_rate(OneDay)},
          {mean, get_mean_rate(Meter)},
          {acceleration, get_acceleration(Name)}
         ],
