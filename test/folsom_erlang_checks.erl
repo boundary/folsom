@@ -183,12 +183,18 @@ check_metrics() ->
              _ ->
                  error
          end,
+    ok = case proplists:get_value(day, Meter) of
+             Value1 when Value1 > 0.005 ->
+                 ok;
+             _ ->
+                 error
+         end,
 
     ?debugFmt("checking meter reader~n", []),
     MeterReader = folsom_metrics:get_metric_value(meter_reader),
     ?debugFmt("~p~n", [MeterReader]),
     ok = case proplists:get_value(one, MeterReader) of
-             Value1 when Value1 > 1 ->
+             Value2 when Value2 > 1 ->
                  ok;
              _ ->
                  error
