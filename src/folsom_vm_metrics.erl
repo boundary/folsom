@@ -69,10 +69,6 @@ get_dets_info() ->
 
 convert_statistics({context_switches, {ContextSwitches, 0}}) ->
     ContextSwitches;
-convert_statistics({exact_reductions, {TotalExactReductions,
-                                        ExactReductionsSinceLastCall}}) ->
-    [{"total_exact_reductions", TotalExactReductions},
-     {"exact_reductions_since_last_call", ExactReductionsSinceLastCall}];
 convert_statistics({garbage_collection, {NumberofGCs, WordsReclaimed, 0}}) ->
     [{"number_of_gcs", NumberofGCs}, {"words_reclaimed", WordsReclaimed}];
 convert_statistics({io, {Input, Output}}) ->
