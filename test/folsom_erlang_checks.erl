@@ -56,6 +56,7 @@ create_metrics() ->
     ok = folsom_metrics:new_histogram(nonea, none, 5000),
 
     ok = folsom_metrics:new_histogram(timed, none, 5000),
+    ok = folsom_metrics:new_histogram(timed2, none, 5000),
 
     ok = folsom_metrics:new_history(<<"history">>),
     ok = folsom_metrics:new_meter(meter),
@@ -81,7 +82,7 @@ create_metrics() ->
     %% check a server got started for the spiral metric
     1 = length(supervisor:which_children(folsom_sample_slide_sup)),
 
-    13 = length(folsom_metrics:get_metrics()),
+    14 = length(folsom_metrics:get_metrics()),
 
     ?debugFmt("~n~nmetrics: ~p~n", [folsom_metrics:get_metrics()]).
 
@@ -102,6 +103,9 @@ populate_metrics() ->
     [ok = folsom_metrics:notify({nonea, Value}) || Value <- ?DATA1],
 
     3.141592653589793 = folsom_metrics:histogram_timed_update(timed, math, pi, []),
+
+    Begin = folsom_metrics:histogram_timed_begin(timed2),
+    folsom_metrics:histogram_timed_notify(Begin),
 
     PopulateDuration = fun() ->
                                ok = folsom_metrics:notify_existing_metric(duration, timer_start, duration),
@@ -171,6 +175,9 @@ check_metrics() ->
     List = folsom_metrics:get_metric_value(timed),
     ?debugFmt("timed update value: ~p", [List]),
 
+    List2 = folsom_metrics:get_metric_value(timed2),
+    ?debugFmt("timed update value begin/end: ~p", [List2]),
+
     1 = length(folsom_metrics:get_metric_value(<<"history">>)),
     1 = length(folsom_metrics:get_metric_value(historya)),
 
@@ -209,7 +216,7 @@ check_metrics() ->
 
 
 delete_metrics() ->
-    15 = length(ets:tab2list(?FOLSOM_TABLE)),
+    16 = length(ets:tab2list(?FOLSOM_TABLE)),
 
     ok = folsom_metrics:delete_metric(counter),
     ok = folsom_metrics:delete_metric(<<"gauge">>),
@@ -224,6 +231,7 @@ delete_metrics() ->
 
     ok = folsom_metrics:delete_metric(nonea),
     ok = folsom_metrics:delete_metric(timed),
+    ok = folsom_metrics:delete_metric(timed2),
     ok = folsom_metrics:delete_metric(testcounter),
 
     ok = ensure_meter_tick_exists(2),
