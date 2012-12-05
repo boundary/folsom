@@ -55,7 +55,9 @@
          get_history_values/2,
          histogram_timed_update/2,
          histogram_timed_update/3,
-         histogram_timed_update/4
+         histogram_timed_update/4,
+         histogram_timed_begin/1,
+         histogram_timed_notify/1
         ]).
 
 -include("folsom.hrl").
@@ -163,3 +165,11 @@ histogram_timed_update(Name, Mod, Fun, Args) ->
     {Time, Value} = timer:tc(Mod, Fun, Args),
     ok = notify({Name, Time}),
     Value.
+
+histogram_timed_begin(Name) ->
+    {Name, os:timestamp()}.
+
+histogram_timed_notify({Name, Begin}) ->
+    Now = os:timestamp(),
+    Time = timer:now_diff(Now, Begin),
+    ok = notify({Name, Time}).
