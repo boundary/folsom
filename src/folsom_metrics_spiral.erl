@@ -48,8 +48,7 @@ new(Name) ->
 update(Name, Value) ->
     #spiral{tid=Tid} = get_value(Name),
     Moment = folsom_utils:now_epoch(),
-    ets:insert_new(Tid, {Moment, 0}),
-    ets:update_counter(Tid, Moment, Value),
+    folsom_utils:update_counter(Tid, Moment, Value),
     ets:update_counter(Tid, count, Value).
 
 get_value(Name) ->

@@ -40,17 +40,16 @@ new({Window, SampleSize}) ->
 
 update(#slide_uniform{reservoir = Reservoir, size = Size, seed = Seed} = Sample0, Value) ->
     Moment = moment(),
-    ets:insert_new(Reservoir, {Moment, 0}),
-    MCnt = ets:update_counter(Reservoir, Moment, 1),
+    MCnt = folsom_utils:update_counter(Reservoir, Moment, 1),
     Sample = case MCnt > Size of
                  true ->
                      {Rnd, NewSeed} = random:uniform_s(Size, Seed),
                      maybe_update(Reservoir, {{Moment, Rnd}, Value}, Size),
                      Sample0#slide_uniform{seed = NewSeed};
-                     false ->
-                              ets:insert(Reservoir, {{Moment, MCnt}, Value}),
-                              Sample0
-                      end,
+                 false ->
+                     ets:insert(Reservoir, {{Moment, MCnt}, Value}),
+                     Sample0
+             end,
     Sample.
 
 maybe_update(Reservoir, {{_Moment, Rnd}, _Value}=Obj, Size) when Rnd =< Size ->
