@@ -80,6 +80,13 @@ update_counter_test() ->
     wait_for_results(Workers),
     ?assertEqual([{hello, 5050}], ets:lookup(Tid, hello)).
 
+update_element_test() ->
+    Tid = ets:new(sometable, [public, set]),
+    Workers = [spawn_monitor(fun() -> timer:sleep(100-N), folsom_utils:update_element(Tid, hello, {100, undefined}, {N+1, 1}) end) || N <- lists:seq(1, 100)],
+    wait_for_results(Workers),
+    T = erlang:make_tuple(101, 1, [{1, hello}]),
+    ?assertEqual([T], ets:lookup(Tid, hello)).
+
 wait_for_results([]) ->
     ok;
 wait_for_results(Workers) ->
