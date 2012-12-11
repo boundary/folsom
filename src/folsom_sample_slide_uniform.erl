@@ -43,48 +43,16 @@ update(#slide_uniform{reservoir = Reservoir, size = Size} = Sample0, Value) ->
     Now = os:timestamp(),
     Moment = folsom_utils:now_epoch(Now),
     {Rnd, _} = random:uniform_s(Size, Now),
-    folsom_utils:update_element(Reservoir, Moment, {Size+1, undefined}, {Rnd+1, Value}),
+    ets:insert(Reservoir, {{Moment, Rnd}, Value}),
     Sample0.
 
-get_values(#slide_uniform{window = Window, reservoir = Reservoir, size=Size}) ->
+get_values(#slide_uniform{window = Window, reservoir = Reservoir}) ->
     Oldest = moment() - Window,
-    Moments=ets:select(Reservoir, [{match(Size+1),[{'>=', '$1', Oldest}],['$_']}]),
-    Values=lists:flatmap(fun(T) ->
-                                 %% Start at element 2 to skip key (the moment)
-                                 get_samples(2, tuple_size(T), T, [])
-                         end, Moments),
-    Values.
-
-%% Convert the tuple of samples into a list, removing undefined values. I'm
-%% assuming this is faster than tuple_to_list + filter to remove undefined,
-%% but we should probably benchmark if we care.
-%%
-%% Note: Technically, we have Size+1 samples when full and should drop the
-%% extra sample if we want to match the semantics of the prior implementation
-%% that did not insert a sample when random() == Size.  Of course, was that
-%% just an implementation detail? Isn't providing more samples a good thing?
-get_samples(Same, Same, _, Acc) ->
-    Acc;
-get_samples(N, Size, T, Acc) ->
-    Acc2 = case element(N, T) of
-               undefined ->
-                   Acc;
-               X ->
-                   [X|Acc]
-           end,
-    get_samples(N+1, Size, T, Acc2).
+    ets:select(Reservoir, [{{{'$1', '_'},'$2'},[{'>=', '$1', Oldest}],['$2']}]).
 
 moment() ->
     folsom_utils:now_epoch().
 
 trim(Reservoir, Window) ->
-    case ets:lookup(Reservoir, size) of
-        [{size, Size}] ->
-            Oldest = moment() - Window,
-            ets:select_delete(Reservoir, [{match(Size+1),[{'<', '$1', Oldest}],['true']}]);
-        _ ->
-            ok
-    end.
-
-match(Size) ->
-    erlang:make_tuple(Size+1, '_', [{1, '$1'}]).
+    Oldest = moment() - Window,
+    ets:select_delete(Reservoir, [{{'$1','_'},[{is_integer, '$1'}, {'<', '$1', Oldest}],['true']}]).
