@@ -28,6 +28,7 @@
          to_atom/1,
          convert_tags/1,
          now_epoch/0,
+         now_epoch/1,
          now_epoch_micro/0,
          get_ets_size/1,
          update_counter/3,
@@ -44,7 +45,9 @@ convert_tags(Tags) ->
     [to_atom(Tag) || Tag <- Tags].
 
 now_epoch() ->
-    {Mega, Sec, _} = os:timestamp(),
+    now_epoch(os:timestamp()).
+
+now_epoch({Mega, Sec, _}) ->
     (Mega * 1000000 + Sec).
 
 now_epoch_micro() ->

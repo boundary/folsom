@@ -39,11 +39,12 @@ new({Window, SampleSize}) ->
     Pid = folsom_sample_slide_sup:start_slide_server(?MODULE, Sample#slide_uniform.reservoir, Sample#slide_uniform.window),
     Sample#slide_uniform{server=Pid}.
 
-update(#slide_uniform{reservoir = Reservoir, size = Size, seed = Seed} = Sample0, Value) ->
-    Moment = moment(),
-    {Rnd, NewSeed} = random:uniform_s(Size, Seed),
+update(#slide_uniform{reservoir = Reservoir, size = Size} = Sample0, Value) ->
+    Now = os:timestamp(),
+    Moment = folsom_utils:now_epoch(Now),
+    {Rnd, _} = random:uniform_s(Size, Now),
     folsom_utils:update_element(Reservoir, Moment, {Size+1, undefined}, {Rnd+1, Value}),
-    Sample0#slide_uniform{seed = NewSeed}.
+    Sample0.
 
 get_values(#slide_uniform{window = Window, reservoir = Reservoir, size=Size}) ->
     Oldest = moment() - Window,
