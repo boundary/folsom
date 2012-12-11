@@ -35,37 +35,55 @@
 
 new({Window, SampleSize}) ->
     Sample = #slide_uniform{window = Window, size = SampleSize},
+    ets:insert(Sample#slide_uniform.reservoir, {size, SampleSize}),
     Pid = folsom_sample_slide_sup:start_slide_server(?MODULE, Sample#slide_uniform.reservoir, Sample#slide_uniform.window),
     Sample#slide_uniform{server=Pid}.
 
 update(#slide_uniform{reservoir = Reservoir, size = Size, seed = Seed} = Sample0, Value) ->
     Moment = moment(),
-    MCnt = folsom_utils:update_counter(Reservoir, Moment, 1),
-    Sample = case MCnt > Size of
-                 true ->
-                     {Rnd, NewSeed} = random:uniform_s(Size, Seed),
-                     maybe_update(Reservoir, {{Moment, Rnd}, Value}, Size),
-                     Sample0#slide_uniform{seed = NewSeed};
-                 false ->
-                     ets:insert(Reservoir, {{Moment, MCnt}, Value}),
-                     Sample0
-             end,
-    Sample.
+    {Rnd, NewSeed} = random:uniform_s(Size, Seed),
+    folsom_utils:update_element(Reservoir, Moment, {Size+1, undefined}, {Rnd+1, Value}),
+    Sample0#slide_uniform{seed = NewSeed}.
 
-maybe_update(Reservoir, {{_Moment, Rnd}, _Value}=Obj, Size) when Rnd =< Size ->
-    ets:insert(Reservoir, Obj);
-maybe_update(_Reservoir, _Obj, _Size) ->
-    ok.
-
-get_values(#slide_uniform{window = Window, reservoir = Reservoir}) ->
+get_values(#slide_uniform{window = Window, reservoir = Reservoir, size=Size}) ->
     Oldest = moment() - Window,
-    ets:select(Reservoir, [{{{'$1', '_'},'$2'},[{'>=', '$1', Oldest}],['$2']}]).
+    Moments=ets:select(Reservoir, [{match(Size+1),[{'>=', '$1', Oldest}],['$_']}]),
+    Values=lists:flatmap(fun(T) ->
+                                 %% Start at element 2 to skip key (the moment)
+                                 get_samples(2, tuple_size(T), T, [])
+                         end, Moments),
+    Values.
+
+%% Convert the tuple of samples into a list, removing undefined values. I'm
+%% assuming this is faster than tuple_to_list + filter to remove undefined,
+%% but we should probably benchmark if we care.
+%%
+%% Note: Technically, we have Size+1 samples when full and should drop the
+%% extra sample if we want to match the semantics of the prior implementation
+%% that did not insert a sample when random() == Size.  Of course, was that
+%% just an implementation detail? Isn't providing more samples a good thing?
+get_samples(Same, Same, _, Acc) ->
+    Acc;
+get_samples(N, Size, T, Acc) ->
+    Acc2 = case element(N, T) of
+               undefined ->
+                   Acc;
+               X ->
+                   [X|Acc]
+           end,
+    get_samples(N+1, Size, T, Acc2).
 
 moment() ->
     folsom_utils:now_epoch().
 
 trim(Reservoir, Window) ->
-    Oldest = moment() - Window,
-    ets:select_delete(Reservoir, [{{{'$1', '_'},'_'},[{'<', '$1', Oldest}],['true']}]),
-    %% and trim the counters
-    ets:select_delete(Reservoir, [{{'$1','_'},[{is_integer, '$1'}, {'<', '$1', Oldest}],['true']}]).
+    case ets:lookup(Reservoir, size) of
+        [{size, Size}] ->
+            Oldest = moment() - Window,
+            ets:select_delete(Reservoir, [{match(Size+1),[{'<', '$1', Oldest}],['true']}]);
+        _ ->
+            ok
+    end.
+
+match(Size) ->
+    erlang:make_tuple(Size+1, '_', [{1, '$1'}]).
