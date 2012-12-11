@@ -17,7 +17,7 @@
 
 -record(spiral, {
           tid = folsom_metrics_histogram_ets:new(folsom_spiral,
-                                                 [ordered_set,
+                                                 [set,
                                                   {write_concurrency, true},
                                                   public]),
           server
