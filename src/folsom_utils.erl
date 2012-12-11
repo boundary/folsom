@@ -101,11 +101,25 @@ update_counter(Tid, Key, Size, Ops) ->
 update_element(Tid, Key, {Size, Default}, Ops) ->
     case ets:update_element(Tid, Key, Ops) of
         true ->
-            ok;
+            true;
         false ->
             %% row didn't exist, create it
             %% use insert_now to avoid races
-            T = erlang:make_tuple(Size+1, Default, [{1, Key}]),
-            ets:insert_new(Tid, T),
-            ets:update_element(Tid, Key, Ops)
+            T = erlang:make_tuple(Size+1, Default,
+                                  make_init_list({1, Key}, Ops)),
+            %% try inserting the result of the default tuple with the
+            %% operations already applied
+            case ets:insert_new(Tid, T) of
+                true ->
+                    true;
+                false ->
+                    %% apply the operations to whatever is already there
+                    ets:update_element(Tid, Key, Ops)
+            end
     end.
+
+%% @private
+make_init_list(X, Y) when is_tuple(Y) ->
+    [X, Y];
+make_init_list(X, Y) when is_list(Y) ->
+    [X|Y].
