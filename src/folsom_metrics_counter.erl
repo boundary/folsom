@@ -32,12 +32,12 @@
          get_value/1,
          clear/1]).
 
--define(WIDTH, 10).
+-define(WIDTH, 16). %% Keep this a power of two
 
 -include("folsom.hrl").
 
 new(Name) ->
-    Counters = [{{Name,N}, 0} || N <- lists:seq(1,?WIDTH)],
+    Counters = [{{Name,N}, 0} || N <- lists:seq(0,?WIDTH-1)],
     ets:insert(?COUNTER_TABLE, Counters).
 
 inc(Name) ->
@@ -60,6 +60,6 @@ clear(Name) ->
     new(Name).
 
 key(Name) ->
-    Now = os:timestamp(),
-    {Rnd, _} = random:uniform_s(?WIDTH, Now),
+    X = erlang:system_info(scheduler_id),
+    Rnd = X band (?WIDTH-1),
     {Name, Rnd}.

@@ -34,7 +34,7 @@
 
 %% size of the window in seconds
 -define(WINDOW, 60).
--define(WIDTH, 10).
+-define(WIDTH, 16). %% Keep this a power of two
 
 -include("folsom.hrl").
 
@@ -44,14 +44,14 @@ new(Name) ->
                                                            Spiral#spiral.tid,
                                                            ?WINDOW),
     ets:insert_new(Spiral#spiral.tid,
-                   [{{count, N}, 0} || N <- lists:seq(1,?WIDTH)]),
+                   [{{count, N}, 0} || N <- lists:seq(0,?WIDTH-1)]),
     ets:insert(?SPIRAL_TABLE, {Name, Spiral#spiral{server=Pid}}).
 
 update(Name, Value) ->
     #spiral{tid=Tid} = get_value(Name),
-    Now = os:timestamp(),
-    Moment = folsom_utils:now_epoch(Now),
-    {Rnd, _} = random:uniform_s(?WIDTH, Now),
+    Moment = folsom_utils:now_epoch(),
+    X = erlang:system_info(scheduler_id),
+    Rnd = X band (?WIDTH-1),
     folsom_utils:update_counter(Tid, {Moment, Rnd}, Value),
     ets:update_counter(Tid, {count, Rnd}, Value).
 
