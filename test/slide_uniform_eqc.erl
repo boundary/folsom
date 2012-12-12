@@ -112,6 +112,7 @@ prop_window_test_() ->
 prop_window() ->
     folsom:start(),
     (catch meck:new(folsom_utils)),
+    (catch meck:expect(folsom_utils, update_counter, fun(Tid, Key, Value) -> meck:passthrough([Tid, Key, Value]) end)),
     ?FORALL(Cmds, commands(?MODULE),
             aggregate(command_names(Cmds),
                       begin

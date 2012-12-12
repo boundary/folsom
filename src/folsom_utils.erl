@@ -28,8 +28,12 @@
          to_atom/1,
          convert_tags/1,
          now_epoch/0,
+         now_epoch/1,
          now_epoch_micro/0,
-         get_ets_size/1
+         get_ets_size/1,
+         update_counter/3,
+         update_counter/4,
+         update_element/4
         ]).
 
 to_atom(Binary) when is_binary(Binary) ->
@@ -41,7 +45,9 @@ convert_tags(Tags) ->
     [to_atom(Tag) || Tag <- Tags].
 
 now_epoch() ->
-    {Mega, Sec, _} = os:timestamp(),
+    now_epoch(os:timestamp()).
+
+now_epoch({Mega, Sec, _}) ->
     (Mega * 1000000 + Sec).
 
 now_epoch_micro() ->
@@ -50,3 +56,73 @@ now_epoch_micro() ->
 
 get_ets_size(Tab) ->
     ets:info(Tab, size).
+
+%% @edoc
+%% Same as {@link ets:update_counter/3} but inserts `{Key, Value}' if object
+%% is missing in the table.
+update_counter(Tid, Key, Value) when is_integer(Value) ->
+    %% try to update the counter, will badarg if it doesn't exist
+    try ets:update_counter(Tid, Key, Value) of
+        Res ->
+            Res
+    catch
+        error:badarg ->
+            %% row didn't exist, create it
+            %% use insert_now to avoid races
+            case ets:insert_new(Tid, {Key, Value}) of
+                true ->
+                    Value;
+                false ->
+                    %% someone beat us to it
+                    ets:update_counter(Tid, Key, Value)
+            end
+    end.
+
+%% @edoc
+%% Similar to {@link ets:update_counter/3} when called with operations, eg:
+%%   ets:update_counter(Tab, Key, UpdateOp | [UpdateOp])
+%% but automatically initializes the object if missing from the table. The
+%% inserted value is a `Size+1' tuple of the form `{Key, 0, 0, ... 0}'.
+update_counter(Tid, Key, Size, Ops) ->
+    %% try to update the counter, will badarg if it doesn't exist
+    try ets:update_counter(Tid, Key, Ops) of
+        Res ->
+            Res
+    catch
+        error:badarg ->
+            %% row didn't exist, create it
+            %% use insert_now to avoid races
+            T = erlang:make_tuple(Size+1, 0, [{1, Key}]),
+            ets:insert_new(Tid, T),
+            ets:update_counter(Tid, Key, Ops)
+    end.
+
+%% @edoc
+%% Similar to {@link ets:update_element/3} but automatically initializes
+%% the object if missing from the table. The initalized value is a `Size+1'
+%% tuple of the form `{Key, Default, Default, .., Default}'.
+update_element(Tid, Key, {Size, Default}, Ops) ->
+    case ets:update_element(Tid, Key, Ops) of
+        true ->
+            true;
+        false ->
+            %% row didn't exist, create it
+            %% use insert_now to avoid races
+            T = erlang:make_tuple(Size+1, Default,
+                                  make_init_list({1, Key}, Ops)),
+            %% try inserting the result of the default tuple with the
+            %% operations already applied
+            case ets:insert_new(Tid, T) of
+                true ->
+                    true;
+                false ->
+                    %% apply the operations to whatever is already there
+                    ets:update_element(Tid, Key, Ops)
+            end
+    end.
+
+%% @private
+make_init_list(X, Y) when is_tuple(Y) ->
+    [X, Y];
+make_init_list(X, Y) when is_list(Y) ->
+    [X|Y].

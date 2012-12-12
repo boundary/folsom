@@ -73,3 +73,37 @@ cleanup_app(ok) ->
     application:stop(folsom),
     application:unload(folsom),
     ok.
+
+update_counter_test() ->
+    Tid = ets:new(sometable, [public, set]),
+    Workers = [spawn_monitor(fun() -> timer:sleep(100-N), folsom_utils:update_counter(Tid, hello, N) end) || N <- lists:seq(1, 100)],
+    wait_for_results(Workers),
+    ?assertEqual([{hello, 5050}], ets:lookup(Tid, hello)).
+
+update_element_test() ->
+    Tid = ets:new(sometable, [public, set]),
+    Workers = [spawn_monitor(fun() -> timer:sleep(100-N), folsom_utils:update_element(Tid, hello, {100, undefined}, {N+1, 1}) end) || N <- lists:seq(1, 100)],
+    wait_for_results(Workers),
+    T = erlang:make_tuple(101, 1, [{1, hello}]),
+    ?assertEqual([T], ets:lookup(Tid, hello)).
+
+wait_for_results([]) ->
+    ok;
+wait_for_results(Workers) ->
+    receive
+        {'DOWN', _, _, Pid, Reason} ->
+            case lists:keyfind(Pid, 1, Workers) of
+                false ->
+                    wait_for_results(Workers);
+                _ ->
+                    case Reason of
+                        normal ->
+                            wait_for_results(lists:keydelete(Pid, 1, Workers));
+                        _ ->
+                            erlang:error(Reason)
+                    end
+            end
+    end.
+
+
+
