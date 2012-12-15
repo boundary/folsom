@@ -17,7 +17,7 @@
 
 -record(spiral, {
           tid = folsom_metrics_histogram_ets:new(folsom_spiral,
-                                                 [ordered_set,
+                                                 [set,
                                                   {write_concurrency, true},
                                                   public]),
           server
@@ -33,7 +33,7 @@
 -record(slide_uniform, {
           window = ?DEFAULT_SLIDING_WINDOW,
           size = ?DEFAULT_SIZE,
-          reservoir = folsom_metrics_histogram_ets:new(folsom_slide_uniform,[ordered_set, {write_concurrency, true}, public]),
+          reservoir = folsom_metrics_histogram_ets:new(folsom_slide_uniform,[set, {write_concurrency, true}, public]),
           seed = now(),
           server
          }).

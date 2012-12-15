@@ -28,8 +28,11 @@
          to_atom/1,
          convert_tags/1,
          now_epoch/0,
+         now_epoch/1,
          now_epoch_micro/0,
-         get_ets_size/1
+         timestamp/0,
+         get_ets_size/1,
+         update_counter/3
         ]).
 
 to_atom(Binary) when is_binary(Binary) ->
@@ -41,12 +44,39 @@ convert_tags(Tags) ->
     [to_atom(Tag) || Tag <- Tags].
 
 now_epoch() ->
-    {Mega, Sec, _} = os:timestamp(),
+    now_epoch(os:timestamp()).
+
+now_epoch({Mega, Sec, _}) ->
     (Mega * 1000000 + Sec).
 
 now_epoch_micro() ->
     {Mega, Sec, Micro} = os:timestamp(),
     (Mega * 1000000 + Sec) * 1000000 + Micro.
 
+%% useful because you can't meck os:timestamp for some reason
+timestamp() ->
+    os:timestamp().
+
 get_ets_size(Tab) ->
     ets:info(Tab, size).
+
+%% @doc
+%% Same as {@link ets:update_counter/3} but inserts `{Key, Value}' if object
+%% is missing in the table.
+update_counter(Tid, Key, Value) when is_integer(Value) ->
+    %% try to update the counter, will badarg if it doesn't exist
+    try ets:update_counter(Tid, Key, Value) of
+        Res ->
+            Res
+    catch
+        error:badarg ->
+            %% row didn't exist, create it
+            %% use insert_new to avoid races
+            case ets:insert_new(Tid, {Key, Value}) of
+                true ->
+                    Value;
+                false ->
+                    %% someone beat us to it
+                    ets:update_counter(Tid, Key, Value)
+            end
+    end.
