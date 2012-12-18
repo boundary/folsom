@@ -44,9 +44,11 @@
 -record(state, {moment=1000,
                 sample,
                 name,
+                count=orddict:new(),
                 values=[]}).
 
 initial_state() ->
+    meck:expect(folsom_utils, now_epoch, fun(_Now) -> 1000 end),
     meck:expect(folsom_utils, now_epoch, fun() -> 1000 end),
     #state{}.
 
@@ -64,8 +66,9 @@ next_state(S, V, {call, ?MODULE, new_histo, []}) ->
     S#state{name={call, erlang, element, [1, V]}, sample={call, erlang, element, [2, V]}};
 next_state(S, V, {call, ?MODULE, tick, [_Moment]}) ->
     S#state{moment=V};
-next_state(#state{moment=Moment, values=Values0, sample=Sample}=S, NewSample, {call, ?MODULE, update, [_, Val]}) ->
-    S#state{values={call, slide_uniform_eqc, new_state_values, [Sample, Moment, Values0, Val]},
+next_state(#state{moment=Moment, values=Values0, sample=Sample, count=Count}=S, NewSample, {call, ?MODULE, update, [_, Val]}) ->
+    S#state{values={call, slide_uniform_eqc, new_state_values, [Sample, Moment, Values0, Val, Count]},
+            count={call, orddict, update_counter, [Moment, 1, Count]},
             sample=NewSample};
 next_state(#state{values=Values, moment=Moment}=S, _V, {call, ?MODULE, trim, _}) ->
     %% trim the model
@@ -107,11 +110,14 @@ postcondition(_S, {call, ?MODULE, _, _}, _Res) ->
 prop_window_test_() ->
     {setup, fun() -> ok end, fun(_X) -> (catch meck:unload(folsom_utils)), folsom:stop() end,
      fun(_X) ->
-                           ?_assert(eqc:quickcheck(eqc:numtests(?NUMTESTS, ?QC_OUT(prop_window())))) end}.
+                {timeout, 30,
+                           ?_assert(eqc:quickcheck(eqc:numtests(?NUMTESTS, ?QC_OUT(prop_window()))))} end}.
 
 prop_window() ->
     folsom:start(),
     (catch meck:new(folsom_utils)),
+    (catch meck:expect(folsom_utils, update_counter, fun(Tid, Key, Value) -> meck:passthrough([Tid, Key, Value]) end)),
+    (catch meck:expect(folsom_utils, timestamp, fun() -> Res = os:timestamp(), put(timestamp, Res), Res end)),
     ?FORALL(Cmds, commands(?MODULE),
             aggregate(command_names(Cmds),
                       begin
@@ -144,6 +150,7 @@ new_histo() ->
 tick(Moment) ->
     IncrBy = trunc(random:uniform(10)),
     meck:expect(folsom_utils, now_epoch, fun() -> Moment + IncrBy end),
+    meck:expect(folsom_utils, now_epoch, fun(_Now) -> Moment + IncrBy end),
     Moment+IncrBy.
 
 update(Sample, Val) ->
@@ -159,16 +166,28 @@ get_values(Sample) ->
 trim(L, Moment, Window) ->
     [{K, V} || {{M, _C}=K, V} <- L, M >= Moment - Window].
 
-new_state_values(Sample, Moment, Values, Val) ->
-    Cnt = length([true || {{M, _C}, _V} <- Values, M == Moment]),
-    case Cnt >= ?SIZE of
+new_state_values(_Sample, Moment, Values, Val, Count) ->
+    %Cnt = length([true || {{M, _C}, _V} <- Values, M == Moment]),
+    Cnt =
+    case orddict:find(Moment, Count) of
+        error ->
+            1;
+        {ok, V} ->
+            V+1
+    end,
+    case Cnt > ?SIZE of
         true ->
             %% replace
-            {Rnd, _} = random:uniform_s(?SIZE, Sample#slide_uniform.seed),
-            lists:keyreplace({Moment, Rnd}, 1, Values, {{Moment, Rnd}, Val});
+            {Rnd, _} = random:uniform_s(Cnt, get(timestamp)),
+            case Rnd =< ?SIZE of
+                true ->
+                    lists:keyreplace({Moment, Rnd}, 1, Values, {{Moment, Rnd}, Val});
+                false ->
+                    Values
+            end;
         false ->
             %% insert
-            Values ++ [{{Moment, Cnt+1}, Val}]
+            Values ++ [{{Moment, Cnt}, Val}]
     end.
 
 -endif.

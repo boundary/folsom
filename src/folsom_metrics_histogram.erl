@@ -57,8 +57,14 @@ new(Name, SampleType, SampleSize, Alpha) ->
 
 update(Name, Value) ->
     Hist = get_value(Name),
-    NewSample = folsom_sample:update(Hist#histogram.type, Hist#histogram.sample, Value),
-    ets:insert(?HISTOGRAM_TABLE, {Name, Hist#histogram{sample = NewSample}}).
+    Sample = Hist#histogram.sample,
+    case folsom_sample:update(Hist#histogram.type, Hist#histogram.sample, Value) of
+        Sample ->
+            %% sample didn't change, don't need to write it back
+            true;
+        NewSample ->
+            ets:insert(?HISTOGRAM_TABLE, {Name, Hist#histogram{sample = NewSample}})
+    end.
 
 % gets the histogram record from ets
 get_value(Name) ->
