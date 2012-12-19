@@ -34,6 +34,7 @@
 
 %% size of the window in seconds
 -define(WINDOW, 60).
+-define(WIDTH, 16). %% Keep this a power of two
 
 -include("folsom.hrl").
 
@@ -42,15 +43,17 @@ new(Name) ->
     Pid = folsom_sample_slide_sup:start_slide_server(?MODULE,
                                                            Spiral#spiral.tid,
                                                            ?WINDOW),
-    ets:insert_new(Spiral#spiral.tid, {count, 0}),
+    ets:insert_new(Spiral#spiral.tid,
+                   [{{count, N}, 0} || N <- lists:seq(0,?WIDTH-1)]),
     ets:insert(?SPIRAL_TABLE, {Name, Spiral#spiral{server=Pid}}).
 
 update(Name, Value) ->
     #spiral{tid=Tid} = get_value(Name),
     Moment = folsom_utils:now_epoch(),
-    ets:insert_new(Tid, {Moment, 0}),
-    ets:update_counter(Tid, Moment, Value),
-    ets:update_counter(Tid, count, Value).
+    X = erlang:system_info(scheduler_id),
+    Rnd = X band (?WIDTH-1),
+    folsom_utils:update_counter(Tid, {Moment, Rnd}, Value),
+    ets:update_counter(Tid, {count, Rnd}, Value).
 
 get_value(Name) ->
     [{Name, Spiral}] =  ets:lookup(?SPIRAL_TABLE, Name),
@@ -58,13 +61,13 @@ get_value(Name) ->
 
 trim(Tid, _Window) ->
     Oldest = oldest(),
-    ets:select_delete(Tid, [{{'$1','_'}, [{is_integer, '$1'}, {'<', '$1', Oldest}], ['true']}]).
+    ets:select_delete(Tid, [{{{'$1','_'},'_'}, [{is_integer, '$1'}, {'<', '$1', Oldest}], ['true']}]).
 
 get_values(Name) ->
     Oldest = oldest(),
     #spiral{tid=Tid} = get_value(Name),
-    [{count, Count}] = ets:lookup(Tid, count),
-    One =lists:sum(ets:select(Tid, [{{'$1','$2'},[{is_integer, '$1'}, {'>=', '$1', Oldest}],['$2']}])),
+    Count = lists:sum(ets:select(Tid, [{{{count,'_'},'$1'},[],['$1']}])),
+    One = lists:sum(ets:select(Tid, [{{{'$1','_'},'$2'},[{is_integer, '$1'}, {'>=', '$1', Oldest}],['$2']}])),
 
     [{count, Count}, {one, One}].
 

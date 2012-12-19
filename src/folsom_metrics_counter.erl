@@ -32,27 +32,34 @@
          get_value/1,
          clear/1]).
 
+-define(WIDTH, 16). %% Keep this a power of two
+
 -include("folsom.hrl").
 
 new(Name) ->
-    Counter = {Name, 0},
-    ets:insert(?COUNTER_TABLE, Counter).
+    Counters = [{{Name,N}, 0} || N <- lists:seq(0,?WIDTH-1)],
+    ets:insert(?COUNTER_TABLE, Counters).
 
 inc(Name) ->
-    ets:update_counter(?COUNTER_TABLE, Name, 1).
+    ets:update_counter(?COUNTER_TABLE, key(Name), 1).
 
 inc(Name, Value) ->
-    ets:update_counter(?COUNTER_TABLE, Name, Value).
+    ets:update_counter(?COUNTER_TABLE, key(Name), Value).
 
 dec(Name) ->
-    ets:update_counter(?COUNTER_TABLE, Name, -1).
+    ets:update_counter(?COUNTER_TABLE, key(Name), -1).
 
 dec(Name, Value) ->
-    ets:update_counter(?COUNTER_TABLE, Name, -Value).
+    ets:update_counter(?COUNTER_TABLE, key(Name), -Value).
 
 get_value(Name) ->
-    [{_, Values}] = ets:lookup(?COUNTER_TABLE, Name),
-    Values.
+    Count = lists:sum(ets:select(?COUNTER_TABLE, [{{{Name,'_'},'$1'},[],['$1']}])),
+    Count.
 
 clear(Name) ->
     new(Name).
+
+key(Name) ->
+    X = erlang:system_info(scheduler_id),
+    Rnd = X band (?WIDTH-1),
+    {Name, Rnd}.
