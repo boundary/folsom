@@ -33,6 +33,8 @@
 
 -include("folsom.hrl").
 
+-define(WIDTH, 16). %% Keep this a power of two
+
 new(Size) ->
     Sample = #slide{window = Size},
     Pid = folsom_sample_slide_sup:start_slide_server(?MODULE, Sample#slide.reservoir, Sample#slide.window),
@@ -40,16 +42,18 @@ new(Size) ->
 
 update(#slide{reservoir = Reservoir} = Sample, Value) ->
     Moment = moment(),
-    ets:insert(Reservoir, {Moment, Value}),
+    X = erlang:system_info(scheduler_id),
+    Rnd = X band (?WIDTH-1),
+    ets:insert(Reservoir, {{Moment, Rnd}, Value}),
     Sample.
 
 get_values(#slide{window = Window, reservoir = Reservoir}) ->
     Oldest = moment() - Window,
-    ets:select(Reservoir, [{{'$1','$2'},[{'>=', '$1', Oldest}],['$2']}]).
+    ets:select(Reservoir, [{{{'$1','_'},'$2'},[{'>=', '$1', Oldest}],['$2']}]).
 
 moment() ->
     folsom_utils:now_epoch().
 
 trim(Reservoir, Window) ->
     Oldest = moment() - Window,
-    ets:select_delete(Reservoir, [{{'$1','_'},[{'<', '$1', Oldest}],['true']}]).
+    ets:select_delete(Reservoir, [{{{'$1','_'},'_'},[{'<', '$1', Oldest}],['true']}]).
