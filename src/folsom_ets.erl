@@ -315,6 +315,13 @@ notify(Name, {dec, Value}, counter, false) ->
     add_handler(counter, Name),
     folsom_metrics_counter:dec(Name, Value),
     ok;
+notify(Name, clear, counter, true) ->
+    folsom_metrics_counter:clear(Name),
+    ok;
+notify(Name, clear, counter, false) ->
+    add_handler(counter, Name),
+    folsom_metrics_counter:clear(Name),
+    ok;
 notify(Name, Value, gauge, true) ->
     folsom_metrics_gauge:update(Name, Value),
     ok;

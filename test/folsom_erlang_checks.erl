@@ -46,6 +46,7 @@
 
 create_metrics() ->
     ok = folsom_metrics:new_counter(counter),
+    ok = folsom_metrics:new_counter(counter2),
     ok = folsom_metrics:new_gauge(<<"gauge">>),
 
     ok = folsom_metrics:new_histogram(<<"uniform">>, uniform, 5000),
@@ -89,6 +90,9 @@ create_metrics() ->
 populate_metrics() ->
     ok = folsom_metrics:notify({counter, {inc, 1}}),
     ok = folsom_metrics:notify({counter, {dec, 1}}),
+
+    ok = folsom_metrics:notify({counter2, {inc, 10}}),
+    ok = folsom_metrics:notify({counter2, {dec, 7}}),
 
     ok = folsom_metrics:notify({<<"gauge">>, 2}),
 
@@ -145,6 +149,12 @@ populate_metrics() ->
 
 check_metrics() ->
     0 = folsom_metrics:get_metric_value(counter),
+
+    3 = folsom_metrics:get_metric_value(counter2),
+
+    ok = folsom_metrics:notify_existing_metric(counter2, clear, counter),
+
+    0 = folsom_metrics:get_metric_value(counter2),
 
     2 = folsom_metrics:get_metric_value(<<"gauge">>),
 
@@ -219,6 +229,7 @@ delete_metrics() ->
     16 = length(ets:tab2list(?FOLSOM_TABLE)),
 
     ok = folsom_metrics:delete_metric(counter),
+    ok = folsom_metrics:delete_metric(counter2),
     ok = folsom_metrics:delete_metric(<<"gauge">>),
 
     ok = folsom_metrics:delete_metric(<<"hugedata">>),
