@@ -45,6 +45,7 @@
 
 create_metrics() ->
     ok = folsom_metrics:new_counter(counter),
+    ok = folsom_metrics:new_counter(counter2),
     ok = folsom_metrics:new_gauge(<<"gauge">>),
 
     ok = folsom_metrics:new_histogram(<<"uniform">>, uniform, 5000),
@@ -80,13 +81,16 @@ create_metrics() ->
     %% check a server got started for the spiral metric
     1 = length(supervisor:which_children(folsom_sample_slide_sup)),
 
-    13 = length(folsom_metrics:get_metrics()),
+    14 = length(folsom_metrics:get_metrics()),
 
     ?debugFmt("~n~nmetrics: ~p~n", [folsom_metrics:get_metrics()]).
 
 populate_metrics() ->
     ok = folsom_metrics:notify({counter, {inc, 1}}),
     ok = folsom_metrics:notify({counter, {dec, 1}}),
+
+    ok = folsom_metrics:notify({counter2, {inc, 10}}),
+    ok = folsom_metrics:notify({counter2, {dec, 7}}),
 
     ok = folsom_metrics:notify({<<"gauge">>, 2}),
 
@@ -140,6 +144,12 @@ populate_metrics() ->
 
 check_metrics() ->
     0 = folsom_metrics:get_metric_value(counter),
+
+    3 = folsom_metrics:get_metric_value(counter2),
+
+    ok = folsom_metrics:notify_existing_metric(counter2, clear, counter),
+
+    0 = folsom_metrics:get_metric_value(counter2),
 
     2 = folsom_metrics:get_metric_value(<<"gauge">>),
 
@@ -202,9 +212,10 @@ check_metrics() ->
 
 
 delete_metrics() ->
-    15 = length(ets:tab2list(?FOLSOM_TABLE)),
+    16 = length(ets:tab2list(?FOLSOM_TABLE)),
 
     ok = folsom_metrics:delete_metric(counter),
+    ok = folsom_metrics:delete_metric(counter2),
     ok = folsom_metrics:delete_metric(<<"gauge">>),
 
     ok = folsom_metrics:delete_metric(<<"hugedata">>),
