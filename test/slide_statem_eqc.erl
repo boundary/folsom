@@ -36,7 +36,6 @@
 
 
 
--define(NUMTESTS, 200).
 -define(QC_OUT(P),
         eqc:on_output(fun(Str, Args) ->
                               io:format(user, Str, Args) end, P)).
@@ -95,7 +94,8 @@ postcondition(#state{values=Values0, moment=Moment}, {call, ?MODULE, get_values,
     end;
 postcondition(#state{values=Values, sample=Sample, moment=Moment}, {call, ?MODULE, trim, _}, _TrimCnt) ->
     %% check that values and the actual table contents are the same after a trim
-    Table = ets:tab2list(Sample#slide.reservoir),
+    Table0 = ets:tab2list(Sample#slide.reservoir),
+    Table = [{X, Y} || {{X, _}, Y} <- Table0],
     Model = lists:sort(trim(Values, Moment, ?WINDOW)),
     case Model == lists:sort(Table) of
         true ->
@@ -107,9 +107,13 @@ postcondition(_S, {call, ?MODULE, _, _}, _Res) ->
     true.
 
 prop_window_test_() ->
-    {setup, fun() -> ok end, fun(_X) -> (catch meck:unload(folsom_utils)), folsom:stop() end,
-     fun(_X) ->
-                           ?_assert(eqc:quickcheck(eqc:numtests(?NUMTESTS, ?QC_OUT(prop_window())))) end}.
+    Seconds = 10,
+    {setup,
+     fun() -> ok end,
+     fun(_X) -> (catch meck:unload(folsom_utils)), folsom:stop() end,
+     [{"QuickCheck Test",
+       {timeout, Seconds*2, fun() -> true = eqc:quickcheck(eqc:testing_time(Seconds, ?QC_OUT(prop_window()))) end
+       }}]}.
 
 prop_window() ->
     folsom:start(),
