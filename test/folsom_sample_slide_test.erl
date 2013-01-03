@@ -100,6 +100,6 @@ check_table(Slide, Moments) ->
     Tab = lists:sort(ets:tab2list(Slide#slide.reservoir)),
     {Ks, Vs} = lists:unzip(Tab),
     ExpectedVs = lists:sort(lists:flatten([lists:duplicate(10, N) || N <- Moments])),
-    Keys = lists:usort(Ks),
-    ?assertEqual(Moments, Keys),
+    StrippedKeys = lists:usort([X || {X, _} <- Ks]),
+    ?assertEqual(Moments, StrippedKeys),
     ?assertEqual(ExpectedVs, lists:sort(Vs)).
