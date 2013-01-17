@@ -94,6 +94,11 @@ populate_metrics() ->
     ok = folsom_metrics:notify({counter2, {inc, 10}}),
     ok = folsom_metrics:notify({counter2, {dec, 7}}),
 
+    meck:new(folsom_ets),
+    meck:expect(folsom_ets, notify, fun(_Event) -> meck:exception(error, something_wrong_with_ets) end),
+    {'EXIT', {something_wrong_with_ets, _}} = folsom_metrics:safely_notify({unknown_counter, {inc, 1}}),
+    meck:unload(folsom_ets),
+
     ok = folsom_metrics:notify({<<"gauge">>, 2}),
 
     [ok = folsom_metrics:notify({<<"uniform">>, Value}) || Value <- ?DATA],

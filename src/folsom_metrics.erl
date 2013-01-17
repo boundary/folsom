@@ -44,6 +44,9 @@
          notify/1,
          notify/2,
          notify/3,
+         safely_notify/1,
+         safely_notify/2,
+         safely_notify/3,
          notify_existing_metric/3,
          get_metrics/0,
          metric_exists/1,
@@ -120,6 +123,15 @@ notify(Name, Event) ->
 
 notify(Name, Event, Type) ->
     folsom_ets:notify(Name, Event, Type).
+
+safely_notify(Event) ->
+  catch notify(Event).
+
+safely_notify(Name, Event) ->
+  catch notify(Name, Event).
+
+safely_notify(Name, Event, Type) ->
+  catch notify(Name, Event, Type).
 
 notify_existing_metric(Name, Event, Type) ->
     folsom_ets:notify_existing_metric(Name, Event, Type).
