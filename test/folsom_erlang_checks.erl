@@ -83,7 +83,7 @@ create_metrics() ->
     %% check a server got started for the spiral metric
     1 = length(supervisor:which_children(folsom_sample_slide_sup)),
 
-    14 = length(folsom_metrics:get_metrics()),
+    15 = length(folsom_metrics:get_metrics()),
 
     ?debugFmt("~n~nmetrics: ~p~n", [folsom_metrics:get_metrics()]).
 
@@ -226,7 +226,7 @@ check_metrics() ->
 
 
 delete_metrics() ->
-    16 = length(ets:tab2list(?FOLSOM_TABLE)),
+    17 = length(ets:tab2list(?FOLSOM_TABLE)),
 
     ok = folsom_metrics:delete_metric(counter),
     ok = folsom_metrics:delete_metric(counter2),
