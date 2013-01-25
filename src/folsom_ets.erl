@@ -29,6 +29,7 @@
          add_handler/3,
          add_handler/4,
          add_handler/5,
+         tag_handler/2,
          delete_handler/1,
          handler_exists/1,
          notify/1,
@@ -39,11 +40,13 @@
          get_handlers_info/0,
          get_info/1,
          get_values/1,
-         get_history_values/2
+         get_history_values/2,
+         get_group_values/1,
+         get_group_values/2
         ]).
 
 -record(metric, {
-          tags = [],
+          tags = sets:new(),
           type,
           history_size
          }).
@@ -65,6 +68,14 @@ add_handler(Type, Name, SampleType, SampleSize) ->
 
 add_handler(Type, Name, SampleType, SampleSize, Alpha) ->
     maybe_add_handler(Type, Name, SampleType, SampleSize, Alpha, handler_exists(Name)).
+
+tag_handler(Name, Tag) ->
+    case handler_exists(Name) of
+        true ->
+            add_tag(Name, Tag);
+        false ->
+            {error, Name, nonexistent_metric}
+    end.
 
 delete_handler(Name) ->
     {_, Info} = get_info(Name),
@@ -148,6 +159,12 @@ get_values(_, Type) ->
 get_history_values(Name, Count) ->
     folsom_metrics_history:get_events(Name, Count).
 
+get_group_values(Tag) ->
+    [{Name, get_values(Name)} || Name <- get_handlers(), has_tag(Name, Tag)].
+
+get_group_values(Tag, Type) ->
+    [{Name, get_values(Name)} || Name <- get_handlers(), has_tag(Name, Tag), has_type(Name, Type)].
+
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
@@ -227,6 +244,22 @@ maybe_add_handler(Type, _, _, _, _, false) ->
     {error, Type, unsupported_metric_type};
 maybe_add_handler(_, Name, _, _, _, true) ->
     {error, Name, metric_already_exists}.
+
+add_tag(Name, Tag) ->
+    OldMetric = ets:lookup_element(?FOLSOM_TABLE, Name, 2),
+    NewMetric = OldMetric#metric{tags=sets:add_element(Tag, get_tags(Name))},
+    true = ets:update_element(?FOLSOM_TABLE, Name, {2, NewMetric}),
+    ok.
+
+get_tags(Name) ->
+    Metric = ets:lookup_element(?FOLSOM_TABLE, Name, 2),
+    Metric#metric.tags.
+
+has_tag(Name, Tag) ->
+    sets:is_element(Tag, get_tags(Name)).
+
+has_type(Name, Type) ->
+    {Name, [{type, Type}]} =:= get_info(Name).
 
 delete_metric(Name, history) ->
     History = folsom_metrics_history:get_value(Name),

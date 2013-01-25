@@ -141,6 +141,23 @@ Meter readers are like a meter except that the values passed to it are monotonic
       > folsom_metrics:new_meter_reader(Name).
       > folsom_metrics:notify({Name, Value}).
 
+##### Metrics groups/tags
+
+Certain users might want to group and query metrics monitoring a common task. In order to do so, they can
+tag metrics:
+
+    > folsom_metrics:tag_metric(Name, Tag).
+
+and query a list of tuples `[{Name, Value}]` of all metrics with a given tag:
+
+    > folsom_metrics:get_metrics_value(Tag).
+
+If only a certain type of metrics from a given group is desired, one can specify so:
+
+    > folsom_metrics:get_metrics_value(Tag, Type).
+
+where Type is one of `counter`, `gauge`, `histogram`, `history`, `meter`, `meter_reader`, `duration` or `spiral`.
+
 ##### Erlang VM
 
 folsom also produces Erlang VM statistics.

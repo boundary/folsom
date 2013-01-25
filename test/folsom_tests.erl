@@ -32,6 +32,8 @@ run_test_() ->
      fun (_) -> folsom:stop() end,
      [{"creating metrics",
        fun folsom_erlang_checks:create_metrics/0},
+      {"tagging metrics",
+       fun folsom_erlang_checks:tag_metrics/0},
       {"populating metrics",
        {timeout, 30, fun folsom_erlang_checks:populate_metrics/0}},
       {"checking metrics",
@@ -40,6 +42,8 @@ run_test_() ->
        fun () ->
                folsom_erlang_checks:counter_metric(10000, testcounter)
        end},
+      {"checking group metrics",
+       fun folsom_erlang_checks:check_group_metrics/0},
       {"checking erlang vm metrics",
        fun folsom_erlang_checks:vm_metrics/0},
       {"deleting metrics",
