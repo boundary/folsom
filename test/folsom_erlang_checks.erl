@@ -241,7 +241,7 @@ check_metrics() ->
     [{count, 100}, {one, 100}] = folsom_metrics:get_metric_value(spiral).
 
 check_group_metrics() ->
-    Metrics = get_metrics_value("mygroup"),
+    Metrics = folsom_metrics:get_metrics_value("mygroup"),
     5 = length(Metrics),
     {counter, 0} = lists:keyfind(counter,1,Metrics),
     {counter2, 0} = lists:keyfind(counter2,1,Metrics),
@@ -263,7 +263,7 @@ check_group_metrics() ->
 
     {spiral, [{count, 100}, {one, 100}]} = lists:keyfind(spiral,1,Metrics),
 
-    Counters = get_metrics_value("mygroup",counter),
+    Counters = folsom_metrics:get_metrics_value("mygroup",counter),
     {counter, 0} = lists:keyfind(counter,1,Counters),
     {counter2, 0} = lists:keyfind(counter2,1,Counters).
 
