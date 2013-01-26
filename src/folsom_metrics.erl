@@ -42,6 +42,7 @@
          new_spiral/1,
          delete_metric/1,
          tag_metric/2,
+         untag_metric/2,
          notify/1,
          notify/2,
          notify/3,
@@ -117,6 +118,9 @@ new_spiral(Name) ->
 
 tag_metric(Name, Tag) ->
     folsom_ets:tag_handler(Name, Tag).
+
+untag_metric(Name, Tag) ->
+    folsom_ets:untag_handler(Name, Tag).
 
 delete_metric(Name) ->
     folsom_ets:delete_handler(Name).

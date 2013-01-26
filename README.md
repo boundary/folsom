@@ -148,7 +148,11 @@ tag metrics:
 
     > folsom_metrics:tag_metric(Name, Tag).
 
-and query a list of tuples `[{Name, Value}]` of all metrics with a given tag:
+and untag metrics:
+
+    > folsom_metrics:untag_metric(Name, Tag).
+
+Users can query a list of tuples `[{Name, Value}]` of all metrics with a given tag:
 
     > folsom_metrics:get_metrics_value(Tag).
 

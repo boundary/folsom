@@ -30,6 +30,7 @@
          add_handler/4,
          add_handler/5,
          tag_handler/2,
+         untag_handler/2,
          delete_handler/1,
          handler_exists/1,
          notify/1,
@@ -73,6 +74,14 @@ tag_handler(Name, Tag) ->
     case handler_exists(Name) of
         true ->
             add_tag(Name, Tag);
+        false ->
+            {error, Name, nonexistent_metric}
+    end.
+
+untag_handler(Name, Tag) ->
+    case handler_exists(Name) of
+        true ->
+            rm_tag(Name, Tag);
         false ->
             {error, Name, nonexistent_metric}
     end.
@@ -160,10 +169,11 @@ get_history_values(Name, Count) ->
     folsom_metrics_history:get_events(Name, Count).
 
 get_group_values(Tag) ->
-    [{Name, get_values(Name)} || Name <- get_handlers(), has_tag(Name, Tag)].
+    folsom_ets:get_group_values(Tag, '_').
 
 get_group_values(Tag, Type) ->
-    [{Name, get_values(Name)} || Name <- get_handlers(), has_tag(Name, Tag), has_type(Name, Type)].
+    Metrics = ets:match(?FOLSOM_TABLE, {'$1', {metric, '$2', Type, '_'}}),
+    [{Name, get_values(Name)} || [Name, Tags] <- Metrics, sets:is_element(Tag, Tags)].
 
 %%%===================================================================
 %%% Internal functions
@@ -246,20 +256,14 @@ maybe_add_handler(_, Name, _, _, _, true) ->
     {error, Name, metric_already_exists}.
 
 add_tag(Name, Tag) ->
-    OldMetric = ets:lookup_element(?FOLSOM_TABLE, Name, 2),
-    NewMetric = OldMetric#metric{tags=sets:add_element(Tag, get_tags(Name))},
-    true = ets:update_element(?FOLSOM_TABLE, Name, {2, NewMetric}),
+    M = #metric{tags=Tags} = ets:lookup_element(?FOLSOM_TABLE, Name, 2),
+    true = ets:update_element(?FOLSOM_TABLE, Name, {2, M#metric{tags=sets:add_element(Tag, Tags)}}),
     ok.
 
-get_tags(Name) ->
-    Metric = ets:lookup_element(?FOLSOM_TABLE, Name, 2),
-    Metric#metric.tags.
-
-has_tag(Name, Tag) ->
-    sets:is_element(Tag, get_tags(Name)).
-
-has_type(Name, Type) ->
-    {Name, [{type, Type}]} =:= get_info(Name).
+rm_tag(Name, Tag) ->
+    M = #metric{tags=Tags} = ets:lookup_element(?FOLSOM_TABLE, Name, 2),
+    true = ets:update_element(?FOLSOM_TABLE, Name, {2, M#metric{tags=sets:del_element(Tag, Tags)}}),
+    ok.
 
 delete_metric(Name, history) ->
     History = folsom_metrics_history:get_value(Name),
