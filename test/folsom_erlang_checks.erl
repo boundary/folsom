@@ -29,7 +29,9 @@
 -export([
          create_metrics/0,
          populate_metrics/0,
+         tag_metrics/0,
          check_metrics/0,
+         check_group_metrics/0,
          delete_metrics/0,
          vm_metrics/0,
          counter_metric/2,
@@ -86,6 +88,15 @@ create_metrics() ->
     15 = length(folsom_metrics:get_metrics()),
 
     ?debugFmt("~n~nmetrics: ~p~n", [folsom_metrics:get_metrics()]).
+
+tag_metrics() ->
+    Group = "mygroup",
+    ok = folsom_metrics:tag_metric(counter, Group),
+    ok = folsom_metrics:tag_metric(counter2, Group),
+    ok = folsom_metrics:tag_metric(<<"gauge">>, Group),
+    ok = folsom_metrics:tag_metric(meter, Group),
+    ok = folsom_metrics:tag_metric(spiral, Group),
+    ?debugFmt("~n~ntagged metrics: ~p, ~p, ~p, ~p and ~p in group ~p~n", [counter,counter2,<<"gauge">>,meter,spiral,Group]).
 
 populate_metrics() ->
     ok = folsom_metrics:notify({counter, {inc, 1}}),
@@ -229,6 +240,42 @@ check_metrics() ->
     %% check spiral
     [{count, 100}, {one, 100}] = folsom_metrics:get_metric_value(spiral).
 
+check_group_metrics() ->
+    Group = "mygroup",
+    Metrics = folsom_metrics:get_metrics_value(Group),
+    5 = length(Metrics),
+    {counter, 0} = lists:keyfind(counter,1,Metrics),
+    {counter2, 0} = lists:keyfind(counter2,1,Metrics),
+    {<<"gauge">>, 2} = lists:keyfind(<<"gauge">>,1,Metrics),
+
+    {meter, Meter} = lists:keyfind(meter,1,Metrics),
+    ok = case proplists:get_value(one, Meter) of
+             Value when Value > 1 ->
+                 ok;
+             _ ->
+                 error
+         end,
+    ok = case proplists:get_value(day, Meter) of
+             Value1 when Value1 > 0.005 ->
+                 ok;
+             _ ->
+                 error
+         end,
+
+    {spiral, [{count, 100}, {one, 100}]} = lists:keyfind(spiral,1,Metrics),
+
+    Counters = folsom_metrics:get_metrics_value(Group,counter),
+    {counter, 0} = lists:keyfind(counter,1,Counters),
+    {counter2, 0} = lists:keyfind(counter2,1,Counters),
+
+    ok = folsom_metrics:untag_metric(counter2, Group),
+    ok = folsom_metrics:untag_metric(<<"gauge">>, Group),
+    ok = folsom_metrics:untag_metric(meter, Group),
+    ok = folsom_metrics:untag_metric(spiral, Group),
+    ?debugFmt("~n~nuntagged metrics: ~p, ~p, ~p and ~p in group ~p~n", [counter2,<<"gauge">>,meter,spiral,Group]),
+    RemainingMetrics = folsom_metrics:get_metrics_value(Group),
+    1 = length(RemainingMetrics),
+    {counter, 0} = lists:keyfind(counter,1,Metrics).
 
 delete_metrics() ->
     17 = length(ets:tab2list(?FOLSOM_TABLE)),
