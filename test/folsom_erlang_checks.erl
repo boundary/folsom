@@ -452,5 +452,4 @@ duration_check(Duration) ->
                                                         kurtosis, percentile, histogram]],
     ?assertEqual(10, proplists:get_value(count, Duration)),
     Last = proplists:get_value(last, Duration),
-    ?assert(Last > 10000),
-    ?assert(Last < 15000).
+    ?assert(Last > 10000).
