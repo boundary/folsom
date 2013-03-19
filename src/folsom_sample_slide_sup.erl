@@ -44,7 +44,7 @@ start_slide_server(SampleMod, Reservoir, Window) ->
 
 %% @private
 init ([]) ->
-    {ok,{{simple_one_for_one,10,10},
+    {ok,{{simple_one_for_one, 3, 180},
          [
           {undefined, {folsom_sample_slide_server, start_link, []},
            transient, brutal_kill, worker, [folsom_sample_slide_server]}
