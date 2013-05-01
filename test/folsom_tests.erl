@@ -51,7 +51,9 @@ run_test_() ->
       {"cpu topology test",
        fun folsom_erlang_checks:cpu_topology/0},
       {"c compiler test",
-       fun folsom_erlang_checks:c_compiler_used/0}]}.
+       fun folsom_erlang_checks:c_compiler_used/0},
+      {"create and delete tests",
+       fun folsom_erlang_checks:create_delete_metrics/0}]}.
 
 configure_test_() ->
     {foreach, fun setup_app/0, fun cleanup_app/1,
