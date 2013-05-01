@@ -30,7 +30,8 @@
          dec/1,
          dec/2,
          get_value/1,
-         clear/1]).
+         clear/1,
+	 delete/1]).
 
 -define(WIDTH, 16). %% Keep this a power of two
 
@@ -58,6 +59,11 @@ get_value(Name) ->
 
 clear(Name) ->
     new(Name).
+
+delete(Name) ->
+    Counters = [{Name,N} || N <- lists:seq(0,?WIDTH-1)],
+    [ets:delete(?COUNTER_TABLE, Counter) || Counter <- Counters],
+    ok.
 
 key(Name) ->
     X = erlang:system_info(scheduler_id),

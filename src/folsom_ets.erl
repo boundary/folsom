@@ -280,7 +280,7 @@ delete_metric(Name, duration) ->
     true = ets:delete(?FOLSOM_TABLE, Name),
     ok;
 delete_metric(Name, counter) ->
-    true = ets:delete(?COUNTER_TABLE, Name),
+    ok = folsom_metrics_counter:delete(Name),
     true = ets:delete(?FOLSOM_TABLE, Name),
     ok;
 delete_metric(Name, gauge) ->
