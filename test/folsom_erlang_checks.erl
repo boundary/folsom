@@ -36,7 +36,8 @@
          vm_metrics/0,
          counter_metric/2,
          cpu_topology/0,
-         c_compiler_used/0
+         c_compiler_used/0,
+	 create_delete_metrics/0
         ]).
 
 -define(DATA, [0, 1, 5, 10, 100, 200, 500, 750, 1000, 2000, 5000]).
@@ -453,3 +454,13 @@ duration_check(Duration) ->
     ?assertEqual(10, proplists:get_value(count, Duration)),
     Last = proplists:get_value(last, Duration),
     ?assert(Last > 10000).
+
+create_delete_metrics() ->
+    ?assertMatch(ok, folsom_metrics:new_counter(counter)),
+    ?assertMatch(ok, folsom_metrics:notify_existing_metric(counter, {inc, 1}, counter)),
+    ?assertMatch(1, folsom_metrics:get_metric_value(counter)),
+    ?assertMatch(ok, folsom_metrics:delete_metric(counter)),
+    ?assertError(badarg, folsom_metrics:notify_existing_metric(counter, {inc, 1}, counter)),
+    ?assertMatch(ok, folsom_metrics:new_counter(counter)),
+    ?assertMatch(ok, folsom_metrics:notify_existing_metric(counter, {inc, 1}, counter)),
+    ?assertMatch(1, folsom_metrics:get_metric_value(counter)).
