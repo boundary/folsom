@@ -64,7 +64,11 @@
          histogram_timed_update/3,
          histogram_timed_update/4,
          histogram_timed_begin/1,
-         histogram_timed_notify/1
+         histogram_timed_notify/1,
+         safely_histogram_timed_update/2,
+         safely_histogram_timed_update/3,
+         safely_histogram_timed_update/4,
+         safely_histogram_timed_notify/1
         ]).
 
 -include("folsom.hrl").
@@ -201,3 +205,24 @@ histogram_timed_notify({Name, Begin}) ->
     Now = os:timestamp(),
     Time = timer:now_diff(Now, Begin),
     ok = notify({Name, Time}).
+
+safely_histogram_timed_update(Name, Fun) ->
+    {Time, Value} = timer:tc(Fun),
+    _ = safely_notify({Name, Time}),
+    Value.
+
+safely_histogram_timed_update(Name, Fun, Args) ->
+    {Time, Value} = timer:tc(Fun, Args),
+    _ = safely_notify({Name, Time}),
+    Value.
+
+safely_histogram_timed_update(Name, Mod, Fun, Args) ->
+    {Time, Value} = timer:tc(Mod, Fun, Args),
+    _ = safely_notify({Name, Time}),
+    Value.
+
+safely_histogram_timed_notify({Name, Begin}) ->
+    Now = os:timestamp(),
+    Time = timer:now_diff(Now, Begin),
+    _ = safely_notify({Name, Time}),
+    ok.
