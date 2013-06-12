@@ -109,6 +109,11 @@ populate_metrics() ->
     meck:new(folsom_ets),
     meck:expect(folsom_ets, notify, fun(_Event) -> meck:exception(error, something_wrong_with_ets) end),
     {'EXIT', {something_wrong_with_ets, _}} = folsom_metrics:safely_notify({unknown_counter, {inc, 1}}),
+    ok = folsom_metrics:safely_histogram_timed_update(unknown_histogram, fun() -> ok end),
+    ok = folsom_metrics:safely_histogram_timed_update(unknown_histogram, fun(ok) -> ok end, [ok]),
+    3.141592653589793 = folsom_metrics:safely_histogram_timed_update(unknown_histogram, math, pi, []),
+    UnknownHistogramBegin = folsom_metrics:histogram_timed_begin(unknown_histogram),
+    ok = folsom_metrics:safely_histogram_timed_notify(UnknownHistogramBegin),
     meck:unload(folsom_ets),
 
     ok = folsom_metrics:notify({<<"gauge">>, 2}),
