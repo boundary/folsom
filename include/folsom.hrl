@@ -57,7 +57,7 @@
 
 -record(none, {
           size = ?DEFAULT_SIZE,
-          n = 0,
+          n = 1,
           reservoir = folsom_metrics_histogram_ets:new(folsom_none,[ordered_set, {write_concurrency, true}, public])
          }).
 
