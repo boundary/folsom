@@ -61,6 +61,12 @@
           reservoir = folsom_metrics_histogram_ets:new(folsom_none,[ordered_set, {write_concurrency, true}, public])
          }).
 
+-record(slide_sorted, {
+          size = ?DEFAULT_SIZE,
+          n = 0,
+          reservoir = folsom_metrics_histogram_ets:new(folsom_slide_sorted,[ordered_set, {write_concurrency, true}, public])
+         }).
+
 -record(histogram, {
           type = uniform,
           sample = #uniform{}
