@@ -40,6 +40,7 @@
          new_duration/3,
          new_duration/4,
          new_spiral/1,
+         new_simple_statistics/1,
          delete_metric/1,
          tag_metric/2,
          untag_metric/2,
@@ -92,6 +93,9 @@ new_histogram(Name, SampleType, SampleSize) ->
 
 new_histogram(Name, SampleType, SampleSize, Alpha) ->
     folsom_ets:add_handler(histogram, Name, SampleType, SampleSize, Alpha).
+
+new_simple_statistics(Name) ->
+    folsom_ets:add_handler(simple_statistics, Name).
 
 new_history(Name) ->
     folsom_metrics:new_history(Name, ?DEFAULT_SIZE).

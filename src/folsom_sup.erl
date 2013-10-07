@@ -89,10 +89,14 @@ init([]) ->
               {folsom_metrics_histogram_ets, start_link, []},
               Restart, Shutdown, Type, [folsom_metrics_histogram_ets]},
 
-    SlideSup = {folsom_sample_slide_sup, {folsom_sample_slide_sup, start_link, []},
-                permanent, 5000, supervisor, [folsom_sample_slide_sup]},
+    TimerSup = {folsom_timer_server_sup, {folsom_timer_server_sup, start_link, []},
+                permanent, 5000, supervisor, [folsom_timer_server_sup]},
 
-    {ok, {SupFlags, [SlideSup, TimerServer, HistETSServer]}}.
+    SimpleStatsTimer = {folsom_simple_statistics_cleaner,
+                           {folsom_timer_server, start_link, [?DEFAULT_STATS_CLEANER_INTERVAL, folsom_metrics_simple_statistics, expire_all, []]},
+                           permanent, 5000, supervisor, [folsom_timer_server]},
+
+    {ok, {SupFlags, [TimerSup, TimerServer, HistETSServer, SimpleStatsTimer]}}.
 
 %%%===================================================================
 %%% Internal functions
@@ -108,7 +112,8 @@ create_tables() ->
               {?METER_READER_TABLE, [set, named_table, public, {write_concurrency, true}]},
               {?HISTORY_TABLE, [set, named_table, public, {write_concurrency, true}]},
               {?DURATION_TABLE, [ordered_set, named_table, public, {write_concurrency, true}]},
-              {?SPIRAL_TABLE, [set, named_table, public, {write_concurrency, true}]}
+              {?SPIRAL_TABLE, [set, named_table, public, {write_concurrency, true}]},
+              {?SIMPLE_STATISTICS_TABLE, [set, named_table, public, {write_concurrency, true}]}
              ],
     [maybe_create_table(ets:info(Name), Name, Opts) || {Name, Opts} <- Tables],
     ok.

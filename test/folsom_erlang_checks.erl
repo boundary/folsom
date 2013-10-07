@@ -68,6 +68,8 @@ create_metrics() ->
     ok = folsom_metrics:new_histogram(timed, none, 5000),
     ok = folsom_metrics:new_histogram(timed2, none, 5000),
 
+    ok = folsom_metrics:new_simple_statistics(simple_statistics),
+
     ok = folsom_metrics:new_history(<<"history">>),
     ok = folsom_metrics:new_meter(meter),
 
@@ -90,9 +92,9 @@ create_metrics() ->
     2 = length(List),
 
     %% check a server got started for the spiral metric
-    1 = length(supervisor:which_children(folsom_sample_slide_sup)),
+    1 = length(supervisor:which_children(folsom_timer_server_sup)),
 
-    18 = length(folsom_metrics:get_metrics()),
+    19 = length(folsom_metrics:get_metrics()),
 
     ?debugFmt("~n~nmetrics: ~p~n", [folsom_metrics:get_metrics()]).
 
@@ -179,6 +181,9 @@ populate_metrics() ->
     % simulate an interval tick
     folsom_metrics_meter_reader:tick(meter_reader),
 
+
+    [ok = folsom_metrics:notify({simple_statistics, Item}) || Item <- [10, 20, 30, 40, 50]],
+
     folsom_metrics:notify_existing_metric(spiral, 100, spiral).
 
 check_metrics() ->
@@ -203,6 +208,8 @@ check_metrics() ->
 
     HugeHistogram = folsom_metrics:get_histogram_statistics(<<"hugedata">>),
     huge_histogram_checks(HugeHistogram),
+
+    [{count,5},{min,10},{max,50},{mean,30.0}] = folsom_metrics:get_metric_value(simple_statistics),
 
     % just check exdec for non-zero values
     Exdec = folsom_metrics:get_histogram_statistics(exdec),
@@ -302,7 +309,7 @@ check_group_metrics() ->
     {counter, 0} = lists:keyfind(counter,1,Metrics).
 
 delete_metrics() ->
-    20 = length(ets:tab2list(?FOLSOM_TABLE)),
+    21 = length(ets:tab2list(?FOLSOM_TABLE)),
 
     ok = folsom_metrics:delete_metric(counter),
     ok = folsom_metrics:delete_metric(counter2),
@@ -312,6 +319,7 @@ delete_metrics() ->
     ok = folsom_metrics:delete_metric(<<"uniform">>),
     ok = folsom_metrics:delete_metric(exdec),
     ok = folsom_metrics:delete_metric(none),
+    ok = folsom_metrics:delete_metric(simple_statistics),
 
     ok = folsom_metrics:delete_metric(<<"history">>),
     ok = folsom_metrics:delete_metric(historya),

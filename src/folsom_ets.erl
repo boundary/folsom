@@ -150,6 +150,8 @@ get_values(Name, counter) ->
     folsom_metrics_counter:get_value(Name);
 get_values(Name, gauge) ->
     folsom_metrics_gauge:get_value(Name);
+get_values(Name, simple_statistics) ->
+    folsom_metrics_simple_statistics:get_values(Name);
 get_values(Name, histogram) ->
     folsom_metrics_histogram:get_values(Name);
 get_values(Name, history) ->
@@ -190,6 +192,9 @@ maybe_add_handler(gauge, Name, false) ->
 maybe_add_handler(histogram, Name, false) ->
     true = folsom_metrics_histogram:new(Name),
     true = ets:insert(?FOLSOM_TABLE, {Name, #metric{type = histogram}}),
+    ok;
+maybe_add_handler(simple_statistics, Name, false) ->
+    true = ets:insert(?FOLSOM_TABLE, {Name, #metric{type = simple_statistics}}),
     ok;
 maybe_add_handler(duration, Name, false) ->
     true = folsom_metrics_histogram:new(Name),
@@ -273,6 +278,9 @@ delete_metric(Name, histogram) ->
     Metric = folsom_metrics_histogram:get_value(Name),
     ok = delete_histogram(Name, Metric),
     ok;
+delete_metric(Name, simple_statistics) ->
+    true = ets:delete(?FOLSOM_TABLE, Name),
+    ok;
 delete_metric(Name, duration) ->
     Histo = folsom_metrics_histogram:get_value(Name),
     ok = delete_histogram(Name, Histo),
@@ -299,7 +307,7 @@ delete_metric(Name, meter_reader) ->
     ok;
 delete_metric(Name, spiral) ->
     #spiral{tid=Tid, server=Pid} = folsom_metrics_spiral:get_value(Name),
-    folsom_sample_slide_server:stop(Pid),
+    folsom_timer_server_sup:stop_timer(Pid),
     ets:delete(?SPIRAL_TABLE, Name),
     ets:delete(?FOLSOM_TABLE, Name),
     ets:delete(Tid),
@@ -325,13 +333,13 @@ delete_histogram(Name, #histogram{type = exdec}) ->
     true = ets:delete(?FOLSOM_TABLE, Name),
     ok;
 delete_histogram(Name, #histogram{type = slide, sample = #slide{reservoir = Reservoir, server=Pid}}) ->
-    folsom_sample_slide_server:stop(Pid),
+    folsom_timer_server_sup:stop_timer(Pid),
     true = ets:delete(?HISTOGRAM_TABLE, Name),
     true = ets:delete(?FOLSOM_TABLE, Name),
     true = ets:delete(Reservoir),
     ok;
 delete_histogram(Name, #histogram{type = slide_uniform, sample = #slide_uniform{reservoir = Reservoir, server=Pid}}) ->
-    folsom_sample_slide_server:stop(Pid),
+    folsom_timer_server_sup:stop_timer(Pid),
     true = ets:delete(?HISTOGRAM_TABLE, Name),
     true = ets:delete(?FOLSOM_TABLE, Name),
     true = ets:delete(Reservoir),
@@ -377,6 +385,13 @@ notify(Name, Value, histogram, true) ->
 notify(Name, Value, histogram, false) ->
     add_handler(histogram, Name),
     folsom_metrics_histogram:update(Name, Value),
+    ok;
+notify(Name, Value, simple_statistics, true) ->
+    folsom_metrics_simple_statistics:update(Name, Value),
+    ok;
+notify(Name, Value, simple_statistics, false) ->
+    add_handler(simple_statistics, Name),
+    folsom_metrics_simple_statistics:update(Name, Value),
     ok;
 notify(Name, Value, history, true) ->
     [{_, #metric{history_size = HistorySize}}] = ets:lookup(?FOLSOM_TABLE, Name),

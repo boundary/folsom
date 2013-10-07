@@ -40,9 +40,8 @@
 
 new(Name) ->
     Spiral = #spiral{},
-    Pid = folsom_sample_slide_sup:start_slide_server(?MODULE,
-                                                           Spiral#spiral.tid,
-                                                           ?WINDOW),
+    Interval = timer:seconds(?WINDOW) div 2,
+    Pid = folsom_timer_server_sup:start_timer(Interval, ?MODULE, trim, [Spiral#spiral.tid, ?WINDOW]),
     ets:insert_new(Spiral#spiral.tid,
                    [{{count, N}, 0} || N <- lists:seq(0,?WIDTH-1)]),
     ets:insert(?SPIRAL_TABLE, {Name, Spiral#spiral{server=Pid}}).

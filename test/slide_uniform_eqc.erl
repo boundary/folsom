@@ -144,7 +144,7 @@ new_histo() ->
     Ref = make_ref(),
     folsom_metrics:new_histogram(Ref, slide_uniform, {?WINDOW, ?SIZE}),
     #histogram{sample=Slide} = folsom_metrics_histogram:get_value(Ref),
-    ok = folsom_sample_slide_server:stop(Slide#slide_uniform.server),
+    ok = folsom_timer_server_sup:stop_timer(Slide#slide_uniform.server),
     {Ref, Slide}.
 
 tick(Moment) ->

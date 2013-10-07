@@ -112,6 +112,13 @@ This is a sliding window in time over a stream of readings with a random uniform
 
     > folsom_metrics:new_histogram(Name, slide_uniform, {Secs::interger(), Size::integer()).
 
+##### Simple statistics
+
+Simple statistics is a counter to calculate min/max/mean for the one minute sliding window. It uses one ets table, works fast and consumes much less memory than slide uniform histograms.
+
+      > folsom_metrics:new_simple_statistics(Name).
+      > folsom_metrics:notify({Name, Value}).
+
 ##### Histories
 
 Histories are a collection of past events, such as errors or log messages.
