@@ -8,7 +8,8 @@
                 folsom_sup]},
   {applications, [
                   kernel,
-                  stdlib
+                  stdlib,
+                  bear
                  ]},
   {env, []},
   {mod, {folsom, []}}
