@@ -70,17 +70,17 @@ get_dets_info() ->
 convert_statistics({context_switches, {ContextSwitches, 0}}) ->
     ContextSwitches;
 convert_statistics({garbage_collection, {NumberofGCs, WordsReclaimed, 0}}) ->
-    [{"number_of_gcs", NumberofGCs}, {"words_reclaimed", WordsReclaimed}];
+    [{number_of_gcs, NumberofGCs}, {words_reclaimed, WordsReclaimed}];
 convert_statistics({io, {Input, Output}}) ->
     [Input, Output];
 convert_statistics({reductions, {TotalReductions, ReductionsSinceLastCall}}) ->
-    [{"total_reductions", TotalReductions},
-     {"reductions_since_last_call", ReductionsSinceLastCall}];
+    [{total_reductions, TotalReductions},
+     {reductions_since_last_call, ReductionsSinceLastCall}];
 convert_statistics({runtime, {TotalRunTime, TimeSinceLastCall}}) ->
-    [{"total_run_time", TotalRunTime}, {"time_since_last_call", TimeSinceLastCall}];
+    [{total_run_time, TotalRunTime}, {time_since_last_call, TimeSinceLastCall}];
 convert_statistics({wall_clock, {TotalWallclockTime, WallclockTimeSinceLastCall}}) ->
-    [{"Total_Wall_Clock_time", TotalWallclockTime},
-     {"wall_clock_time_since_last_call", WallclockTimeSinceLastCall}];
+    [{total_wall_clock_time, TotalWallclockTime},
+     {wall_clock_time_since_last_call, WallclockTimeSinceLastCall}];
 convert_statistics({_, Value}) ->
     Value.
 
