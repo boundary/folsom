@@ -465,7 +465,7 @@ cpu_topology() ->
 
 run_convert_and_jsonify(Item) ->
     ?debugFmt("Converting ... ~n~p~n", [Item]),
-    Result = folsom_vm_metrics:convert_system_info({cpu_topology, Item}),
+    Result = folsom_vm_metrics:convert_system_info(cpu_topology, Item),
     %?debugFmt("~p~n", [mochijson2:encode(Result)]).
     mochijson2:encode(Result).
 
@@ -478,7 +478,7 @@ c_compiler_used() ->
                 [{compiler, gnuc}, {version, <<"4.4">>}],
                 [{compiler, msc}, {version, <<"1600">>}]],
 
-    ?assertEqual(Expected, [folsom_vm_metrics:convert_system_info({c_compiler_used, {Compiler, Version}})
+    ?assertEqual(Expected, [folsom_vm_metrics:convert_system_info(c_compiler_used, {Compiler, Version})
                              || {Compiler, Version} <- Test]).
 
 
