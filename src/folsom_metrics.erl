@@ -46,9 +46,11 @@
          notify/1,
          notify/2,
          notify/3,
+         notify/4,
          safely_notify/1,
          safely_notify/2,
          safely_notify/3,
+         safely_notify/4,
          notify_existing_metric/3,
          get_metrics/0,
          metric_exists/1,
@@ -60,6 +62,7 @@
          get_histogram_statistics/1,
          get_histogram_statistics/2,
          get_history_values/2,
+         get_tags/1,
          histogram_timed_update/2,
          histogram_timed_update/3,
          histogram_timed_update/4,
@@ -140,6 +143,9 @@ notify(Name, Event) ->
 notify(Name, Event, Type) ->
     folsom_ets:notify(Name, Event, Type).
 
+notify(Name, Event, Type, Tags) ->
+    folsom_ets:tagged_notify(Name, Event, Type, Tags).
+
 safely_notify(Event) ->
   catch notify(Event).
 
@@ -148,6 +154,9 @@ safely_notify(Name, Event) ->
 
 safely_notify(Name, Event, Type) ->
   catch notify(Name, Event, Type).
+
+safely_notify(Name, Event, Type, Tags) ->
+  catch notify(Name, Event, Type, Tags).
 
 notify_existing_metric(Name, Event, Type) ->
     folsom_ets:notify_existing_metric(Name, Event, Type).
@@ -184,6 +193,9 @@ get_histogram_statistics(Name1, Name2) ->
 
 get_history_values(Name, Count) ->
     folsom_ets:get_history_values(Name, Count).
+
+get_tags(Name) ->
+    folsom_ets:get_tags(Name).
 
 histogram_timed_update(Name, Fun) ->
     {Time, Value} = timer:tc(Fun),
