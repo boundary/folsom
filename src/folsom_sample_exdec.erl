@@ -26,7 +26,7 @@
 %%%
 %%% that implementation is based on:
 %%%
-%%% http://www.research.att.com/people/Cormode_Graham/library/publications/CormodeShkapenyukSrivastavaXu09.pdf
+%%% http://dimacs.rutgers.edu/~graham/pubs/papers/fwddecay.pdf
 %%% @end
 %%%------------------------------------------------------------------
 
