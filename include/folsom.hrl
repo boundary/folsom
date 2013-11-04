@@ -7,6 +7,7 @@
 -define(HISTORY_TABLE, folsom_histories).
 -define(DURATION_TABLE, folsom_durations).
 -define(SPIRAL_TABLE, folsom_spirals).
+-define(SIMPLE_STATISTICS_TABLE, folsom_simple_statistics).
 
 -define(DEFAULT_LIMIT, 5).
 -define(DEFAULT_SIZE, 1028). % mimic codahale's metrics
@@ -14,6 +15,10 @@
 -define(DEFAULT_ALPHA, 0.015). % mimic codahale's metrics
 -define(DEFAULT_INTERVAL, 5000).
 -define(DEFAULT_SAMPLE_TYPE, uniform).
+
+-define(DEFAULT_STATS_CLEANER_INTERVAL, 30000).
+-define(DEFAULT_STATS_INTERVAL, 10).
+-define(DEFAULT_STATS_SLIDE_SIZE, 6).
 
 -record(spiral, {
           tid = folsom_metrics_histogram_ets:new(folsom_spiral,

@@ -1,6 +1,6 @@
 %% -------------------------------------------------------------------
 %%
-%% Copyright (c) 2011 Basho Technologies, Inc.
+%% Copyright (c) 2011, Basho Technologies, Inc.
 %%
 %% This file is provided to you under the Apache License,
 %% Version 2.0 (the "License"); you may not use this file
@@ -18,56 +18,54 @@
 %%
 %% -------------------------------------------------------------------
 %%%-------------------------------------------------------------------
-%%% File:      folsom_sample_slide_server.erl
-%%% @author    Russell Brown <russelldb@basho.com>
+%%% File:      folsom_timer_server.erl
+%%% @author    Russell Brown <russelldb@basho.com>,
+%%%            Andrey Vasenin <vasenin@aboutecho.com>
 %%% @doc
-%%% Serialization point for folsom_sample_slide. Handles
-%%% pruning of older smaples. One started per histogram.
-%%% See folsom.hrl, folsom_sample_slide, folsom_sample_slide_sup
+%%% Evaluates apply(Module, Function, Arguments) repeatedly at intervals of Time.
 %%% @end
 %%%-----------------------------------------------------------------
--module(folsom_sample_slide_server).
+
+-module(folsom_timer_server).
 
 -behaviour(gen_server).
 
 %% API
--export([start_link/3, stop/1]).
-
--record(state, {sample_mod,  reservoir, window}).
+-export([start_link/4, stop/1]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
          terminate/2, code_change/3]).
 
-start_link(SampleMod, Reservoir, Window) ->
-    gen_server:start_link(?MODULE, [SampleMod, Reservoir, Window], []).
+-record(state, {time, module, func, args, timer_pid}).
+
+start_link(Time, Module, Func, Args) ->
+    gen_server:start_link(?MODULE, [Time, Module, Func, Args], []).
 
 stop(Pid) ->
     gen_server:cast(Pid, stop).
 
-init([SampleMod, Reservoir, Window]) ->
-    {ok, #state{sample_mod = SampleMod, reservoir = Reservoir, window = Window}, timeout(Window)}.
+init([Time, Module, Func, Args]) ->
+    Pid = erlang:send_after(Time, self(), tick),
+    {ok, #state{time = Time, timer_pid = Pid, module = Module, func = Func, args = Args}}.
 
-handle_call(_Request, _From, State) ->
-    Reply = ok,
-    {reply, Reply, State}.
+handle_call(_Request, _From, State) -> {reply, ok, State}.
 
 handle_cast(stop, State) ->
     {stop, normal, State};
 handle_cast(_Msg, State) ->
     {noreply, State}.
 
-handle_info(timeout, State=#state{sample_mod = SampleMod, reservoir = Reservoir, window = Window}) ->
-    SampleMod:trim(Reservoir, Window),
-    {noreply, State, timeout(Window)};
-handle_info(_Info, State) ->
-    {noreply, State}.
+handle_info(tick, State=#state{time = Time, module = Module, func = Func, args = Args, timer_pid = OldTimer}) ->
+    erlang:cancel_timer(OldTimer),
+    apply(Module, Func, Args),
+    Pid = erlang:send_after(Time, self(), tick),
+    {noreply, State#state{timer_pid = Pid}};
+handle_info(_Info, State) -> {noreply, State}.
 
-terminate(_Reason, _State) ->
+terminate(_Reason, #state{timer_pid = Pid}) ->
+    erlang:cancel_timer(Pid),
     ok.
 
 code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
-
-timeout(Window) ->
-    timer:seconds(Window) div 2.

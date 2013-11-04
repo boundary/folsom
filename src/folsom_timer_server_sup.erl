@@ -1,6 +1,6 @@
 %% -------------------------------------------------------------------
 %%
-%% Copyright (c) 2011 Basho Technologies, Inc.
+%% Copyright (c) 2011, Basho Technologies, Inc.
 %%
 %% This file is provided to you under the Apache License,
 %% Version 2.0 (the "License"); you may not use this file
@@ -18,34 +18,35 @@
 %%
 %% -------------------------------------------------------------------
 %%%-------------------------------------------------------------------
-%%% File:      folsom_sample_slide_sup.erl
-%%% @author    Russell Brown <russelldb@basho.com>
+%%% File:      folsom_timer_server_sup.erl
+%%% @author    Russell Brown <russelldb@basho.com>,
+%%%            Andrey Vasenin <vasenin@aboutecho.com>
 %%% @doc
-%%% Starts simple_one_for_one children per slide sample
+%%% Supervisor for folsom's timers. It starts simple_one_to_one timer's
+%%% child specs
 %%% @end
 %%%-----------------------------------------------------------------
--module(folsom_sample_slide_sup).
+-module(folsom_timer_server_sup).
 -behaviour(supervisor).
 
-%% beahvior functions
--export([start_link/0,
-         init/1
-        ]).
+-export([start_link/0, init/1 ]).
 
-%% public functions
--export([start_slide_server/3]).
+-export([start_timer/4, stop_timer/1]).
 
 start_link () ->
     supervisor:start_link({local,?MODULE},?MODULE,[]).
 
-start_slide_server(SampleMod, Reservoir, Window) ->
-    {ok, Pid} = supervisor:start_child(?MODULE, [SampleMod, Reservoir, Window]),
+start_timer(Time, Module, Function, Args) ->
+    {ok, Pid} = supervisor:start_child(?MODULE, [Time, Module, Function, Args]),
     Pid.
 
-%% @private
+stop_timer(Pid) ->
+    folsom_timer_server:stop(Pid).
+
 init ([]) ->
     {ok,{{simple_one_for_one, 3, 180},
          [
-          {undefined, {folsom_sample_slide_server, start_link, []},
+          {undefined, {folsom_timer_server, start_link, []},
            transient, brutal_kill, worker, [folsom_sample_slide_server]}
          ]}}.
+

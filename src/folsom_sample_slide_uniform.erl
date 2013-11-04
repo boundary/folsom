@@ -35,7 +35,8 @@
 
 new({Window, SampleSize}) ->
     Sample = #slide_uniform{window = Window, size = SampleSize},
-    Pid = folsom_sample_slide_sup:start_slide_server(?MODULE, Sample#slide_uniform.reservoir, Sample#slide_uniform.window),
+    Interval = timer:seconds(Sample#slide_uniform.window) div 2,
+    Pid = folsom_timer_server_sup:start_timer(Interval, ?MODULE, trim, [Sample#slide_uniform.reservoir, Sample#slide_uniform.window]),
     Sample#slide_uniform{server=Pid}.
 
 update(#slide_uniform{reservoir = Reservoir, size = Size} = Sample0, Value) ->

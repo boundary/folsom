@@ -56,7 +56,7 @@ exercise() ->
     %% unless we call trim
     %% so kill the trim server process
     #histogram{sample=Slide} = folsom_metrics_histogram:get_value(?HISTO),
-    ok = folsom_sample_slide_server:stop(Slide#slide.server),
+    ok = folsom_timer_server_sup:stop_timer(Slide#slide.server),
     Moments = lists:seq(1, ?RUNTIME),
     %% pump in 90 seconds worth of readings
     Moment = lists:foldl(fun(_X, Tick) ->
