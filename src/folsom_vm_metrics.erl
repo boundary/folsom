@@ -230,7 +230,11 @@ get_socket_sockname(Socket) ->
     end.
 
 get_ets_dets_info(Type, Tab) ->
-    [{Key, pid_port_fun_to_atom(Value)} || {Key, Value} <- Type:info(Tab)].
+    case Type:info(Tab) of
+        undefined -> [];
+        Entries when is_list(Entries) ->
+            [{Key, pid_port_fun_to_atom(Value)} || {Key, Value} <- Entries]
+    end.
 
 ip_to_binary(Tuple) ->
     iolist_to_binary(string:join(lists:map(fun integer_to_list/1, tuple_to_list(Tuple)), ".")).
