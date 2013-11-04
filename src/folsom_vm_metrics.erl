@@ -46,10 +46,10 @@ get_memory() ->
     erlang:memory().
 
 get_statistics() ->
-    [{Key, convert_statistics({Key, erlang:statistics(Key)})} || Key <- ?STATISTICS].
+    [{Key, convert_statistics({Key, get_statistics(Key)})} || Key <- ?STATISTICS].
 
 get_system_info() ->
-    [{Key, convert_system_info({Key, erlang:system_info(Key)})} || Key <- ?SYSTEM_INFO].
+    [{Key, convert_system_info({Key, get_system_info(Key)})} || Key <- ?SYSTEM_INFO].
 
 get_process_info() ->
     [{pid_port_fun_to_atom(Pid), get_process_info(Pid)} || Pid <- processes()].
@@ -64,6 +64,19 @@ get_dets_info() ->
     [{Tab, get_ets_dets_info(dets, Tab)} || Tab <- dets:all()].
 
 % internal functions
+
+% wrap system_info and statistics in a try/catch in case keys are missing
+% in old/new versions of erlang
+
+get_system_info(Key) ->
+    try erlang:system_info(Key) catch
+                                    error:badarg->undefined
+                                end.
+
+get_statistics(Key) ->
+    try erlang:statistics(Key) catch
+                                   error:badarg->undefined
+                               end.
 
 %% conversion functions for erlang:statistics(Key)
 
