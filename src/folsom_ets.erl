@@ -413,7 +413,7 @@ notify(Name, Value, meter_reader, true) ->
     folsom_metrics_meter_reader:mark(Name, Value),
     ok;
 notify(Name, Value, meter_reader, false) ->
-    add_handler(meter, Name),
+    add_handler(meter_reader, Name),
     folsom_metrics_meter_reader:mark(Name, Value),
     ok;
 notify(Name, Value, duration, true) ->
