@@ -1,7 +1,7 @@
 %% -*- mode: erlang -*-
 {application, folsom,
  [
-  {description, ""},
+  {description, "Erlang based metrics system"},
   {vsn, git},
   {registered, [folsom_meter_timer_server,
                 folsom_metrics_histogram_ets,
