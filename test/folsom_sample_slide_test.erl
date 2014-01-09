@@ -44,8 +44,11 @@ slide_test_() ->
        fun create/0},
       {"test sliding window",
        {timeout, 30, fun exercise/0}},
-      {"resize sliding window",
-       {timeout, 30, fun resize_window/0}}
+      {"resize sliding window (expand)",
+       {timeout, 30, fun expand_window/0}},
+      {"resize sliding window (shrink)",
+       {timeout, 30, fun shrink_window/0}}
+
      ]}.
 
 create() ->
@@ -91,7 +94,7 @@ exercise() ->
     check_table(Slide, []),
     ok.
 
-resize_window() ->
+expand_window() ->
     %% create a new histogram
     %% will leave the trim server running, as resize() needs it
     ok = folsom_metrics:new_histogram(?HISTO2, slide, ?WINDOW),
@@ -114,7 +117,7 @@ resize_window() ->
     Values = lists:sort(folsom_sample_slide:get_values(Slide)),
     ?assertEqual(ExpectedValues, Values),
 
-    %%resize the sliding window
+    %%expand the sliding window
     NewSlide = folsom_sample_slide:resize(Slide, ?DOUBLE_WINDOW),
 
     %% get values only returns last ?WINDOW*2 seconds
@@ -135,6 +138,54 @@ resize_window() ->
     %% trim, and table should be empty
     Trimmed2 = folsom_sample_slide:trim(NewSlide#slide.reservoir, ?DOUBLE_WINDOW),
     ?assertEqual((?RUNTIME * ?READINGS) - ((?RUNTIME - ?DOUBLE_WINDOW - 1) * ?READINGS), Trimmed2),
+    check_table(NewSlide, []),
+    ok = folsom_metrics:delete_metric(?HISTO2).
+
+
+shrink_window() ->
+    %% create a new histogram
+    %% will leave the trim server running, as resize() needs it
+    ok = folsom_metrics:new_histogram(?HISTO2, slide, ?DOUBLE_WINDOW),
+    #histogram{sample=Slide} = folsom_metrics_histogram:get_value(?HISTO2),
+    Moments = lists:seq(1, ?RUNTIME ),
+    %% pump in 90 seconds worth of readings
+    Moment = lists:foldl(fun(_X, Tick) ->
+                                 Tock = tick(Tick),
+                                 [folsom_sample_slide:update(Slide, N) ||
+                                     N <- lists:duplicate(?READINGS, Tock)],
+                                 Tock end,
+                         0,
+                         Moments),
+    %% are all readings in the table?
+    check_table(Slide, Moments),
+    
+    %% get values only returns last ?DOUBLE_WINDOW seconds
+    ExpectedValues = lists:sort(lists:flatten([lists:duplicate(?READINGS, N) ||
+                                                  N <- lists:seq(?RUNTIME - ?DOUBLE_WINDOW, ?RUNTIME)])),
+    Values = lists:sort(folsom_sample_slide:get_values(Slide)),
+    ?assertEqual(ExpectedValues, Values),
+
+    %%shrink the sliding window
+    NewSlide = folsom_sample_slide:resize(Slide, ?WINDOW),
+
+    %% get values only returns last ?WINDOW*2 seconds
+    NewExpectedValues = lists:sort(lists:flatten([lists:duplicate(?READINGS, N) ||
+                                                  N <- lists:seq(?RUNTIME - ?WINDOW, ?RUNTIME)])),
+    NewValues = lists:sort(folsom_sample_slide:get_values(NewSlide)),
+    ?assertEqual(NewExpectedValues, NewValues),
+    
+    
+    %% trim the table
+    Trimmed = folsom_sample_slide:trim(NewSlide#slide.reservoir, ?WINDOW),
+    ?assertEqual((?RUNTIME - ?WINDOW - 1) * ?READINGS, Trimmed),
+    check_table(NewSlide, lists:seq(?RUNTIME - ?WINDOW, ?RUNTIME)),
+    %% increment the clock past the window
+    tick(Moment, ?WINDOW*2),
+    %% get values should be empty
+    ?assertEqual([], folsom_sample_slide:get_values(NewSlide)),
+    %% trim, and table should be empty
+    Trimmed2 = folsom_sample_slide:trim(NewSlide#slide.reservoir, ?WINDOW),
+    ?assertEqual((?RUNTIME * ?READINGS) - ((?RUNTIME - ?WINDOW - 1) * ?READINGS), Trimmed2),
     check_table(NewSlide, []),
     ok.
 

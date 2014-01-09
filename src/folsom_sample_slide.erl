@@ -29,7 +29,7 @@
          get_values/1,
          moment/0,
          trim/2,
-	 resize/2
+         resize/2
         ]).
 
 -include("folsom.hrl").
