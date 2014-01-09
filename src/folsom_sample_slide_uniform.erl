@@ -28,7 +28,8 @@
          update/2,
          get_values/1,
          moment/0,
-         trim/2
+         trim/2,
+         resize/2
         ]).
 
 -include("folsom.hrl").
@@ -52,6 +53,10 @@ update(#slide_uniform{reservoir = Reservoir, size = Size} = Sample0, Value) ->
                       Sample0
     end,
     Sample.
+
+resize(Sample, NewSize) ->
+    folsom_sample_slide_server:resize(Sample#slide.server, NewSize),
+    Sample#slide{window = NewSize}.
 
 maybe_update(Reservoir, {{_Moment, Rnd}, _Value}=Obj, Size) when Rnd =< Size ->
     ets:insert(Reservoir, Obj);

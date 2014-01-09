@@ -31,7 +31,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/3, stop/1]).
+-export([start_link/3, stop/1, resize/2]).
 
 -record(state, {sample_mod,  reservoir, window}).
 
@@ -48,6 +48,13 @@ stop(Pid) ->
 init([SampleMod, Reservoir, Window]) ->
     {ok, #state{sample_mod = SampleMod, reservoir = Reservoir, window = Window}, timeout(Window)}.
 
+resize(Pid, NewWindow) ->
+    gen_server:call(Pid, {resize, NewWindow}).
+
+handle_call({resize, NewWindow}, _From, State) ->
+    NewState = State#state{window=NewWindow},
+    Reply = ok,
+    {reply, Reply, NewState, timeout(NewWindow)};
 handle_call(_Request, _From, State) ->
     Reply = ok,
     {reply, Reply, State}.

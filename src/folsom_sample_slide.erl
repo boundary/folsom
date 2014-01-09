@@ -28,7 +28,8 @@
          update/2,
          get_values/1,
          moment/0,
-         trim/2
+         trim/2,
+         resize/2
         ]).
 
 -include("folsom.hrl").
@@ -46,6 +47,10 @@ update(#slide{reservoir = Reservoir} = Sample, Value) ->
     Rnd = X band (?WIDTH-1),
     ets:insert(Reservoir, {{Moment, Rnd}, Value}),
     Sample.
+
+resize(Sample, NewSize) ->
+    folsom_sample_slide_server:resize(Sample#slide.server, NewSize),
+    Sample#slide{window = NewSize}.
 
 get_values(#slide{window = Window, reservoir = Reservoir}) ->
     Oldest = moment() - Window,
