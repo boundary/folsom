@@ -42,6 +42,7 @@ start(_Type, _Args) ->
        {histogram, new_histogram},
        {history, new_history},
        {meter, new_meter},
+       {spiral, new_spiral},
        {meter_reader, new_meter_reader}]),
     {ok, Pid}.
 
