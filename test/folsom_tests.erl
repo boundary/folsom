@@ -28,8 +28,10 @@
 
 run_test_() ->
     {setup,
-     fun () -> folsom:start() end,
-     fun (_) -> folsom:stop() end,
+     fun() -> {ok, Apps} = application:ensure_all_started(folsom),
+              Apps
+     end,
+     fun(Apps) -> [application:stop(App) || App <- Apps] end,
      [{"creating metrics",
        fun folsom_erlang_checks:create_metrics/0},
       {"tagging metrics",

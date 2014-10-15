@@ -35,11 +35,13 @@
 
 slide_test_() ->
     {setup,
-     fun () -> folsom:start(),
-               meck:new(folsom_utils)
+     fun () -> {ok, Apps} = application:ensure_all_started(folsom),
+               meck:new(folsom_utils),
+               Apps
      end,
-     fun (_) -> meck:unload(folsom_utils),
-                folsom:stop() end,
+     fun (Apps) -> meck:unload(folsom_utils),
+                   [application:stop(App) || App <- Apps]
+     end,
      [{"Create sliding window",
        fun create/0},
       {"test sliding window",
