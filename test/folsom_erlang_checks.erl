@@ -119,7 +119,7 @@ populate_metrics() ->
     ok = folsom_metrics:safely_histogram_timed_update(unknown_histogram, fun(ok) -> ok end, [ok]),
     3.141592653589793 = folsom_metrics:safely_histogram_timed_update(unknown_histogram, math, pi, []),
     UnknownHistogramBegin = folsom_metrics:histogram_timed_begin(unknown_histogram),
-    ok = folsom_metrics:safely_histogram_timed_notify(UnknownHistogramBegin),
+    {error, unknown_histogram, nonexistent_metric} = folsom_metrics:safely_histogram_timed_notify(UnknownHistogramBegin),
     meck:unload(folsom_ets),
 
     ok = folsom_metrics:notify({<<"gauge">>, 2}),

@@ -238,5 +238,4 @@ safely_histogram_timed_update(Name, Mod, Fun, Args) ->
 safely_histogram_timed_notify({Name, Begin}) ->
     Now = os:timestamp(),
     Time = timer:now_diff(Now, Begin),
-    _ = safely_notify({Name, Time}),
-    ok.
+    safely_notify({Name, Time}).
