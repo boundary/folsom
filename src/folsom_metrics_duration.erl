@@ -71,5 +71,6 @@ get_value(Name) ->
 get_values(Name) ->
     Values = folsom_metrics_histogram:get_values(Name),
     {Name, Cnt, _Start, Last} = get_value(Name),
-    Stats = bear:get_statistics(Values),
+    WantedMetrics = application:get_env(folsom, enabled_metrics, ?DEFAULT_METRICS),
+    Stats = bear:get_statistics_subset(Values, WantedMetrics),
     [{count, Cnt}, {last, Last} | Stats].

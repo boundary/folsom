@@ -188,7 +188,8 @@ get_metric_value(Name) ->
 
 get_histogram_statistics(Name) ->
     Values = folsom_ets:get_values(Name),
-    bear:get_statistics(Values).
+    WantedMetrics = application:get_env(folsom, enabled_metrics, ?DEFAULT_METRICS),
+    bear:get_statistics_subset(Values, WantedMetrics).
 
 get_histogram_statistics(Name1, Name2) ->
     Values1 = get_metric_value(Name1),
