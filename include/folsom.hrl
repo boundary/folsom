@@ -20,7 +20,9 @@
                                                  [set,
                                                   {write_concurrency, true},
                                                   public]),
-          server
+          server,
+          update = update_counter :: update_counter |
+                                     update_counter_no_exception
          }).
 
 -record(slide, {

@@ -40,6 +40,7 @@
          new_duration/3,
          new_duration/4,
          new_spiral/1,
+         new_spiral/2,
          delete_metric/1,
          tag_metric/2,
          untag_metric/2,
@@ -124,6 +125,9 @@ new_duration(Name, SampleType, SampleSize, Alpha) ->
 
 new_spiral(Name) ->
     folsom_ets:add_handler(spiral, Name).
+
+new_spiral(Name, Update) ->
+    folsom_ets:add_handler(spiral, Name, Update).
 
 tag_metric(Name, Tag) ->
     folsom_ets:tag_handler(Name, Tag).

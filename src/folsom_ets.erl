@@ -242,6 +242,10 @@ maybe_add_handler(history, Name, SampleSize, false) ->
     ok = folsom_metrics_history:new(Name),
     true = ets:insert(?FOLSOM_TABLE, {Name, #metric{type = history, history_size = SampleSize}}),
     ok;
+maybe_add_handler(spiral, Name, Update, false) ->
+    true = folsom_metrics_spiral:new(Name, Update),
+    true = ets:insert(?FOLSOM_TABLE, {Name, #metric{type = spiral}}),
+    ok;
 maybe_add_handler(Type, _, _, false) ->
     {error, Type, unsupported_metric_type};
 maybe_add_handler(_, Name, _, true) ->

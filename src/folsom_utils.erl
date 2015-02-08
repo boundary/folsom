@@ -32,7 +32,8 @@
          now_epoch_micro/0,
          timestamp/0,
          get_ets_size/1,
-         update_counter/3
+         update_counter/3,
+         update_counter_no_exceptions/3
         ]).
 
 to_atom(Binary) when is_binary(Binary) ->
@@ -79,4 +80,25 @@ update_counter(Tid, Key, Value) when is_integer(Value) ->
                     %% someone beat us to it
                     ets:update_counter(Tid, Key, Value)
             end
+    end.
+
+%% @doc
+%% Same as {@link ets:update_counter/3} but inserts `{Key, Value}' if object
+%% is missing in the table, avoiding exceptions by reading first.
+%% Won't be required after https://github.com/erlang/otp/pull/362
+update_counter_no_exceptions(Tid, Key, Value) when is_integer(Value) ->
+    %% Read counter first to avoid an exception
+    case ets:lookup(Tid, Key) of
+        [] ->
+            %% row didn't exist, create it
+            %% use insert_new to avoid races
+            case ets:insert_new(Tid, {Key, Value}) of
+                true ->
+                    Value;
+                false ->
+                    %% someone beat us to it
+                    ets:update_counter(Tid, Key, Value)
+            end;
+        _ ->
+            ets:update_counter(Tid, Key, Value)
     end.
