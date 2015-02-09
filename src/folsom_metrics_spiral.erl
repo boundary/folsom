@@ -26,6 +26,7 @@
 -module(folsom_metrics_spiral).
 
 -export([new/1,
+         new/2,
          update/2,
          trim/2,
          get_value/1,
@@ -39,7 +40,16 @@
 -include("folsom.hrl").
 
 new(Name) ->
-    Spiral = #spiral{},
+    new(Name, fast).
+
+new(Name, Update) when Update == fast orelse Update == no_exceptions ->
+    UpdateFun = case Update of
+                    fast ->
+                        update_counter;
+                    no_exceptions ->
+                        update_counter_no_exceptions
+                end,
+    Spiral = #spiral{update=UpdateFun},
     Pid = folsom_sample_slide_sup:start_slide_server(?MODULE,
                                                            Spiral#spiral.tid,
                                                            ?WINDOW),
@@ -48,11 +58,11 @@ new(Name) ->
     ets:insert(?SPIRAL_TABLE, {Name, Spiral#spiral{server=Pid}}).
 
 update(Name, Value) ->
-    #spiral{tid=Tid} = get_value(Name),
+    #spiral{tid=Tid, update=Update} = get_value(Name),
     Moment = folsom_utils:now_epoch(),
     X = erlang:system_info(scheduler_id),
     Rnd = X band (?WIDTH-1),
-    folsom_utils:update_counter(Tid, {Moment, Rnd}, Value),
+    folsom_utils:Update(Tid, {Moment, Rnd}, Value),
     ets:update_counter(Tid, {count, Rnd}, Value).
 
 get_value(Name) ->
