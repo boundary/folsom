@@ -112,6 +112,7 @@
                       multi_scheduling,
                       multi_scheduling_blockers,
                       otp_release,
+                      port_count,
                       process_count,
                       process_limit,
                       scheduler_bind_type,
