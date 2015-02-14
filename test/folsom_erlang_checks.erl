@@ -369,6 +369,7 @@ vm_metrics() ->
 
     List3 = folsom_vm_metrics:get_system_info(),
     true = lists:keymember(allocated_areas, 1, List3),
+    true = lists:keymember(port_count, 1, List3),
 
     [{_, [{backtrace, _}| _]} | _] = folsom_vm_metrics:get_process_info(),
 
