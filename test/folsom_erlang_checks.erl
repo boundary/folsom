@@ -211,6 +211,13 @@ check_metrics() ->
     Histogram1 = folsom_metrics:get_histogram_statistics(<<"uniform">>),
     histogram_checks(Histogram1),
 
+    MetricsSubset = [min, max],
+
+    ok = set_enabled_metrics(MetricsSubset),
+    Histogram2 = folsom_metrics:get_histogram_statistics(<<"uniform">>),
+    subset_checks(Histogram2, MetricsSubset),
+    ok = set_enabled_metrics(?DEFAULT_METRICS),
+
     HugeHistogram = folsom_metrics:get_histogram_statistics(<<"hugedata">>),
     huge_histogram_checks(HugeHistogram),
 
@@ -270,6 +277,11 @@ check_metrics() ->
     %% check duration
     Dur = folsom_metrics:get_metric_value(duration),
     duration_check(Dur),
+
+    ok = set_enabled_metrics(MetricsSubset),
+    Dur2 = folsom_metrics:get_metric_value(duration),
+    subset_checks(Dur2, MetricsSubset),
+    ok = set_enabled_metrics(?DEFAULT_METRICS),
 
     %% check spiral
     [{count, 100}, {one, 100}] = folsom_metrics:get_metric_value(spiral),
@@ -510,3 +522,19 @@ create_delete_metrics() ->
     ?assertMatch(ok, folsom_metrics:new_counter(counter)),
     ?assertMatch(ok, folsom_metrics:notify_existing_metric(counter, {inc, 1}, counter)),
     ?assertMatch(1, folsom_metrics:get_metric_value(counter)).
+
+set_enabled_metrics(Enabled) ->
+    application:set_env(folsom, enabled_metrics, Enabled).
+
+subset_checks(List, Enabled) ->
+    ?debugFmt("checking subset statistics", []),
+    ?debugFmt("~p, ~p~n", [List, Enabled]),
+    Disabled = ?DEFAULT_METRICS -- Enabled,
+    true = lists:all(fun(K) ->
+                             proplists:get_value(K, List) == undefined
+                     end,
+                     Disabled),
+    true = lists:all(fun(K) ->
+                             proplists:get_value(K, List) /= undefined
+                     end,
+                     Enabled).

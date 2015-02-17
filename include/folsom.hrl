@@ -195,3 +195,19 @@
                       priority,
                       tos
                      ]).
+
+-define(DEFAULT_METRICS, [
+                          arithmetic_mean,
+                          geometric_mean,
+                          harmonic_mean,
+                          histogram,
+                          kurtosis,
+                          n,
+                          max,
+                          median,
+                          min,
+                          {percentile, [50, 75, 95, 99, 999]},
+                          skewness,
+                          standard_deviation,
+                          variance
+                         ]).
