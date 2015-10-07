@@ -1,0 +1,4 @@
+[{<<"bear">>,
+  {git,"git://github.com/boundary/bear.git",
+       {ref,"119234548783af19b8ec75c879c5062676b92571"}},
+  0}].
