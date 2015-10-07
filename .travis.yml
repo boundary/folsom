@@ -1,6 +1,6 @@
 language: erlang
 
-script: rebar get-deps compile && rebar skip_deps=true eunit
+script: ./rebar3 update && ./rebar3 compile && ./rebar3 eunit
 
 otp_release:
   - 17.3

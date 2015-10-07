@@ -480,7 +480,7 @@ for(N, LoopCount, Counter) ->
 
 cpu_topology() ->
     ?debugFmt("Testing various CPU topologies ...~n", []),
-    {ok, [Data]} = file:consult("../test/cpu_topo_data"),
+    {ok, [Data]} = file:consult("test/cpu_topo_data"),
     [run_convert_and_jsonify(Item) || Item <- Data].
 
 
