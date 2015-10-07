@@ -2,7 +2,7 @@
 {application, folsom,
  [
   {description, "Erlang based metrics system"},
-  {vsn, git},
+  {vsn, "0.8.3"},
   {modules, []},
   {registered, [folsom_meter_timer_server,
                 folsom_metrics_histogram_ets,
