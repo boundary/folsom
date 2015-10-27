@@ -65,8 +65,14 @@ handle_cast(_Msg, State) ->
     {noreply, State}.
 
 handle_info(timeout, State=#state{sample_mod = SampleMod, reservoir = Reservoir, window = Window}) ->
-    SampleMod:trim(Reservoir, Window),
-    {noreply, State, timeout(Window)};
+    try
+	SampleMod:trim(Reservoir, Window),
+	{noreply, State, timeout(Window)}
+    catch error:badarg ->
+	    %% The ets table must have gone away; stop normally instead of bringing
+	    %% the supervisor down with us.
+	    {stop, normal, State}
+    end;
 handle_info(_Info, State) ->
     {noreply, State}.
 
