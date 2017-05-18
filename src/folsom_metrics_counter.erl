@@ -42,16 +42,27 @@ new(Name) ->
     ets:insert(?COUNTER_TABLE, Counters).
 
 inc(Name) ->
-    ets:update_counter(?COUNTER_TABLE, key(Name), 1).
+    inc(Name, 1).
 
-inc(Name, Value) ->
-    ets:update_counter(?COUNTER_TABLE, key(Name), Value).
+inc(Name, Value) when is_integer(Value) ->
+    ets:update_counter(?COUNTER_TABLE, key(Name), Value);
+inc(Name, Value) when is_float(Value) ->
+    inc_float_racy_but_good_enough(key(Name), Value).
 
 dec(Name) ->
-    ets:update_counter(?COUNTER_TABLE, key(Name), -1).
+    dec(Name, -1).
 
-dec(Name, Value) ->
-    ets:update_counter(?COUNTER_TABLE, key(Name), -Value).
+dec(Name, Value) when is_integer(Value) ->
+    ets:update_counter(?COUNTER_TABLE, key(Name), -Value);
+dec(Name, Value) when is_float(Value) ->
+    inc_float_racy_but_good_enough(key(Name), -1.0 * Value).
+
+inc_float_racy_but_good_enough(Name, Value) ->
+    Old = case ets:lookup(?COUNTER_TABLE, Name) of
+              [{_, Val}] -> Val;
+              []         -> 0.0
+          end,
+    true = ets:insert(?COUNTER_TABLE, {Name, Old + Value}).
 
 get_value(Name) ->
     Count = lists:sum(ets:select(?COUNTER_TABLE, [{{{Name,'_'},'$1'},[],['$1']}])),
