@@ -64,15 +64,6 @@ inc_float_racy_but_good_enough(Name, Value) ->
           end,
     true = ets:insert(?COUNTER_TABLE, {Name, Old + Value}).
 
-inc(Name, Value) ->
-    ets:update_counter(?COUNTER_TABLE, key(Name), Value).
-
-dec(Name) ->
-    ets:update_counter(?COUNTER_TABLE, key(Name), -1).
-
-dec(Name, Value) ->
-    ets:update_counter(?COUNTER_TABLE, key(Name), -Value).
-
 get_value(Name) ->
     Count = lists:sum(ets:select(?COUNTER_TABLE, [{{{Name,'_'},'$1'},[],['$1']}])),
     Count.
