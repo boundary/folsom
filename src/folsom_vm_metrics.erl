@@ -146,15 +146,15 @@ convert_c_compiler_version(A) ->
     list_to_binary(io_lib:format("~p", [A])).
 
 convert_cpu_topology([{core, Value}| Tail], Acc) when is_tuple(Value) ->
-    convert_cpu_topology(Tail, lists:append(Acc, [{core, tuple_to_list(Value)}]));
+    convert_cpu_topology(Tail, Acc ++ [{core, tuple_to_list(Value)}]);
 convert_cpu_topology([{core, Value}| Tail], Acc) when is_list(Value) ->
-    convert_cpu_topology(Tail, lists:append(Acc, [{core, convert_cpu_topology(Value, [])}]));
+    convert_cpu_topology(Tail, Acc ++ [{core, convert_cpu_topology(Value, [])}]);
 convert_cpu_topology([{thread, Value}| Tail], Acc) ->
-    convert_cpu_topology(Tail, lists:append(Acc, [{thread, tuple_to_list(Value)}]));
+    convert_cpu_topology(Tail, Acc ++ [{thread, tuple_to_list(Value)}]);
 convert_cpu_topology([{node, Value}| Tail], Acc) ->
-    convert_cpu_topology(Tail, lists:append(Acc, [{node, convert_cpu_topology(Value, [])}]));
+    convert_cpu_topology(Tail, Acc ++ [{node, convert_cpu_topology(Value, [])}]);
 convert_cpu_topology([{processor, Value}| Tail], Acc) ->
-    convert_cpu_topology(Tail, lists:append(Acc, [{processor, convert_cpu_topology(Value, [])}]));
+    convert_cpu_topology(Tail, Acc ++ [{processor, convert_cpu_topology(Value, [])}]);
 convert_cpu_topology({Key, Value}, _) ->
     [{Key, Value}];
 convert_cpu_topology([], Acc) ->
