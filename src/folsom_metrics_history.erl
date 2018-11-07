@@ -78,6 +78,6 @@ get_prev_event(_, '$end_of_table', _, Acc) ->
     Acc;
 get_prev_event(Name, Key, Count, Acc) when length(Acc) < Count ->
     Event = ets:lookup(Name, Key),
-    get_prev_event(Name, ets:prev(Name, Key), Count, lists:append(Acc, Event));
+    get_prev_event(Name, ets:prev(Name, Key), Count, Acc ++ Event);
 get_prev_event(_, _, _, Acc) ->
     Acc.
